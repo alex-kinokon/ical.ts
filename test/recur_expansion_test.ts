@@ -1,9 +1,13 @@
+import { suite, setup, test, suiteSetup } from 'mocha';
+import { assert } from 'chai';
+import { loadSample, ICAL } from './support/helper';
+
 suite('recur_expansion', function () {
   let subject, primary;
 
   function createSubject(file) {
     setup(async function () {
-      let icsData = await testSupport.loadSample(file);
+      let icsData = await loadSample(file);
       let exceptions = [];
 
       await new Promise(resolve => {

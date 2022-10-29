@@ -1,3 +1,7 @@
+import { suite, test, suiteSetup, suiteTeardown } from 'mocha';
+import { assert } from 'chai';
+import { loadSample, ICAL } from './support/helper';
+
 suite('ICAL.helpers', function () {
   suite('#clone', function () {
     let subject = ICAL.helpers.clone;
@@ -105,10 +109,10 @@ suite('ICAL.helpers', function () {
     let cal;
 
     suiteSetup(async function () {
-      let data = await testSupport.loadSample('minimal.ics');
+      let data = await loadSample('minimal.ics');
       cal = new ICAL.Component(ICAL.parse(data));
 
-      data = await testSupport.loadSample('timezones/America/Atikokan.ics');
+      data = await loadSample('timezones/America/Atikokan.ics');
       ICAL.TimezoneService.register(
         new ICAL.Component(ICAL.parse(data)).getFirstSubcomponent('vtimezone')
       );

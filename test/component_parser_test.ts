@@ -1,9 +1,13 @@
+import { suite, setup, test, suiteSetup } from 'mocha';
+import { assert } from 'chai';
+import { loadSample, ICAL } from './support/helper';
+
 suite('component_parser', function () {
   let subject;
   let icsData;
 
   suiteSetup(async function () {
-    icsData = await testSupport.loadSample('recur_instances.ics');
+    icsData = await loadSample('recur_instances.ics');
   });
 
   suite('#process', function () {
@@ -27,7 +31,7 @@ suite('component_parser', function () {
       assert.deepEqual(a.toJSON(), b.toJSON(), msg);
     }
 
-    function setupProcess(options) {
+    function setupProcess(options?) {
       setup(function (done) {
         events.length = 0;
         timezones.length = 0;

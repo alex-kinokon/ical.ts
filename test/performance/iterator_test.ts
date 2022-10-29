@@ -1,8 +1,12 @@
+import { suite, suiteSetup } from 'mocha';
+import { loadSample } from '../support/helper';
+import { perfTest, ICAL } from '../support/helper';
+
 suite('iterator', function () {
   let icsData;
 
   suiteSetup(async function () {
-    icsData = await testSupport.loadSample('parserv2.ics');
+    icsData = await loadSample('parserv2.ics');
   });
 
   let parsed;

@@ -1,3 +1,7 @@
+import { suite, test } from 'mocha';
+import { assert } from 'chai';
+import { ICAL, hasProperties } from './support/helper';
+
 suite('ical/duration', function () {
   test('#clone', function () {
     let subject = ICAL.Duration.fromData({
@@ -28,15 +32,15 @@ suite('ical/duration', function () {
     };
 
     let subject2 = subject.clone();
-    assert.hasProperties(subject, expected, 'base object unchanged');
-    assert.hasProperties(subject2, expected, 'cloned object unchanged');
+    hasProperties(subject, expected, 'base object unchanged');
+    hasProperties(subject2, expected, 'cloned object unchanged');
 
     for (let k in expected2) {
       subject2[k] = expected2[k];
     }
 
-    assert.hasProperties(subject, expected, 'base object unchanged');
-    assert.hasProperties(subject2, expected2, 'cloned object changed');
+    hasProperties(subject, expected, 'base object unchanged');
+    hasProperties(subject2, expected2, 'cloned object changed');
   });
 
   test('#reset', function () {
@@ -49,11 +53,11 @@ suite('ical/duration', function () {
       isNegative: true
     };
     let subject = new ICAL.Duration(expected);
-    assert.hasProperties(subject, expected);
+    hasProperties(subject, expected);
 
     subject.reset();
 
-    assert.hasProperties(subject, {
+    hasProperties(subject, {
       weeks: 0,
       days: 0,
       hours: 0,
@@ -118,7 +122,7 @@ suite('ical/duration', function () {
       isNegative: false
     };
 
-    function verify(string, data, verifystring) {
+    function verify(string, data, verifystring?) {
       let expected = {};
       let key;
 
@@ -132,7 +136,7 @@ suite('ical/duration', function () {
 
       test('parse: "' + string + '"', function () {
         let subject = ICAL.Duration.fromString(string);
-        assert.hasProperties(subject, expected);
+        hasProperties(subject, expected);
         assert.equal(subject.toString(), verifystring || string);
       });
     }

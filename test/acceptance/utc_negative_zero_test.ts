@@ -1,8 +1,12 @@
+import { suite, test, suiteSetup } from 'mocha';
+import { assert } from 'chai';
+import { loadSample, ICAL } from '../support/helper';
+
 suite('ics - negative zero', function () {
   let icsData;
 
   suiteSetup(async function () {
-    icsData = await testSupport.loadSample('utc_negative_zero.ics');
+    icsData = await loadSample('utc_negative_zero.ics');
   });
 
   test('summary', function () {

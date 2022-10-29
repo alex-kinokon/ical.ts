@@ -1,3 +1,7 @@
+import { suite, setup, test, suiteSetup } from 'mocha';
+import { assert } from 'chai';
+import { hasProperties, ICAL } from './support/helper';
+
 suite('Property', function () {
   let fixtures;
 
@@ -204,7 +208,7 @@ suite('Property', function () {
 
       assert.instanceOf(value, ICAL.Time);
       //2012-10-01
-      assert.hasProperties(
+      hasProperties(
         value,
         { year: 2012, month: 10, day: 1, isDate: true },
         'property correctness'
@@ -292,7 +296,7 @@ suite('Property', function () {
       assert.lengthOf(result, 2);
 
       // 2012-10-10
-      assert.hasProperties(result[0], {
+      hasProperties(result[0], {
         year: 2012,
         month: 10,
         day: 10,
@@ -300,7 +304,7 @@ suite('Property', function () {
       });
 
       //2012-10-11
-      assert.hasProperties(result[1], {
+      hasProperties(result[1], {
         year: 2012,
         month: 10,
         day: 11,
@@ -381,7 +385,7 @@ suite('Property', function () {
       assert.equal(subject.type, 'date-time');
       assert.instanceOf(value, ICAL.Time);
 
-      assert.hasProperties(value, {
+      hasProperties(value, {
         year: 2012,
         month: 9,
         day: 1,

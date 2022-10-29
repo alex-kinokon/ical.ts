@@ -13,10 +13,11 @@ const color = Base.color;
 
 // this reporter outputs test results, indenting two spaces per suite
 class MyReporter extends Base {
-  constructor(runner, options) {
+  _indents = 0;
+  _n = 0;
+
+  constructor(runner: Mocha.Runner, options?: Mocha.MochaOptions) {
     super(runner, options);
-    this._indents = 0;
-    this._n = 0;
 
     runner
       .once(EVENT_RUN_BEGIN, () => {

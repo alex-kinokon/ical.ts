@@ -1,3 +1,7 @@
+import { suite, setup, test } from 'mocha';
+import { assert } from 'chai';
+import { ICAL, loadSample } from './support/helper';
+
 suite('timezone', function () {
   let timezone;
 
@@ -18,9 +22,7 @@ suite('timezone', function () {
         });
       } else {
         setup(async function () {
-          let icsData = await testSupport.loadSample(
-            'timezones/' + tzid + '.ics'
-          );
+          let icsData = await loadSample('timezones/' + tzid + '.ics');
 
           let parsed = ICAL.parse(icsData);
           let vcalendar = new ICAL.Component(parsed);

@@ -1,3 +1,6 @@
+import { suite, suiteSetup } from 'mocha';
+import { perfTest, ICAL } from '../support/helper';
+
 suite('rrule', function () {
   let start;
   let occurrences;

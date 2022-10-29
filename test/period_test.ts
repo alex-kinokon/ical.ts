@@ -1,5 +1,11 @@
+import { suite, setup, test, suiteSetup } from 'mocha';
+import { assert } from 'chai';
+import { ICAL, hasProperties } from './support/helper';
+import type Time from '../lib/ical/time';
+import type Duration from '../lib/ical/duration';
+
 suite('ical/period', function () {
-  let start, end, duration;
+  let start: Time, end: Time, duration: Duration;
 
   setup(function () {
     start = ICAL.Time.fromString('1970-01-02T03:04:05Z');
@@ -17,13 +23,13 @@ suite('ical/period', function () {
 
         if ('start' in data) {
           assert.instanceOf(subject.start, ICAL.Time);
-          assert.hasProperties(subject.start, data.start, 'start property');
+          hasProperties(subject.start, data.start, 'start property');
         }
 
         if ('end' in data) {
           if (data.end) {
             assert.instanceOf(subject.end, ICAL.Time);
-            assert.hasProperties(subject.end, data.end, 'end property');
+            hasProperties(subject.end, data.end, 'end property');
           } else {
             assert.isNull(subject.end);
           }
@@ -32,11 +38,7 @@ suite('ical/period', function () {
         if ('duration' in data) {
           if (data.duration) {
             assert.instanceOf(subject.duration, ICAL.Duration);
-            assert.hasProperties(
-              subject.duration,
-              data.duration,
-              'duration property'
-            );
+            hasProperties(subject.duration, data.duration, 'duration property');
           } else {
             assert.isNull(subject.duration);
           }
@@ -46,25 +48,17 @@ suite('ical/period', function () {
           let dur = subject.getDuration();
 
           if ('duration' in data && data.duration) {
-            assert.hasProperties(
-              dur,
-              data.duration,
-              'duration matches calculated'
-            );
+            hasProperties(dur, data.duration, 'duration matches calculated');
           }
-          assert.hasProperties(dur, data.calculatedDuration);
+          hasProperties(dur, data.calculatedDuration);
         }
         if ('calculatedEnd' in data) {
           let subjectEnd = subject.getEnd();
 
           if ('end' in data && data.end) {
-            assert.hasProperties(
-              subjectEnd,
-              data.end,
-              'duration matches calculated'
-            );
+            hasProperties(subjectEnd, data.end, 'duration matches calculated');
           }
-          assert.hasProperties(subjectEnd, data.calculatedEnd);
+          hasProperties(subjectEnd, data.calculatedEnd);
         }
       });
     }
@@ -169,8 +163,8 @@ suite('ical/period', function () {
         end: end
       });
 
-      assert.hasProperties(subject.start, start, 'start date');
-      assert.hasProperties(subject.end, end, 'end date');
+      hasProperties(subject.start, start, 'start date');
+      hasProperties(subject.end, end, 'end date');
       assert.isNull(subject.duration);
     });
     test('valid start,duration', function () {
@@ -179,9 +173,9 @@ suite('ical/period', function () {
         duration: duration
       });
 
-      assert.hasProperties(subject.start, start, 'start date');
+      hasProperties(subject.start, start, 'start date');
       assert.isNull(subject.end);
-      assert.hasProperties(subject.duration, duration, 'duration');
+      hasProperties(subject.duration, duration, 'duration');
     });
 
     test('end value exists but is null', function () {
@@ -189,7 +183,7 @@ suite('ical/period', function () {
         start: start,
         end: null
       });
-      assert.hasProperties(subject.start, start, 'start date');
+      hasProperties(subject.start, start, 'start date');
       assert.isNull(subject.end);
       assert.isNull(subject.duration);
     });
@@ -201,7 +195,7 @@ suite('ical/period', function () {
       });
       assert.isNull(subject.start);
       assert.isNull(subject.end);
-      assert.hasProperties(subject.duration, duration, 'duration');
+      hasProperties(subject.duration, duration, 'duration');
     });
 
     test('duration value exists but is null', function () {
@@ -209,7 +203,7 @@ suite('ical/period', function () {
         start: start,
         duration: null
       });
-      assert.hasProperties(subject.start, start, 'start date');
+      hasProperties(subject.start, start, 'start date');
       assert.isNull(subject.end);
       assert.isNull(subject.duration);
     });
@@ -230,9 +224,9 @@ suite('ical/period', function () {
         end: null,
         duration: duration
       });
-      assert.hasProperties(subject.start, start, 'start date');
+      hasProperties(subject.start, start, 'start date');
       assert.isNull(subject.end);
-      assert.hasProperties(subject.duration, duration, 'duration');
+      hasProperties(subject.duration, duration, 'duration');
     });
 
     test('invalid start value', function () {

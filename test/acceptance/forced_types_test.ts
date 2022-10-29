@@ -1,8 +1,12 @@
+import { suite, test, suiteSetup } from 'mocha';
+import { assert } from 'chai';
+import { loadSample, ICAL } from '../support/helper';
+
 suite('ics test', function () {
   let icsData;
 
   suiteSetup(async function () {
-    icsData = await testSupport.loadSample('forced_types.ics');
+    icsData = await loadSample('forced_types.ics');
   });
 
   test('force type', function () {

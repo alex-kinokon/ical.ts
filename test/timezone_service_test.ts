@@ -1,7 +1,11 @@
+import { suite, setup, test, suiteSetup, teardown } from 'mocha';
+import { assert } from 'chai';
+import { ICAL, loadSample } from './support/helper';
+
 suite('timezone_service', function () {
   let icsData;
   suiteSetup(async function () {
-    icsData = await testSupport.loadSample('timezones/America/Los_Angeles.ics');
+    icsData = await loadSample('timezones/America/Los_Angeles.ics');
   });
 
   let subject;

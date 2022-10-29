@@ -1,3 +1,7 @@
+import { suite, test } from 'mocha';
+import { assert } from 'chai';
+import { hasProperties, ICAL } from './support/helper';
+
 suite('ICAL.UtcOffset', function () {
   test('#clone', function () {
     let subject = new ICAL.UtcOffset({ hours: 5, minutes: 6 });
@@ -18,7 +22,7 @@ suite('ICAL.UtcOffset', function () {
 
   suite('#normalize', function () {
     test('minute overflow', function () {
-      assert.hasProperties(
+      hasProperties(
         new ICAL.UtcOffset({
           minutes: 120
         }),
@@ -30,7 +34,7 @@ suite('ICAL.UtcOffset', function () {
       );
     });
     test('minutes underflow', function () {
-      assert.hasProperties(
+      hasProperties(
         new ICAL.UtcOffset({
           minutes: -120
         }),
@@ -42,7 +46,7 @@ suite('ICAL.UtcOffset', function () {
       );
     });
     test('minutes underflow with hours', function () {
-      assert.hasProperties(
+      hasProperties(
         new ICAL.UtcOffset({
           hours: 2,
           minutes: -120
@@ -55,7 +59,7 @@ suite('ICAL.UtcOffset', function () {
       );
     });
     test('hours overflow', function () {
-      assert.hasProperties(
+      hasProperties(
         new ICAL.UtcOffset({
           hours: 15,
           minutes: 30
@@ -68,7 +72,7 @@ suite('ICAL.UtcOffset', function () {
       );
     });
     test('hours underflow', function () {
-      assert.hasProperties(
+      hasProperties(
         new ICAL.UtcOffset({
           hours: 13,
           minutes: 30,
@@ -82,7 +86,7 @@ suite('ICAL.UtcOffset', function () {
       );
     });
     test('hours double underflow', function () {
-      assert.hasProperties(
+      hasProperties(
         new ICAL.UtcOffset({
           hours: 40,
           minutes: 30,
@@ -96,7 +100,7 @@ suite('ICAL.UtcOffset', function () {
       );
     });
     test('negative zero utc offset', function () {
-      assert.hasProperties(
+      hasProperties(
         new ICAL.UtcOffset({
           hours: 0,
           minutes: 0,

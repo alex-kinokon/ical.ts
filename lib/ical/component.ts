@@ -36,7 +36,7 @@ class Component {
    *                                      component
    * @param {ICAL.Component} parent     Parent component to associate
    */
-  constructor(jCal, parent) {
+  constructor(jCal, parent?) {
     if (typeof jCal === 'string') {
       // jCal spec (name, properties, components)
       jCal = [jCal, [], []];

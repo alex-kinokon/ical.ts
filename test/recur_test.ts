@@ -1,3 +1,7 @@
+import { suite, test } from 'mocha';
+import { assert } from 'chai';
+import { hasProperties, ICAL } from './support/helper';
+
 suite('recur', function () {
   suite('initialization', function () {
     test('empty init', function () {
@@ -272,12 +276,12 @@ suite('recur', function () {
 
       assert.instanceOf(fromJSON.until, ICAL.Time);
 
-      assert.hasProperties(fromJSON, {
+      hasProperties(fromJSON, {
         freq: props.freq,
         count: props.count
       });
 
-      assert.hasProperties(fromJSON.parts, {
+      hasProperties(fromJSON.parts, {
         BYDAY: props.byday,
         BYSETPOS: [props.bysetpos]
       });
@@ -322,9 +326,9 @@ suite('recur', function () {
         if (options.until) {
           let until = options.until;
           delete options.until;
-          assert.hasProperties(result.until, until);
+          hasProperties(result.until, until);
         }
-        assert.hasProperties(result, options);
+        hasProperties(result, options);
       });
     }
 
@@ -408,7 +412,7 @@ suite('recur', function () {
   suite('#fromData', function () {
     function verify(data, options) {
       test('parse: "' + JSON.stringify(data) + '"', function () {
-        assert.hasProperties(ICAL.Recur.fromData(data), options);
+        hasProperties(ICAL.Recur.fromData(data), options);
       });
     }
 

@@ -1,3 +1,7 @@
+import { suite, test } from 'mocha';
+import { assert } from 'chai';
+import { ICAL, useTimezones } from './support/helper';
+
 suite('vcard time', function () {
   // Lots of things are also covered in the design test
 
@@ -30,7 +34,7 @@ suite('vcard time', function () {
   });
 
   suite('#utcOffset', function () {
-    testSupport.useTimezones('America/New_York');
+    useTimezones('America/New_York');
 
     test('floating and utc', function () {
       let subject = ICAL.VCardTime.fromDateAndOrTimeString(
@@ -60,7 +64,7 @@ suite('vcard time', function () {
   });
 
   suite('#toString', function () {
-    testSupport.useTimezones('America/New_York');
+    useTimezones('America/New_York');
 
     test('invalid icaltype', function () {
       let subject = ICAL.VCardTime.fromDateAndOrTimeString(

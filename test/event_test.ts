@@ -1,6 +1,11 @@
+import { suite, setup, test, suiteSetup } from 'mocha';
+import { assert } from 'chai';
+import { useTimezones } from './support/helper';
+import { loadSample, ICAL } from './support/helper';
+
 suite('ICAL.Event', function () {
   let testTzid = 'America/New_York';
-  testSupport.useTimezones(testTzid, 'America/Denver', 'America/Los_Angeles');
+  useTimezones(testTzid, 'America/Denver', 'America/Los_Angeles');
 
   let icsDataRecurInstances;
 
@@ -28,7 +33,7 @@ suite('ICAL.Event', function () {
   }
 
   suiteSetup(async function () {
-    icsDataRecurInstances = await testSupport.loadSample('recur_instances.ics');
+    icsDataRecurInstances = await loadSample('recur_instances.ics');
   });
 
   let exceptions = [];
@@ -398,7 +403,7 @@ suite('ICAL.Event', function () {
       let icsData;
 
       suiteSetup(async function () {
-        icsData = await testSupport.loadSample('multiple_rrules.ics');
+        icsData = await loadSample('multiple_rrules.ics');
       });
 
       test('result', function () {
@@ -747,7 +752,7 @@ suite('ICAL.Event', function () {
     let icsData;
 
     suiteSetup(async function () {
-      icsData = await testSupport.loadSample('duration_instead_of_dtend.ics');
+      icsData = await loadSample('duration_instead_of_dtend.ics');
     });
 
     test('result', function () {
@@ -818,7 +823,7 @@ suite('ICAL.Event', function () {
     let icsData;
 
     suiteSetup(async function () {
-      icsData = await testSupport.loadSample('only_dtstart_date.ics');
+      icsData = await loadSample('only_dtstart_date.ics');
     });
 
     test('result', function () {
@@ -856,7 +861,7 @@ suite('ICAL.Event', function () {
     let icsData;
 
     suiteSetup(async function () {
-      icsData = await testSupport.loadSample('only_dtstart_time.ics');
+      icsData = await loadSample('only_dtstart_time.ics');
     });
 
     test('result', function () {
@@ -894,7 +899,7 @@ suite('ICAL.Event', function () {
     let icsData;
 
     suiteSetup(async function () {
-      icsData = await testSupport.loadSample('minimal.ics');
+      icsData = await loadSample('minimal.ics');
     });
 
     test('result with different timezones', function () {

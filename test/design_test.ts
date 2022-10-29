@@ -1,7 +1,12 @@
+import { suite, setup, test, suiteSetup, suiteTeardown } from 'mocha';
+import { assert } from 'chai';
+import { loadSample, ICAL, hasProperties } from './support/helper';
+import type Timezone from '../lib/ical/timezone';
+
 suite('design', function () {
-  let timezone;
+  let timezone: Timezone;
   suiteSetup(async function () {
-    let data = await testSupport.loadSample('timezones/America/New_York.ics');
+    let data = await loadSample('timezones/America/New_York.ics');
     let parsed = ICAL.parse(data);
     let vcalendar = new ICAL.Component(parsed);
     let vtimezone = vcalendar.getFirstSubcomponent('vtimezone');
@@ -14,7 +19,7 @@ suite('design', function () {
     ICAL.TimezoneService.reset();
   });
 
-  let subject;
+  let subject: typeof ICAL.design.defaultSet;
   setup(function () {
     subject = ICAL.design.defaultSet;
   });
@@ -90,7 +95,7 @@ suite('design', function () {
 
         let time = subject.decorate(value, prop);
 
-        assert.hasProperties(time, {
+        hasProperties(time, {
           year: 2012,
           month: 10,
           day: 10,
@@ -110,7 +115,7 @@ suite('design', function () {
 
         let time = subject.decorate(value, prop);
 
-        assert.hasProperties(time, {
+        hasProperties(time, {
           year: 2012,
           month: 10,
           day: 10,
@@ -157,7 +162,7 @@ suite('design', function () {
 
         let decorated = subject.decorate(undecorated, prop);
 
-        assert.hasProperties(decorated, {
+        hasProperties(decorated, {
           year: 2012,
           month: 9,
           day: 1,
@@ -174,7 +179,7 @@ suite('design', function () {
 
         let decorated = subject.decorate(undecorated, prop);
 
-        assert.hasProperties(decorated, {
+        hasProperties(decorated, {
           year: 2012,
           month: 9,
           day: 1,
@@ -201,7 +206,7 @@ suite('design', function () {
         let decorated = subject.decorate(undecorated, prop);
         assert.equal(decorated.zone, timezone);
 
-        assert.hasProperties(decorated, {
+        hasProperties(decorated, {
           year: 2012,
           month: 9,
           day: 1,
@@ -263,7 +268,7 @@ suite('design', function () {
             let decorated = valueType.decorate(jcalvalue, prop);
             let undecorated = valueType.undecorate(decorated);
 
-            assert.hasProperties(decorated._time, props);
+            hasProperties(decorated._time, props);
             assert.equal(zoneName, decorated.zone.toString());
             assert.equal(undecorated, jcalvalue);
             assert.equal(decorated.toICALString(), icalvalue);
@@ -534,7 +539,7 @@ suite('design', function () {
         let undecorated = ['1997-01-01T18:00:00', 'PT5H30M'];
         let decorated = subject.decorate(undecorated, prop);
 
-        assert.hasProperties(decorated.start, {
+        hasProperties(decorated.start, {
           year: 1997,
           day: 1,
           month: 1,
@@ -543,7 +548,7 @@ suite('design', function () {
 
         assert.equal(decorated.start.zone, timezone);
 
-        assert.hasProperties(decorated.duration, {
+        hasProperties(decorated.duration, {
           hours: 5,
           minutes: 30
         });
@@ -557,14 +562,14 @@ suite('design', function () {
         let undecorated = ['1997-01-01T18:00:00', '1998-01-01T17:00:00'];
         let decorated = subject.decorate(undecorated, prop);
 
-        assert.hasProperties(decorated.start, {
+        hasProperties(decorated.start, {
           year: 1997,
           day: 1,
           month: 1,
           hour: 18
         });
 
-        assert.hasProperties(decorated.end, {
+        hasProperties(decorated.end, {
           year: 1998,
           day: 1,
           month: 1,
@@ -585,14 +590,14 @@ suite('design', function () {
         let undecorated = ['1997-01-01', '1998-01-01'];
         let decorated = subject.decorate(undecorated, prop);
 
-        assert.hasProperties(decorated.start, {
+        hasProperties(decorated.start, {
           year: 1997,
           day: 1,
           month: 1,
           isDate: true
         });
 
-        assert.hasProperties(decorated.end, {
+        hasProperties(decorated.end, {
           year: 1998,
           day: 1,
           month: 1,
@@ -610,7 +615,7 @@ suite('design', function () {
         let undecorated = ['1997-01-01T18:00:00', 'PT5H30M'];
         let decorated = subject.decorate(undecorated, prop);
 
-        assert.hasProperties(decorated.start, {
+        hasProperties(decorated.start, {
           year: 1997,
           day: 1,
           month: 1,
@@ -619,7 +624,7 @@ suite('design', function () {
 
         assert.equal(decorated.start.zone, timezone);
 
-        assert.hasProperties(decorated.duration, {
+        hasProperties(decorated.duration, {
           hours: 5,
           minutes: 30
         });
@@ -656,14 +661,14 @@ suite('design', function () {
 
         assert.instanceOf(decorated, ICAL.Recur);
 
-        assert.hasProperties(decorated, {
+        hasProperties(decorated, {
           freq: 'MONTHLY',
           parts: {
             BYDAY: ['MO', 'TU', 'WE', 'TH', 'FR']
           }
         });
 
-        assert.hasProperties(decorated.until, {
+        hasProperties(decorated.until, {
           year: 2012,
           month: 10,
           day: 12

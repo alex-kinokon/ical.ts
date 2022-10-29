@@ -31,7 +31,7 @@ class Event {
    *            specified exceptions will automatically be set in relation of
    *            component's parent
    */
-  constructor(component, options) {
+  constructor(component, options?) {
     if (!(component instanceof Component)) {
       options = component;
       component = null;

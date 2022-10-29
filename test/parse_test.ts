@@ -1,3 +1,7 @@
+import { suite, setup, test } from 'mocha';
+import { assert } from 'chai';
+import { load, ICAL } from './support/helper';
+
 suite('parserv2', function () {
   let subject;
   setup(function () {
@@ -49,14 +53,12 @@ suite('parserv2', function () {
 
         // fetch ical
         setup(async function () {
-          input = await testSupport.load(root + path);
+          input = await load(root + path);
         });
 
         // fetch json
         setup(async function () {
-          let data = await testSupport.load(
-            root + path.replace(/vcf|ics$/, 'json')
-          );
+          let data = await load(root + path.replace(/vcf|ics$/, 'json'));
           try {
             expected = JSON.parse(data.trim());
           } catch (e) {

@@ -1,8 +1,12 @@
+import { suite, test, suiteSetup } from 'mocha';
+import { assert } from 'chai';
+import { loadSample, ICAL } from '../support/helper';
+
 suite('google birthday events', function () {
   let icsData;
 
   suiteSetup(async function () {
-    icsData = await testSupport.loadSample('google_birthday.ics');
+    icsData = await loadSample('google_birthday.ics');
   });
 
   test('expanding malformatted recurring event', function (done) {

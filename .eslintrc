@@ -462,7 +462,6 @@
       "globals": {
         "ICAL": "readonly",
         "assert": "readonly",
-        "testSupport": "readonly",
         "perfTest": "readonly"
       }
     },

@@ -369,7 +369,7 @@ class Time {
    *                                  opposed to a date-time)
    * @param {ICAL.Timezone} zone timezone this position occurs in
    */
-  constructor(data, zone) {
+  constructor(data, zone?) {
     this.wrappedJSObject = this;
     let time = (this._time = Object.create(null));
 

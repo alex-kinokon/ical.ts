@@ -1,3 +1,7 @@
+import { suite, setup, test } from 'mocha';
+import { assert } from 'chai';
+import { ICAL, load } from './support/helper';
+
 suite('ICAL.stringify', function () {
   suite('round trip tests', function () {
     let root = 'samples/';
@@ -15,7 +19,7 @@ suite('ICAL.stringify', function () {
 
         // fetch ical
         setup(async function () {
-          input = await testSupport.load(root + path + '.ics');
+          input = await load(root + path + '.ics');
         });
 
         function jsonEqual(actual, expected) {

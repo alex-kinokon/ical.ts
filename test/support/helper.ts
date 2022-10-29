@@ -3,60 +3,49 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-/* eslint-env browser, node, mocha */
-
 let crossGlobal = typeof window === 'undefined' ? global : window;
-let testSupport = (crossGlobal.testSupport = {
-  isNode: typeof global !== 'undefined'
-});
 
-/* eslint-disable no-var, no-redeclare */
-if (testSupport.isNode) {
-  var ICAL = require('../../lib/ical/module').default;
-  var chai = require('chai');
-  var Benchmark = require('benchmark');
-  var { URL } = require('url');
-  var { readFile, readdir } = require('fs/promises');
-} else {
-  var ICAL = require('/base/lib/ical/module').default;
-  var chai = window.chai;
-}
+import ICAL from '../../lib/ical/module';
+import chai, { assert } from 'chai';
+import Benchmark from 'benchmark';
+import { URL } from 'url';
+import { readFile, readdir } from 'fs/promises';
+import { suiteSetup, suiteTeardown, test } from 'mocha';
+
 /* eslint-enable no-var, no-redeclare*/
 
-crossGlobal.ICAL = ICAL;
-chai.config.includeStack = true;
-crossGlobal.assert = chai.assert;
-crossGlobal.assert.hasProperties = function chai_hasProperties(
-  given,
-  props,
-  msg
-) {
+export { ICAL };
+
+export function hasProperties(given, props, msg?) {
   msg = typeof msg === 'undefined' ? '' : msg + ': ';
 
   if (props instanceof Array) {
     props.forEach(function (prop) {
-      crossGlobal.assert.ok(
+      assert.ok(
         prop in given,
         msg + 'given should have "' + prop + '" property'
       );
     });
   } else {
     for (let key in props) {
-      crossGlobal.assert.deepEqual(
+      assert.deepEqual(
         given[key],
         props[key],
         msg + ' property equality for (' + key + ') '
       );
     }
   }
-};
+}
 
+chai.config.includeStack = true;
+
+let _timezones;
 /**
  * Registers a given timezone from samples with the timezone service.
  *
  * @param {String} zoneName like "America/Los_Angeles".
  */
-testSupport.registerTimezone = async function (zoneName) {
+export async function registerTimezone(zoneName: string) {
   function register(icsData) {
     let parsed = ICAL.parse(icsData);
     let calendar = new ICAL.Component(parsed);
@@ -65,22 +54,22 @@ testSupport.registerTimezone = async function (zoneName) {
     ICAL.TimezoneService.register(vtimezone);
   }
 
-  if (!this._timezones) {
-    this._timezones = Object.create(null);
+  if (!_timezones) {
+    _timezones = Object.create(null);
   }
 
-  let ics = this._timezones[zoneName];
+  let ics = _timezones[zoneName];
 
   if (ics) {
     return register(ics);
   } else {
     let path = 'samples/timezones/' + zoneName + '.ics';
-    let data = await testSupport.load(path);
+    let data = await load(path);
     let zone = register(data);
-    this._timezones[zone] = data;
+    _timezones[zone] = data;
     return zone;
   }
-};
+}
 
 /**
  * Registers a timezones for a given suite of tests. Uses suiteSetup to stage
@@ -90,9 +79,7 @@ testSupport.registerTimezone = async function (zoneName) {
  * teardown function will reset the service while the parent suite will still
  * need them.
  */
-testSupport.useTimezones = function (zones) {
-  let allZones = Array.prototype.slice.call(arguments);
-
+export function useTimezones(...allZones: string[]) {
   suiteTeardown(function () {
     // to ensure clean tests
     ICAL.TimezoneService.reset();
@@ -104,9 +91,9 @@ testSupport.useTimezones = function (zones) {
       throw new Error('Can only register zones once');
     }
 
-    await Promise.all(allZones.map(zone => testSupport.registerTimezone(zone)));
+    await Promise.all(allZones.map(zone => registerTimezone(zone)));
   });
-};
+}
 
 const $import = {
   meta: { url: require('url').pathToFileURL(__filename).href }
@@ -115,38 +102,25 @@ const $import = {
 /**
  * @param {String} path relative to root (/) of project.
  */
-testSupport.load = async function (path) {
-  if (testSupport.isNode) {
-    let root = new URL('../../' + path, $import.meta.url).pathname;
-    return readFile(root, 'utf8');
-  } else {
-    let response = await fetch('/base/' + path);
-    if (response.status == 200) {
-      let text = await response.text();
-      return text;
-    } else {
-      let err = new Error('file not found or other error', response);
-      throw err;
-    }
-  }
-};
+export async function load(path: string) {
+  const root = new URL('../../' + path, $import.meta.url).pathname;
+  return readFile(root, 'utf8');
+}
 
-testSupport.loadSample = async function (file) {
-  return testSupport.load('samples/' + file);
-};
+export async function loadSample(file: string) {
+  return load('samples/' + file);
+}
 
 let icalPerf = {};
-function perfTestDefine(scope, done) {
+function perfTestDefine(this: Mocha.Context, scope, done) {
   this.timeout(0);
   let benchSuite = new Benchmark.Suite();
-  let currentTest = this.test;
+  let currentTest = this.test!;
   benchSuite.add('latest', scope.bind(this));
+
   Object.entries(icalPerf).forEach(([key, ical]) => {
     benchSuite.add(key, () => {
-      let lastGlobal = crossGlobal.ICAL;
-      crossGlobal.ICAL = ical;
       scope.call(this);
-      crossGlobal.ICAL = lastGlobal;
     });
   });
 
@@ -164,38 +138,21 @@ function perfTestDefine(scope, done) {
   benchSuite.run();
 }
 
-crossGlobal.perfTest = function (name, scope) {
+export function perfTest(name: string, scope: () => void) {
   test(name, function (done) {
     perfTestDefine.call(this, scope, done);
   });
-};
-crossGlobal.perfTest.only = function (name, scope) {
+}
+perfTest.only = function (name: string, scope: () => void) {
   test.only(name, function (done) {
     perfTestDefine.call(this, scope, done);
   });
 };
-crossGlobal.perfTest.skip = function (name, scope) {
+perfTest.skip = function (name: string, scope: () => void) {
   test.skip(name, function (done) {
     perfTestDefine.call(this, scope, done);
   });
 };
-
-if (!testSupport.isNode) {
-  console.log('KARMA');
-  try {
-    for (let file in window.__karma__.files) {
-      if (Object.hasOwn(window.__karma__.files, file)) {
-        if (/_test\.[jt]s$/.test(file)) {
-          require(file);
-        }
-      }
-    }
-
-    window.__karma__.start();
-  } catch (e) {
-    window.__karma__.error(e.toString());
-  }
-}
 
 export const mochaHooks = {
   async beforeAll() {
@@ -205,7 +162,7 @@ export const mochaHooks = {
       let match = file.match(/^ical_(\w+).c?js$/);
       if (match) {
         try {
-          let module = await import('../../tools/benchmark/' + file);
+          let module = await import(`../../tools/benchmark/${file}`);
           if (module.default) {
             icalPerf[match[1]] = module.default;
           } else {

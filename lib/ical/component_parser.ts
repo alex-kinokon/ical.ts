@@ -44,7 +44,7 @@ class ComponentParser {
    * @param {Boolean} options.parseEvent        Whether events should be parsed
    * @param {Boolean} options.parseTimezeone    Whether timezones should be parsed
    */
-  constructor(options) {
+  constructor(options?) {
     if (typeof options === 'undefined') {
       options = {};
     }
@@ -74,7 +74,7 @@ class ComponentParser {
    * Fired when parsing is complete
    * @callback
    */
-  oncomplete = /* c8 ignore next */ function() {};
+  oncomplete = /* c8 ignore next */ function () {};
 
   /**
    * Fired if an error occurs during parsing.
@@ -82,7 +82,7 @@ class ComponentParser {
    * @callback
    * @param {Error} err details of error
    */
-  onerror = /* c8 ignore next */ function(err) {};
+  onerror = /* c8 ignore next */ function (err) {};
 
   /**
    * Fired when a top level component (VTIMEZONE) is found
@@ -90,7 +90,7 @@ class ComponentParser {
    * @callback
    * @param {ICAL.Timezone} component     Timezone object
    */
-  ontimezone = /* c8 ignore next */ function(component) {};
+  ontimezone = /* c8 ignore next */ function (component) {};
 
   /**
    * Fired when a top level component (VEVENT) is found.
@@ -98,7 +98,7 @@ class ComponentParser {
    * @callback
    * @param {ICAL.Event} component    Top level component
    */
-  onevent = /* c8 ignore next */ function(component) {};
+  onevent = /* c8 ignore next */ function (component) {};
 
   /**
    * Process a string or parse ical object.  This function itself will return

@@ -26,6 +26,8 @@
     "@babel/register": "^7.18.9",
     "@octokit/core": "^4.1.0",
     "@rollup/plugin-babel": "^6.0.0",
+    "@types/benchmark": "^2.1.2",
+    "@types/chai": "^4.3.3",
     "@types/mocha": "github:alex-kinokon/mocha-types",
     "@types/node": "^18.11.7",
     "benchmark": "^2.1.4",

@@ -1,3 +1,6 @@
+import { suite } from 'mocha';
+import { perfTest, ICAL } from '../support/helper';
+
 suite('ICAL.Time', function () {
   perfTest('subtract date', function () {
     let time = new ICAL.Time({

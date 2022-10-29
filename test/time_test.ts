@@ -1,3 +1,12 @@
+import { suite, setup, test, suiteSetup } from 'mocha';
+import { assert } from 'chai';
+import {
+  useTimezones,
+  loadSample,
+  ICAL,
+  hasProperties
+} from './support/helper';
+
 suite('icaltime', function () {
   let Time = ICAL.Time;
   let Timezone = ICAL.Timezone;
@@ -24,7 +33,7 @@ suite('icaltime', function () {
   suite('initialize', function () {
     let icsData;
     suiteSetup(async function () {
-      icsData = await testSupport.loadSample('timezones/America/New_York.ics');
+      icsData = await loadSample('timezones/America/New_York.ics');
     });
 
     test('with timezone', function () {
@@ -143,7 +152,7 @@ suite('icaltime', function () {
   });
 
   suite('#subtractDate and #subtractDateTz', function () {
-    testSupport.useTimezones('America/Los_Angeles', 'America/New_York');
+    useTimezones('America/Los_Angeles', 'America/New_York');
 
     test('diff between two times in different timezones', function () {
       // 3 hours ahead of west
@@ -166,13 +175,13 @@ suite('icaltime', function () {
       });
 
       let diff1 = west.subtractDate(east);
-      assert.hasProperties(diff1, {
+      hasProperties(diff1, {
         hours: 2,
         minutes: 30,
         isNegative: false
       });
       let diff2 = west.subtractDateTz(east);
-      assert.hasProperties(diff2, {
+      hasProperties(diff2, {
         hours: 5,
         minutes: 30,
         isNegative: false
@@ -198,14 +207,14 @@ suite('icaltime', function () {
       });
 
       let diff1 = t1.subtractDate(t2);
-      assert.hasProperties(diff1, {
+      hasProperties(diff1, {
         hours: 13,
         minutes: 20,
         isNegative: false
       });
 
       let diff2 = t1.subtractDateTz(t2);
-      assert.hasProperties(diff2, {
+      hasProperties(diff2, {
         hours: 13,
         minutes: 20,
         isNegative: false
@@ -231,7 +240,7 @@ suite('icaltime', function () {
 
       let diff = t1.subtractDate(t2);
 
-      assert.hasProperties(diff, {
+      hasProperties(diff, {
         hours: 13,
         minutes: 20,
         isNegative: true
@@ -254,7 +263,7 @@ suite('icaltime', function () {
 
       let subject = Time.fromJSDate(date, true);
 
-      assert.hasProperties(subject, expected);
+      hasProperties(subject, expected);
     });
 
     test('floating', function () {
@@ -277,7 +286,7 @@ suite('icaltime', function () {
         timezone: 'Z'
       };
 
-      assert.hasProperties(subject, expected);
+      hasProperties(subject, expected);
     });
   });
 
@@ -293,7 +302,7 @@ suite('icaltime', function () {
         second: 0
       };
 
-      assert.hasProperties(subject, expected, 'starts at begining of time');
+      hasProperties(subject, expected, 'starts at begining of time');
     });
 
     test('with year, month', function () {
@@ -302,7 +311,7 @@ suite('icaltime', function () {
         month: 1
       });
 
-      assert.hasProperties(subject, {
+      hasProperties(subject, {
         year: 2012,
         month: 1
       });
@@ -314,7 +323,7 @@ suite('icaltime', function () {
         timezone: 'Z'
       });
 
-      assert.hasProperties(subject, {
+      hasProperties(subject, {
         year: 2012,
         zone: Timezone.utcTimezone
       });
@@ -326,7 +335,7 @@ suite('icaltime', function () {
         timezone: 'floating'
       });
 
-      assert.hasProperties(subject, {
+      hasProperties(subject, {
         year: 2012,
         zone: Timezone.localTimezone
       });
@@ -339,7 +348,7 @@ suite('icaltime', function () {
         month: 1
       });
 
-      assert.hasProperties(subject, {
+      hasProperties(subject, {
         icaltype: 'date',
         year: 2012,
         month: 1
@@ -516,7 +525,7 @@ suite('icaltime', function () {
 
       test(msg, function () {
         subject = Time.fromJSDate(date);
-        assert.hasProperties(subject.startOfWeek(), expected);
+        hasProperties(subject.startOfWeek(), expected);
       });
     });
   });
@@ -696,9 +705,7 @@ suite('icaltime', function () {
     suite('with timezone', function () {
       let icsData;
       suiteSetup(async function () {
-        icsData = await testSupport.loadSample(
-          'timezones/America/Los_Angeles.ics'
-        );
+        icsData = await loadSample('timezones/America/Los_Angeles.ics');
       });
 
       let subject;
@@ -1340,7 +1347,7 @@ suite('icaltime', function () {
   });
 
   suite('#compare', function () {
-    testSupport.useTimezones('America/New_York', 'America/Los_Angeles');
+    useTimezones('America/New_York', 'America/Los_Angeles');
 
     test('simple comparison', function () {
       let a = Time.fromString('2001-01-01T00:00:00');

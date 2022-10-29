@@ -1,8 +1,11 @@
+import { suite, test, suiteSetup } from 'mocha';
+import { loadSample, ICAL } from '../support/helper';
+
 suite('ics - blank description', function () {
   let icsData;
 
   suiteSetup(async function () {
-    icsData = await testSupport.loadSample('blank_description.ics');
+    icsData = await loadSample('blank_description.ics');
   });
 
   test('summary', function () {
