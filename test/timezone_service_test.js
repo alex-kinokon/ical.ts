@@ -1,28 +1,28 @@
-suite('timezone_service', function() {
+suite('timezone_service', function () {
   let icsData;
-  suiteSetup(async function() {
+  suiteSetup(async function () {
     icsData = await testSupport.loadSample('timezones/America/Los_Angeles.ics');
   });
 
   let subject;
-  setup(function() {
+  setup(function () {
     subject = ICAL.TimezoneService;
     subject.reset();
   });
 
-  teardown(function() {
+  teardown(function () {
     subject.reset();
   });
 
-  test('utc zones', function() {
+  test('utc zones', function () {
     let zones = ['Z', 'UTC', 'GMT'];
-    zones.forEach(function(tzid) {
+    zones.forEach(function (tzid) {
       assert.ok(subject.has(tzid), tzid + ' should exist');
       assert.equal(subject.get(tzid), ICAL.Timezone.utcTimezone);
     });
   });
 
-  test('#reset', function() {
+  test('#reset', function () {
     let name = 'ZFOO';
     subject.register(name, ICAL.Timezone.utcTimezone);
     assert.isTrue(subject.has(name), 'should have set ' + name);
@@ -33,8 +33,8 @@ suite('timezone_service', function() {
     assert.equal(subject.count, 3);
   });
 
-  suite('register zones', function() {
-    test('when it does not exist', function() {
+  suite('register zones', function () {
+    test('when it does not exist', function () {
       let name = 'test';
       assert.isFalse(subject.has(name));
 
@@ -42,41 +42,35 @@ suite('timezone_service', function() {
       subject.register(name, ICAL.Timezone.localTimezone);
       assert.equal(subject.count, 4);
       assert.isTrue(subject.has(name), 'is present after set');
-      assert.equal(
-        subject.get(name),
-        ICAL.Timezone.localTimezone
-      );
+      assert.equal(subject.get(name), ICAL.Timezone.localTimezone);
 
       subject.remove(name);
       assert.isFalse(subject.has(name), 'can remove zones');
     });
 
-    test('with invalid type', function() {
-      assert.throws(function() {
+    test('with invalid type', function () {
+      assert.throws(function () {
         subject.register('zzz', 'fff');
-      }, "timezone must be ICAL.Timezone");
+      }, 'timezone must be ICAL.Timezone');
     });
-    test('with only invalid component', function() {
-      assert.throws(function() {
+    test('with only invalid component', function () {
+      assert.throws(function () {
         let comp = new ICAL.Component('vtoaster');
         subject.register(comp);
-      }, "timezone must be ICAL.Timezone");
+      }, 'timezone must be ICAL.Timezone');
     });
 
-    test('override', function() {
+    test('override', function () {
       // don't do this but you can if you want to shoot
       // yourself in the foot.
       assert.equal(subject.count, 3);
       subject.register('Z', ICAL.Timezone.localTimezone);
 
-      assert.equal(
-        subject.get('Z'),
-        ICAL.Timezone.localTimezone
-      );
+      assert.equal(subject.get('Z'), ICAL.Timezone.localTimezone);
       assert.equal(subject.count, 3);
     });
 
-    test('using a component', function() {
+    test('using a component', function () {
       let parsed = ICAL.parse(icsData);
       let comp = new ICAL.Component(parsed);
       let vtimezone = comp.getFirstSubcomponent('vtimezone');

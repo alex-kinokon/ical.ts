@@ -1,14 +1,17 @@
-suite('vcard time', function() {
+suite('vcard time', function () {
   // Lots of things are also covered in the design test
 
-  suite('initialization', function() {
-    test('default icaltype', function() {
+  suite('initialization', function () {
+    test('default icaltype', function () {
       let subject = ICAL.VCardTime.fromDateAndOrTimeString('2015-01-01');
       assert.equal(subject.icaltype, 'date-and-or-time');
     });
 
-    test('clone', function() {
-      let orig = ICAL.VCardTime.fromDateAndOrTimeString('2015-01-02T03:04:05-08:00', 'date-time');
+    test('clone', function () {
+      let orig = ICAL.VCardTime.fromDateAndOrTimeString(
+        '2015-01-02T03:04:05-08:00',
+        'date-time'
+      );
       let subject = orig.clone();
 
       orig.day++;
@@ -26,42 +29,57 @@ suite('vcard time', function() {
     });
   });
 
-  suite('#utcOffset', function() {
+  suite('#utcOffset', function () {
     testSupport.useTimezones('America/New_York');
 
-    test('floating and utc', function() {
-      let subject = ICAL.VCardTime.fromDateAndOrTimeString('2015-01-02T03:04:05', 'date-time');
+    test('floating and utc', function () {
+      let subject = ICAL.VCardTime.fromDateAndOrTimeString(
+        '2015-01-02T03:04:05',
+        'date-time'
+      );
       subject.zone = ICAL.Timezone.utcTimezone;
       assert.equal(subject.utcOffset(), 0);
 
       subject.zone = ICAL.Timezone.localTimezone;
       assert.equal(subject.utcOffset(), 0);
     });
-    test('ICAL.UtcOffset', function() {
-      let subject = ICAL.VCardTime.fromDateAndOrTimeString('2015-01-02T03:04:05-08:00', 'date-time');
+    test('ICAL.UtcOffset', function () {
+      let subject = ICAL.VCardTime.fromDateAndOrTimeString(
+        '2015-01-02T03:04:05-08:00',
+        'date-time'
+      );
       assert.equal(subject.utcOffset(), -28800);
     });
-    test('Olson timezone', function() {
-      let subject = ICAL.VCardTime.fromDateAndOrTimeString('2015-01-02T03:04:05');
+    test('Olson timezone', function () {
+      let subject = ICAL.VCardTime.fromDateAndOrTimeString(
+        '2015-01-02T03:04:05'
+      );
       subject.zone = ICAL.TimezoneService.get('America/New_York');
       assert.equal(subject.utcOffset(), -18000);
     });
   });
 
-  suite('#toString', function() {
+  suite('#toString', function () {
     testSupport.useTimezones('America/New_York');
 
-    test('invalid icaltype', function() {
-      let subject = ICAL.VCardTime.fromDateAndOrTimeString('2015-01-01', 'ballparkfigure');
+    test('invalid icaltype', function () {
+      let subject = ICAL.VCardTime.fromDateAndOrTimeString(
+        '2015-01-01',
+        'ballparkfigure'
+      );
       assert.isNull(subject.toString());
     });
-    test('invalid timezone', function() {
-      let subject = ICAL.VCardTime.fromDateAndOrTimeString('2015-01-01T01:01:01');
+    test('invalid timezone', function () {
+      let subject = ICAL.VCardTime.fromDateAndOrTimeString(
+        '2015-01-01T01:01:01'
+      );
       subject.zone = null;
       assert.equal(subject.toString(), '2015-01-01T01:01:01');
     });
-    test('Olson timezone', function() {
-      let subject = ICAL.VCardTime.fromDateAndOrTimeString('2015-01-02T03:04:05');
+    test('Olson timezone', function () {
+      let subject = ICAL.VCardTime.fromDateAndOrTimeString(
+        '2015-01-02T03:04:05'
+      );
       subject.zone = ICAL.TimezoneService.get('America/New_York');
       assert.equal(subject.toString(), '2015-01-02T03:04:05-05:00');
     });

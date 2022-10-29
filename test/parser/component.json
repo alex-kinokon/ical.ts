@@ -1,4 +1,5 @@
-["vcalendar",
+[
+  "vcalendar",
   [],
   [
     [
@@ -12,10 +13,6 @@
         ]
       ]
     ],
-    [
-      "vevent",
-      [["summary", {}, "text", "another"]],
-      []
-    ]
+    ["vevent", [["summary", {}, "text", "another"]], []]
   ]
 ]

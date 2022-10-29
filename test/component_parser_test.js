@@ -1,22 +1,20 @@
-suite('component_parser', function() {
+suite('component_parser', function () {
   let subject;
   let icsData;
 
-  suiteSetup(async function() {
+  suiteSetup(async function () {
     icsData = await testSupport.loadSample('recur_instances.ics');
   });
 
-  suite('#process', function() {
+  suite('#process', function () {
     let events = [];
     let exceptions = [];
     let timezones = [];
 
     function eventEquals(a, b, msg) {
-      if (!a)
-        throw new Error('actual is falsy');
+      if (!a) throw new Error('actual is falsy');
 
-      if (!b)
-        throw new Error('expected is falsy');
+      if (!b) throw new Error('expected is falsy');
 
       if (a instanceof ICAL.Event) {
         a = a.component;
@@ -30,25 +28,25 @@ suite('component_parser', function() {
     }
 
     function setupProcess(options) {
-      setup(function(done) {
+      setup(function (done) {
         events.length = 0;
         timezones.length = 0;
 
         subject = new ICAL.ComponentParser(options);
 
-        subject.onrecurrenceexception = function(item) {
+        subject.onrecurrenceexception = function (item) {
           exceptions.push(item);
         };
 
-        subject.onevent = function(event) {
+        subject.onevent = function (event) {
           events.push(event);
         };
 
-        subject.ontimezone = function(tz) {
+        subject.ontimezone = function (tz) {
           timezones.push(tz);
         };
 
-        subject.oncomplete = function() {
+        subject.oncomplete = function () {
           done();
         };
 
@@ -56,10 +54,10 @@ suite('component_parser', function() {
       });
     }
 
-    suite('without events', function() {
+    suite('without events', function () {
       setupProcess({ parseEvent: false });
 
-      test('parse result', function() {
+      test('parse result', function () {
         assert.lengthOf(events, 0);
         assert.lengthOf(timezones, 1);
 
@@ -67,19 +65,18 @@ suite('component_parser', function() {
         assert.instanceOf(tz, ICAL.Timezone);
         assert.equal(tz.tzid, 'America/Los_Angeles');
       });
-
     });
 
-    suite('with events', function() {
+    suite('with events', function () {
       setupProcess();
 
-      test('parse result', function() {
+      test('parse result', function () {
         let component = new ICAL.Component(ICAL.parse(icsData));
         let list = component.getAllSubcomponents('vevent');
 
         let expectedEvents = [];
 
-        list.forEach(function(item) {
+        list.forEach(function (item) {
           expectedEvents.push(new ICAL.Event(item));
         });
 
@@ -91,27 +88,27 @@ suite('component_parser', function() {
       });
     });
 
-    suite('without parsing timezones', function() {
+    suite('without parsing timezones', function () {
       setupProcess({ parseTimezone: false });
 
-      test('parse result', function() {
+      test('parse result', function () {
         assert.lengthOf(timezones, 0);
         assert.lengthOf(events, 3);
       });
     });
 
-    suite('alternate input', function() {
-      test('parsing component from string', function(done) {
+    suite('alternate input', function () {
+      test('parsing component from string', function (done) {
         subject = new ICAL.ComponentParser();
-        subject.oncomplete = function() {
+        subject.oncomplete = function () {
           assert.lengthOf(events, 3);
           done();
         };
         subject.process(icsData);
       });
-      test('parsing component from component', function(done) {
+      test('parsing component from component', function (done) {
         subject = new ICAL.ComponentParser();
-        subject.oncomplete = function() {
+        subject.oncomplete = function () {
           assert.lengthOf(events, 3);
           done();
         };
@@ -120,5 +117,4 @@ suite('component_parser', function() {
       });
     });
   });
-
 });

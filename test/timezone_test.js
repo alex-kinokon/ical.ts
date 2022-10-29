@@ -1,24 +1,26 @@
-suite('timezone', function() {
+suite('timezone', function () {
   let timezone;
 
   function timezoneTest(tzid, name, testCb) {
-    if (typeof(name) === 'function') {
+    if (typeof name === 'function') {
       testCb = name;
       name = 'parse';
     }
 
-    suite(tzid, function() {
-      if (tzid == "UTC") {
-        setup(function() {
+    suite(tzid, function () {
+      if (tzid == 'UTC') {
+        setup(function () {
           timezone = ICAL.Timezone.utcTimezone;
         });
-      } else if (tzid == "floating") {
-        setup(function() {
+      } else if (tzid == 'floating') {
+        setup(function () {
           timezone = ICAL.Timezone.localTimezone;
         });
       } else {
-        setup(async function() {
-          let icsData = await testSupport.loadSample('timezones/' + tzid + '.ics');
+        setup(async function () {
+          let icsData = await testSupport.loadSample(
+            'timezones/' + tzid + '.ics'
+          );
 
           let parsed = ICAL.parse(icsData);
           let vcalendar = new ICAL.Component(parsed);
@@ -33,12 +35,10 @@ suite('timezone', function() {
   }
 
   function utcHours(time) {
-    let seconds = timezone.utcOffset(
-      new ICAL.Time(time)
-    );
+    let seconds = timezone.utcOffset(new ICAL.Time(time));
 
     // in hours
-    return (seconds / 3600);
+    return seconds / 3600;
   }
 
   let sanityChecks = [
@@ -50,8 +50,8 @@ suite('timezone', function() {
         'America/New_York': -5,
         'America/Denver': -7,
         'America/Atikokan': -5, // single tz
-        'UTC': 0,
-        'floating': 0
+        UTC: 0,
+        floating: 0
       }
     },
 
@@ -63,8 +63,8 @@ suite('timezone', function() {
         'America/Denver': -6,
         'America/New_York': -4,
         'America/Atikokan': -5,
-        'UTC': 0,
-        'floating': 0
+        UTC: 0,
+        floating: 0
       }
     },
 
@@ -81,7 +81,6 @@ suite('timezone', function() {
         'America/Denver': -7
       }
     },
-
 
     // Edge case timezone that defines an RDATE with VALUE=DATE
     {
@@ -146,26 +145,28 @@ suite('timezone', function() {
   ];
 
   // simple format checks
-  sanityChecks.forEach(function(item) {
+  sanityChecks.forEach(function (item) {
     let title = 'time: ' + JSON.stringify(item.time);
 
-    suite(title, function() {
+    suite(title, function () {
       for (let tzid in item.offsets) {
-        timezoneTest(tzid, tzid + " offset " + item.offsets[tzid], function(testTzid) {
-          assert.equal(
-            utcHours(item.time),
-            item.offsets[testTzid]
-          );
-        }.bind(this, tzid));
+        timezoneTest(
+          tzid,
+          tzid + ' offset ' + item.offsets[tzid],
+          function (testTzid) {
+            assert.equal(utcHours(item.time), item.offsets[testTzid]);
+          }.bind(this, tzid)
+        );
       }
     });
   });
 
-  timezoneTest('America/Los_Angeles', '#expandedUntilYear', function() {
-
+  timezoneTest('America/Los_Angeles', '#expandedUntilYear', function () {
     function calcYear(yr) {
-        return Math.max(ICAL.Timezone._minimumExpansionYear, yr) +
-               ICAL.Timezone.EXTRA_COVERAGE;
+      return (
+        Math.max(ICAL.Timezone._minimumExpansionYear, yr) +
+        ICAL.Timezone.EXTRA_COVERAGE
+      );
     }
 
     let time = new ICAL.Time({
@@ -201,35 +202,43 @@ suite('timezone', function() {
     assert.equal(timezone.expandedUntilYear, expectedCoverage);
   });
 
-  suite('#convertTime', function() {
-    timezoneTest('America/Los_Angeles', 'convert date-time from utc', function() {
-      let subject = ICAL.Time.fromString('2012-03-11T01:59:00Z');
-      let subject2 = subject.convertToZone(timezone);
-      assert.equal(subject2.zone.tzid, timezone.tzid);
-      assert.equal(subject2.toString(), '2012-03-10T17:59:00');
-    });
+  suite('#convertTime', function () {
+    timezoneTest(
+      'America/Los_Angeles',
+      'convert date-time from utc',
+      function () {
+        let subject = ICAL.Time.fromString('2012-03-11T01:59:00Z');
+        let subject2 = subject.convertToZone(timezone);
+        assert.equal(subject2.zone.tzid, timezone.tzid);
+        assert.equal(subject2.toString(), '2012-03-10T17:59:00');
+      }
+    );
 
-    timezoneTest('America/Los_Angeles', 'convert date from utc', function() {
+    timezoneTest('America/Los_Angeles', 'convert date from utc', function () {
       let subject = ICAL.Time.fromString('2012-03-11');
       let subject2 = subject.convertToZone(timezone);
       assert.equal(subject2.zone.tzid, timezone.tzid);
       assert.equal(subject2.toString(), '2012-03-11');
     });
-    timezoneTest('America/Los_Angeles', 'convert local time to zone', function() {
-      let subject = ICAL.Time.fromString('2012-03-11T01:59:00');
-      subject.zone = ICAL.Timezone.localTimezone;
-      assert.equal(subject.toString(), '2012-03-11T01:59:00');
+    timezoneTest(
+      'America/Los_Angeles',
+      'convert local time to zone',
+      function () {
+        let subject = ICAL.Time.fromString('2012-03-11T01:59:00');
+        subject.zone = ICAL.Timezone.localTimezone;
+        assert.equal(subject.toString(), '2012-03-11T01:59:00');
 
-      let subject2 = subject.convertToZone(timezone);
-      assert.equal(subject2.toString(), '2012-03-11T01:59:00');
+        let subject2 = subject.convertToZone(timezone);
+        assert.equal(subject2.toString(), '2012-03-11T01:59:00');
 
-      let subject3 = subject2.convertToZone(ICAL.Timezone.localTimezone);
-      assert.equal(subject3.toString(), '2012-03-11T01:59:00');
-    });
+        let subject3 = subject2.convertToZone(ICAL.Timezone.localTimezone);
+        assert.equal(subject3.toString(), '2012-03-11T01:59:00');
+      }
+    );
   });
 
-  suite('#fromData', function() {
-    timezoneTest('America/Los_Angeles', 'string component', function() {
+  suite('#fromData', function () {
+    timezoneTest('America/Los_Angeles', 'string component', function () {
       let subject = new ICAL.Timezone({
         component: timezone.component.toString(),
         tzid: 'Makebelieve/Different'
@@ -237,19 +246,22 @@ suite('timezone', function() {
 
       assert.equal(subject.expandedUntilYear, 0);
       assert.equal(subject.tzid, 'Makebelieve/Different');
-      assert.equal(subject.component.getFirstPropertyValue('tzid'), 'America/Los_Angeles');
+      assert.equal(
+        subject.component.getFirstPropertyValue('tzid'),
+        'America/Los_Angeles'
+      );
     });
 
-    timezoneTest('America/Los_Angeles', 'component in data', function() {
+    timezoneTest('America/Los_Angeles', 'component in data', function () {
       let subject = new ICAL.Timezone({
-        component: timezone.component,
+        component: timezone.component
       });
 
       assert.equal(subject.tzid, 'America/Los_Angeles');
       assert.deepEqual(subject.component, timezone.component);
     });
 
-    timezoneTest('America/Los_Angeles', 'with strange component', function() {
+    timezoneTest('America/Los_Angeles', 'with strange component', function () {
       let subject = new ICAL.Timezone({
         component: 123
       });
@@ -258,8 +270,8 @@ suite('timezone', function() {
     });
   });
 
-  suite('#utcOffset', function() {
-    test('empty vtimezone', function() {
+  suite('#utcOffset', function () {
+    test('empty vtimezone', function () {
       let subject = new ICAL.Timezone({
         component: new ICAL.Component('vtimezone')
       });
@@ -267,32 +279,36 @@ suite('timezone', function() {
       assert.equal(subject.utcOffset(ICAL.Time.fromString('2012-01-01')), 0);
     });
 
-    test('empty STANDARD/DAYLIGHT', function() {
+    test('empty STANDARD/DAYLIGHT', function () {
       let subject = new ICAL.Timezone({
-        component: new ICAL.Component(['vtimezone', [], [
-          ['standard', [], []],
-          ['daylight', [], []]
-        ]])
+        component: new ICAL.Component([
+          'vtimezone',
+          [],
+          [
+            ['standard', [], []],
+            ['daylight', [], []]
+          ]
+        ])
       });
 
       assert.equal(subject.utcOffset(ICAL.Time.fromString('2012-01-01')), 0);
     });
   });
 
-  suite('#toString', function() {
-    timezoneTest('America/Los_Angeles', 'toString', function() {
-      assert.equal(timezone.toString(), "America/Los_Angeles");
-      assert.equal(timezone.tzid, "America/Los_Angeles");
-      assert.equal(timezone.tznames, "");
+  suite('#toString', function () {
+    timezoneTest('America/Los_Angeles', 'toString', function () {
+      assert.equal(timezone.toString(), 'America/Los_Angeles');
+      assert.equal(timezone.tzid, 'America/Los_Angeles');
+      assert.equal(timezone.tznames, '');
 
-      timezone.tznames = "test";
-      assert.equal(timezone.toString(), "test");
-      assert.equal(timezone.tzid, "America/Los_Angeles");
-      assert.equal(timezone.tznames, "test");
+      timezone.tznames = 'test';
+      assert.equal(timezone.toString(), 'test');
+      assert.equal(timezone.tzid, 'America/Los_Angeles');
+      assert.equal(timezone.tznames, 'test');
     });
   });
 
-  test('#_compare_change_fn', function() {
+  test('#_compare_change_fn', function () {
     let subject = ICAL.Timezone._compare_change_fn;
 
     let a = new ICAL.Time({

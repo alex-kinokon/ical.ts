@@ -1,5 +1,5 @@
-suite('ical/duration', function() {
-  test('#clone', function() {
+suite('ical/duration', function () {
+  test('#clone', function () {
     let subject = ICAL.Duration.fromData({
       weeks: 1,
       days: 2,
@@ -32,14 +32,14 @@ suite('ical/duration', function() {
     assert.hasProperties(subject2, expected, 'cloned object unchanged');
 
     for (let k in expected2) {
-        subject2[k] = expected2[k];
+      subject2[k] = expected2[k];
     }
 
     assert.hasProperties(subject, expected, 'base object unchanged');
     assert.hasProperties(subject2, expected2, 'cloned object changed');
   });
 
-  test('#reset', function() {
+  test('#reset', function () {
     let expected = {
       weeks: 1,
       days: 2,
@@ -62,12 +62,12 @@ suite('ical/duration', function() {
       isNegative: false
     });
 
-    assert.equal(subject.toString(), "PT0S");
+    assert.equal(subject.toString(), 'PT0S');
   });
 
-  suite('#normalize', function() {
+  suite('#normalize', function () {
     function verify(name, str, data) {
-      test(name, function() {
+      test(name, function () {
         let subject = new ICAL.Duration();
         for (let k in data) {
           subject[k] = data[k];
@@ -94,9 +94,9 @@ suite('ical/duration', function() {
     });
   });
 
-  suite("#compare", function() {
+  suite('#compare', function () {
     function verify(str, a, b, cmp) {
-      test(str, function() {
+      test(str, function () {
         let dur_a = ICAL.Duration.fromString(a);
         let dur_b = ICAL.Duration.fromString(b);
         assert.equal(dur_a.compare(dur_b), cmp);
@@ -109,7 +109,7 @@ suite('ical/duration', function() {
     verify('negative/positive', 'P2H', '-P2H', 1);
   });
 
-  suite('#fromString', function() {
+  suite('#fromString', function () {
     let base = {
       weeks: 0,
       days: 0,
@@ -130,7 +130,7 @@ suite('ical/duration', function() {
         expected[key] = data[key];
       }
 
-      test('parse: "' + string + '"', function() {
+      test('parse: "' + string + '"', function () {
         let subject = ICAL.Duration.fromString(string);
         assert.hasProperties(subject, expected);
         assert.equal(subject.toString(), verifystring || string);
@@ -138,8 +138,8 @@ suite('ical/duration', function() {
     }
 
     function verifyFail(string, errorParam) {
-      test('expected failure: ' + string, function() {
-        assert.throws(function() {
+      test('expected failure: ' + string, function () {
+        assert.throws(function () {
           ICAL.Duration.fromString(string);
         }, errorParam);
       });
@@ -149,27 +149,39 @@ suite('ical/duration', function() {
       weeks: 7
     });
 
-    verify('PT1H0M0S', {
-      hours: 1
-    }, "PT1H");
+    verify(
+      'PT1H0M0S',
+      {
+        hours: 1
+      },
+      'PT1H'
+    );
 
     verify('PT15M', {
       minutes: 15
     });
 
-    verify('P15DT5H0M20S', {
-      days: 15,
-      hours: 5,
-      seconds: 20
-    }, "P15DT5H20S");
+    verify(
+      'P15DT5H0M20S',
+      {
+        days: 15,
+        hours: 5,
+        seconds: 20
+      },
+      'P15DT5H20S'
+    );
 
-    verify('-P0DT0H30M0S', {
-      isNegative: true,
-      weeks: 0,
-      days: 0,
-      minutes: 30,
-      seconds: 0
-    }, "-PT30M");
+    verify(
+      '-P0DT0H30M0S',
+      {
+        isNegative: true,
+        weeks: 0,
+        days: 0,
+        minutes: 30,
+        seconds: 0
+      },
+      '-PT30M'
+    );
 
     verifyFail('PT1WH', /Missing number before "H"/);
     verifyFail('PT1WsomeH', /Invalid number "some" before "H"/);

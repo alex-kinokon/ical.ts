@@ -5,26 +5,27 @@
 
 /* eslint-env browser, node, mocha */
 
-let crossGlobal = typeof(window) === 'undefined' ? global : window;
-let testSupport = crossGlobal.testSupport = {
-  isNode: (typeof(global) !== 'undefined'),
-  isKarma: (typeof(window) !== 'undefined' && typeof window.__karma__ !== 'undefined')
-};
+let crossGlobal = typeof window === 'undefined' ? global : window;
+let testSupport = (crossGlobal.testSupport = {
+  isNode: typeof global !== 'undefined',
+  isKarma:
+    typeof window !== 'undefined' && typeof window.__karma__ !== 'undefined'
+});
 
 if (testSupport.isKarma) {
   // Need to do this before the first await, browser/karma won't wait on top level await
-  window.__karma__.loaded = function() {};
+  window.__karma__.loaded = function () {};
 }
 
 /* eslint-disable no-var, no-redeclare */
 if (testSupport.isNode) {
-  var ICAL = (await import("../../lib/ical/module.js")).default;
-  var chai = (await import("chai")).default;
-  var Benchmark = (await import("benchmark")).default;
-  var { URL } = await import("url");
-  var { readFile, readdir } = (await import('fs/promises'));
+  var ICAL = (await import('../../lib/ical/module.js')).default;
+  var chai = (await import('chai')).default;
+  var Benchmark = (await import('benchmark')).default;
+  var { URL } = await import('url');
+  var { readFile, readdir } = await import('fs/promises');
 } else {
-  var ICAL = (await import("/base/lib/ical/module.js")).default;
+  var ICAL = (await import('/base/lib/ical/module.js')).default;
   var chai = window.chai;
 }
 /* eslint-enable no-var, no-redeclare*/
@@ -32,13 +33,17 @@ if (testSupport.isNode) {
 crossGlobal.ICAL = ICAL;
 chai.config.includeStack = true;
 crossGlobal.assert = chai.assert;
-crossGlobal.assert.hasProperties = function chai_hasProperties(given, props, msg) {
-  msg = (typeof(msg) === 'undefined') ? '' : msg + ': ';
+crossGlobal.assert.hasProperties = function chai_hasProperties(
+  given,
+  props,
+  msg
+) {
+  msg = typeof msg === 'undefined' ? '' : msg + ': ';
 
   if (props instanceof Array) {
-    props.forEach(function(prop) {
+    props.forEach(function (prop) {
       crossGlobal.assert.ok(
-        (prop in given),
+        prop in given,
         msg + 'given should have "' + prop + '" property'
       );
     });
@@ -58,7 +63,7 @@ crossGlobal.assert.hasProperties = function chai_hasProperties(given, props, msg
  *
  * @param {String} zoneName like "America/Los_Angeles".
  */
-testSupport.registerTimezone = async function(zoneName) {
+testSupport.registerTimezone = async function (zoneName) {
   function register(icsData) {
     let parsed = ICAL.parse(icsData);
     let calendar = new ICAL.Component(parsed);
@@ -92,18 +97,18 @@ testSupport.registerTimezone = async function(zoneName) {
  * teardown function will reset the service while the parent suite will still
  * need them.
  */
-testSupport.useTimezones = function(zones) {
+testSupport.useTimezones = function (zones) {
   let allZones = Array.prototype.slice.call(arguments);
 
-  suiteTeardown(function() {
+  suiteTeardown(function () {
     // to ensure clean tests
     ICAL.TimezoneService.reset();
   });
 
-  suiteSetup(async function() {
+  suiteSetup(async function () {
     // By default, Z/UTC/GMT are already registered
     if (ICAL.TimezoneService.count > 3) {
-      throw new Error("Can only register zones once");
+      throw new Error('Can only register zones once');
     }
 
     await Promise.all(allZones.map(zone => testSupport.registerTimezone(zone)));
@@ -113,12 +118,12 @@ testSupport.useTimezones = function(zones) {
 /**
  * @param {String} path relative to root (/) of project.
  */
-testSupport.load = async function(path) {
+testSupport.load = async function (path) {
   if (testSupport.isNode) {
     let root = new URL('../../' + path, import.meta.url).pathname;
     return readFile(root, 'utf8');
   } else {
-    let response = await fetch("/base/" + path);
+    let response = await fetch('/base/' + path);
     if (response.status == 200) {
       let text = await response.text();
       return text;
@@ -129,7 +134,7 @@ testSupport.load = async function(path) {
   }
 };
 
-testSupport.loadSample = async function(file) {
+testSupport.loadSample = async function (file) {
   return testSupport.load('samples/' + file);
 };
 
@@ -138,7 +143,7 @@ function perfTestDefine(scope, done) {
   this.timeout(0);
   let benchSuite = new Benchmark.Suite();
   let currentTest = this.test;
-  benchSuite.add("latest", scope.bind(this));
+  benchSuite.add('latest', scope.bind(this));
   Object.entries(icalPerf).forEach(([key, ical]) => {
     benchSuite.add(key, () => {
       let lastGlobal = crossGlobal.ICAL;
@@ -150,11 +155,11 @@ function perfTestDefine(scope, done) {
 
   currentTest._benchCycle = [];
 
-  benchSuite.on('cycle', function(event) {
+  benchSuite.on('cycle', function (event) {
     currentTest._benchCycle.push(String(event.target));
   });
 
-  benchSuite.on('complete', function(event) {
+  benchSuite.on('complete', function (event) {
     currentTest._benchFastest = this.filter('fastest').map('name');
     done(event.target.error);
   });
@@ -162,24 +167,24 @@ function perfTestDefine(scope, done) {
   benchSuite.run();
 }
 
-crossGlobal.perfTest = function(name, scope) {
-  test(name, function(done) {
+crossGlobal.perfTest = function (name, scope) {
+  test(name, function (done) {
     perfTestDefine.call(this, scope, done);
   });
 };
-crossGlobal.perfTest.only = function(name, scope) {
-  test.only(name, function(done) {
+crossGlobal.perfTest.only = function (name, scope) {
+  test.only(name, function (done) {
     perfTestDefine.call(this, scope, done);
   });
 };
-crossGlobal.perfTest.skip = function(name, scope) {
-  test.skip(name, function(done) {
+crossGlobal.perfTest.skip = function (name, scope) {
+  test.skip(name, function (done) {
     perfTestDefine.call(this, scope, done);
   });
 };
 
 if (!testSupport.isNode) {
-  console.log("KARMA");
+  console.log('KARMA');
   try {
     for (let file in window.__karma__.files) {
       if (Object.hasOwn(window.__karma__.files, file)) {
@@ -203,14 +208,18 @@ export const mochaHooks = {
       let match = file.match(/^ical_(\w+).c?js$/);
       if (match) {
         try {
-          let module = await import("../../tools/benchmark/" + file);
+          let module = await import('../../tools/benchmark/' + file);
           if (module.default) {
             icalPerf[match[1]] = module.default;
           } else {
-            console.error(`Error loading tools/benchmark/${file}, skipping for performance tests: Missing default export`);
+            console.error(
+              `Error loading tools/benchmark/${file}, skipping for performance tests: Missing default export`
+            );
           }
         } catch (e) {
-          console.error(`Error loading tools/benchmark/${file}, skipping for performance tests: ${e}`);
+          console.error(
+            `Error loading tools/benchmark/${file}, skipping for performance tests: ${e}`
+          );
         }
       }
     }

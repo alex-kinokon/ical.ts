@@ -1,8 +1,8 @@
-suite('icaltime', function() {
+suite('icaltime', function () {
   let Time = ICAL.Time;
   let Timezone = ICAL.Timezone;
 
-  test('round trip', function() {
+  test('round trip', function () {
     let f = new Time({
       second: 1,
       minute: 2,
@@ -21,13 +21,13 @@ suite('icaltime', function() {
     assert.equal(g, Time.epochTime.toString());
   });
 
-  suite('initialize', function() {
+  suite('initialize', function () {
     let icsData;
-    suiteSetup(async function() {
+    suiteSetup(async function () {
       icsData = await testSupport.loadSample('timezones/America/New_York.ics');
     });
 
-    test('with timezone', function() {
+    test('with timezone', function () {
       let parsed = ICAL.parse(icsData);
       let vcalendar = new ICAL.Component(parsed);
       let vtimezone = vcalendar.getFirstSubcomponent('vtimezone');
@@ -47,44 +47,30 @@ suite('icaltime', function() {
       // -5
       assert.equal(time.utcOffset() / 3600, -5);
 
-      assert.equal(
-        time.toUnixTime(),
-        Date.UTC(2012, 0, 1, 15) / 1000
-      );
+      assert.equal(time.toUnixTime(), Date.UTC(2012, 0, 1, 15) / 1000);
 
       ICAL.TimezoneService.reset();
     });
   });
 
-  suite('.icaltime', function() {
+  suite('.icaltime', function () {
     function verify(time, type) {
-      test('convert time ' + JSON.stringify(time), function() {
-        assert.equal(
-          (new ICAL.Time(time)).icaltype,
-          type
-        );
+      test('convert time ' + JSON.stringify(time), function () {
+        assert.equal(new ICAL.Time(time).icaltype, type);
       });
     }
 
     verify({ year: 2013, month: 1, day: 1 }, 'date');
-    verify(
-      { year: 2013, month: 1, day: 1, hour: 3, isDate: true },
-      'date'
-    );
+    verify({ year: 2013, month: 1, day: 1, hour: 3, isDate: true }, 'date');
 
-    verify(
-      { year: 2013, month: 1, day: 1, hour: 22 },
-      'date-time'
-    );
+    verify({ year: 2013, month: 1, day: 1, hour: 22 }, 'date-time');
 
-    verify(
-      { year: 2013, isDate: false },
-      'date-time'
-    );
+    verify({ year: 2013, isDate: false }, 'date-time');
 
-    test('converting types during runtime', function() {
+    test('converting types during runtime', function () {
       let time = new ICAL.Time({
-        year: 2013, isDate: false
+        year: 2013,
+        isDate: false
       });
 
       time.isDate = true;
@@ -92,10 +78,10 @@ suite('icaltime', function() {
     });
   });
 
-  suite('setters', function() {
+  suite('setters', function () {
     let subject;
 
-    setup(function() {
+    setup(function () {
       subject = new ICAL.Time({
         year: 2012,
         month: 12,
@@ -116,7 +102,7 @@ suite('icaltime', function() {
       assert.equal(subject.year, 2013);
     }
 
-    test('.month / .day beyond the year', function() {
+    test('.month / .day beyond the year', function () {
       subject.day++;
       subject.month++;
 
@@ -125,7 +111,7 @@ suite('icaltime', function() {
       assert.equal(subject.year, 2013);
     });
 
-    test('.hour', function() {
+    test('.hour', function () {
       subject.hour = 23;
       subject.hour++;
 
@@ -133,7 +119,7 @@ suite('icaltime', function() {
       assert.equal(subject.hour, 0);
     });
 
-    test('.minute', function() {
+    test('.minute', function () {
       subject.minute = 59;
       subject.hour = 23;
       subject.minute++;
@@ -143,7 +129,7 @@ suite('icaltime', function() {
       assert.equal(subject.minute, 0);
     });
 
-    test('.second', function() {
+    test('.second', function () {
       subject.hour = 23;
       subject.minute = 59;
       subject.second = 59;
@@ -154,13 +140,12 @@ suite('icaltime', function() {
       assert.equal(subject.minute, 0);
       assert.equal(subject.second, 0);
     });
-
   });
 
-  suite('#subtractDate and #subtractDateTz', function() {
+  suite('#subtractDate and #subtractDateTz', function () {
     testSupport.useTimezones('America/Los_Angeles', 'America/New_York');
 
-    test('diff between two times in different timezones', function() {
+    test('diff between two times in different timezones', function () {
       // 3 hours ahead of west
       let east = new ICAL.Time({
         year: 2012,
@@ -170,7 +155,6 @@ suite('icaltime', function() {
         minute: 20,
         timezone: 'America/New_York'
       });
-
 
       let west = new ICAL.Time({
         year: 2012,
@@ -195,7 +179,7 @@ suite('icaltime', function() {
       });
     });
 
-    test('diff between two times in same timezone', function() {
+    test('diff between two times in same timezone', function () {
       let t1 = new ICAL.Time({
         year: 2012,
         month: 1,
@@ -227,7 +211,7 @@ suite('icaltime', function() {
         isNegative: false
       });
     });
-    test('negative absolute difference', function() {
+    test('negative absolute difference', function () {
       let t1 = new ICAL.Time({
         year: 2012,
         month: 1,
@@ -255,9 +239,8 @@ suite('icaltime', function() {
     });
   });
 
-  suite('#fromJSDate', function() {
-
-    test('utc', function() {
+  suite('#fromJSDate', function () {
+    test('utc', function () {
       let date = new Date(2012, 0, 1);
       let expected = {
         year: date.getUTCFullYear(),
@@ -271,22 +254,17 @@ suite('icaltime', function() {
 
       let subject = Time.fromJSDate(date, true);
 
-      assert.hasProperties(
-        subject, expected
-      );
+      assert.hasProperties(subject, expected);
     });
 
-    test('floating', function() {
+    test('floating', function () {
       let date = new Date(2012, 0, 1);
       let subject = Time.fromJSDate(date);
 
-      assert.deepEqual(
-        subject.toJSDate(),
-        date
-      );
+      assert.deepEqual(subject.toJSDate(), date);
     });
 
-    test('reset', function() {
+    test('reset', function () {
       let subject = Time.fromJSDate(null);
       let expected = {
         year: 1970,
@@ -296,17 +274,15 @@ suite('icaltime', function() {
         minute: 0,
         second: 0,
         isDate: false,
-        timezone: "Z"
+        timezone: 'Z'
       };
 
-      assert.hasProperties(
-        subject, expected
-      );
+      assert.hasProperties(subject, expected);
     });
   });
 
-  suite('#fromData', function() {
-    test('empty object', function() {
+  suite('#fromData', function () {
+    test('empty object', function () {
       let subject = Time.fromData();
       let expected = {
         year: 0,
@@ -320,7 +296,7 @@ suite('icaltime', function() {
       assert.hasProperties(subject, expected, 'starts at begining of time');
     });
 
-    test('with year, month', function() {
+    test('with year, month', function () {
       let subject = Time.fromData({
         year: 2012,
         month: 1
@@ -332,7 +308,7 @@ suite('icaltime', function() {
       });
     });
 
-    test('utc timezone', function() {
+    test('utc timezone', function () {
       let subject = Time.fromData({
         year: 2012,
         timezone: 'Z'
@@ -344,7 +320,7 @@ suite('icaltime', function() {
       });
     });
 
-    test('floating timezone', function() {
+    test('floating timezone', function () {
       let subject = Time.fromData({
         year: 2012,
         timezone: 'floating'
@@ -356,7 +332,7 @@ suite('icaltime', function() {
       });
     });
 
-    test('setting icaltype', function() {
+    test('setting icaltype', function () {
       let subject = Time.fromData({
         icaltype: 'date-time',
         year: 2012,
@@ -371,8 +347,7 @@ suite('icaltime', function() {
     });
   });
 
-  suite('#dayOfWeek', function() {
-
+  suite('#dayOfWeek', function () {
     // format for dayOfWeek assertion
     // is [dayNumber, dateObject]
     let assertions = [
@@ -389,21 +364,17 @@ suite('icaltime', function() {
       //      we can add tests above...
     ];
 
-    assertions.forEach(function(item) {
+    assertions.forEach(function (item) {
       let dayOfWeek = item[0];
       let date = item[1];
-      let human = date.getFullYear() + '-' + date.getMonth() + '-' + date.getDate();
+      let human =
+        date.getFullYear() + '-' + date.getMonth() + '-' + date.getDate();
       let msg = human + ' should be #' + dayOfWeek + ' day';
 
-      test(msg, function() {
-        let subject = ICAL.Time.fromJSDate(
-          date
-        );
+      test(msg, function () {
+        let subject = ICAL.Time.fromJSDate(date);
 
-        assert.equal(
-          subject.dayOfWeek(),
-          dayOfWeek
-        );
+        assert.equal(subject.dayOfWeek(), dayOfWeek);
       });
     });
 
@@ -460,27 +431,23 @@ suite('icaltime', function() {
       [Time.SATURDAY, 1, new Date(2012, 0, 7)]
     ];
 
-    assertionsWithWkst.forEach(function(item) {
+    assertionsWithWkst.forEach(function (item) {
       let wkst = item[0];
       let dayOfWeek = item[1];
       let date = item[2];
-      let human = date.getFullYear() + '-' + date.getMonth() + '-' + date.getDate();
+      let human =
+        date.getFullYear() + '-' + date.getMonth() + '-' + date.getDate();
       let msg = human + ' should be #' + dayOfWeek + ' day';
 
-      test(msg, function() {
-        let subject = ICAL.Time.fromJSDate(
-          date
-        );
+      test(msg, function () {
+        let subject = ICAL.Time.fromJSDate(date);
 
-        assert.equal(
-          subject.dayOfWeek(wkst),
-          dayOfWeek
-        );
+        assert.equal(subject.dayOfWeek(wkst), dayOfWeek);
       });
     });
   });
 
-  suite('#dayOfYear', function() {
+  suite('#dayOfYear', function () {
     let inc;
 
     function testYear(start) {
@@ -495,53 +462,39 @@ suite('icaltime', function() {
       inc = 1;
       let time = Time.fromJSDate(cur);
 
-      end = new Date(
-        end.getFullYear(),
-        end.getMonth(),
-        0
-      );
+      end = new Date(end.getFullYear(), end.getMonth(), 0);
 
       while (end.valueOf() >= cur.valueOf()) {
         if (inc > max) {
           throw new Error('test error inf loop');
         }
 
-        assert.equal(
-          time.dayOfYear(),
-          inc,
-          cur.toString()
-        );
+        assert.equal(time.dayOfYear(), inc, cur.toString());
 
-        cur = new Date(
-          start.getFullYear(),
-          0,
-          start.getDate() + inc
-        );
+        cur = new Date(start.getFullYear(), 0, start.getDate() + inc);
         time = Time.fromJSDate(cur);
         inc++;
       }
     }
 
-    test('full year (2011/no leap)', function() {
+    test('full year (2011/no leap)', function () {
       testYear(new Date(2011, 0, 1));
       assert.equal(inc - 1, 365, 'is not leap');
     });
 
-    test('full year (2012 + leap)', function() {
+    test('full year (2012 + leap)', function () {
       testYear(new Date(2012, 0, 1));
       assert.equal(inc - 1, 366, 'is leap');
     });
   });
 
-  suite('#startOfWeek', function() {
+  suite('#startOfWeek', function () {
     let start = new Date(2012, 1, 1);
     let subject;
     let expected;
 
-    suiteSetup(function() {
-      let time = Time.fromJSDate(new Date(
-        2012, 0, 29
-      ));
+    suiteSetup(function () {
+      let time = Time.fromJSDate(new Date(2012, 0, 29));
 
       expected = {
         year: time.year,
@@ -550,10 +503,9 @@ suite('icaltime', function() {
         minute: time.minute,
         second: time.second
       };
-
     });
 
-    [0, 1, 2, 3].forEach((day) => {
+    [0, 1, 2, 3].forEach(day => {
       let date = new Date(
         start.getFullYear(),
         start.getMonth(),
@@ -562,201 +514,172 @@ suite('icaltime', function() {
 
       let msg = 'convert: "' + date.toString() + '" to first day of week';
 
-      test(msg, function() {
+      test(msg, function () {
         subject = Time.fromJSDate(date);
-        assert.hasProperties(
-          subject.startOfWeek(),
-          expected
-        );
+        assert.hasProperties(subject.startOfWeek(), expected);
       });
     });
-
   });
 
-  suite('#getDominicalLetter', function() {
-    test('instance', function() {
-      let subject = function(yr) {
-        return (new ICAL.Time({ year: yr })).getDominicalLetter();
+  suite('#getDominicalLetter', function () {
+    test('instance', function () {
+      let subject = function (yr) {
+        return new ICAL.Time({ year: yr }).getDominicalLetter();
       };
-      assert.equal(subject(1989), "A");
-      assert.equal(subject(1990), "G");
-      assert.equal(subject(1991), "F");
-      assert.equal(subject(1993), "C");
-      assert.equal(subject(1994), "B");
-      assert.equal(subject(1997), "E");
-      assert.equal(subject(1998), "D");
+      assert.equal(subject(1989), 'A');
+      assert.equal(subject(1990), 'G');
+      assert.equal(subject(1991), 'F');
+      assert.equal(subject(1993), 'C');
+      assert.equal(subject(1994), 'B');
+      assert.equal(subject(1997), 'E');
+      assert.equal(subject(1998), 'D');
 
-      assert.equal(subject(2000), "BA");
-      assert.equal(subject(2004), "DC");
-      assert.equal(subject(2008), "FE");
-      assert.equal(subject(2012), "AG");
-      assert.equal(subject(2016), "CB");
-      assert.equal(subject(2020), "ED");
-      assert.equal(subject(2024), "GF");
-
+      assert.equal(subject(2000), 'BA');
+      assert.equal(subject(2004), 'DC');
+      assert.equal(subject(2008), 'FE');
+      assert.equal(subject(2012), 'AG');
+      assert.equal(subject(2016), 'CB');
+      assert.equal(subject(2020), 'ED');
+      assert.equal(subject(2024), 'GF');
     });
-    test('static', function() {
+    test('static', function () {
       let subject = ICAL.Time.getDominicalLetter;
-      assert.equal(subject(1989), "A");
-      assert.equal(subject(1990), "G");
-      assert.equal(subject(1991), "F");
-      assert.equal(subject(1993), "C");
-      assert.equal(subject(1994), "B");
-      assert.equal(subject(1997), "E");
-      assert.equal(subject(1998), "D");
+      assert.equal(subject(1989), 'A');
+      assert.equal(subject(1990), 'G');
+      assert.equal(subject(1991), 'F');
+      assert.equal(subject(1993), 'C');
+      assert.equal(subject(1994), 'B');
+      assert.equal(subject(1997), 'E');
+      assert.equal(subject(1998), 'D');
 
-      assert.equal(subject(2000), "BA");
-      assert.equal(subject(2004), "DC");
-      assert.equal(subject(2008), "FE");
-      assert.equal(subject(2012), "AG");
-      assert.equal(subject(2016), "CB");
-      assert.equal(subject(2020), "ED");
-      assert.equal(subject(2024), "GF");
+      assert.equal(subject(2000), 'BA');
+      assert.equal(subject(2004), 'DC');
+      assert.equal(subject(2008), 'FE');
+      assert.equal(subject(2012), 'AG');
+      assert.equal(subject(2016), 'CB');
+      assert.equal(subject(2020), 'ED');
+      assert.equal(subject(2024), 'GF');
     });
   });
 
-  suite('#nthWeekDay', function() {
-    suite('negative', function() {
-      test('last saturday in Sept 2012 (before current day)', function() {
+  suite('#nthWeekDay', function () {
+    suite('negative', function () {
+      test('last saturday in Sept 2012 (before current day)', function () {
         let time = Time.fromData({ year: 2012, month: 9, day: 1 });
 
         let day = time.nthWeekDay(Time.SATURDAY, -1);
         let date = new Date(2012, 8, day);
 
-        assert.deepEqual(
-          date,
-          new Date(2012, 8, 29)
-        );
+        assert.deepEqual(date, new Date(2012, 8, 29));
       });
 
-      test('last Monday in Jan 2012 (target after current day)', function() {
+      test('last Monday in Jan 2012 (target after current day)', function () {
         let time = Time.fromData({ year: 2012, month: 1, day: 1 });
 
         let day = time.nthWeekDay(Time.MONDAY, -1);
         let date = new Date(2012, 0, day);
 
-        assert.deepEqual(
-          new Date(2012, 0, 30),
-          date
-        );
+        assert.deepEqual(new Date(2012, 0, 30), date);
       });
 
-      test('2nd to last friday after May 15th 2012 (multiple weeks)', function() {
+      test('2nd to last friday after May 15th 2012 (multiple weeks)', function () {
         let time = Time.fromData({ year: 2012, month: 5, day: 15 });
 
         let day = time.nthWeekDay(Time.FRIDAY, -2);
         let date = new Date(2012, 4, day);
 
-        assert.deepEqual(
-          date,
-          new Date(2012, 4, 18)
-        );
+        assert.deepEqual(date, new Date(2012, 4, 18));
       });
 
-      test('third to last Tuesday in April 2012 (tuesday)', function() {
+      test('third to last Tuesday in April 2012 (tuesday)', function () {
         let time = Time.fromData({ year: 2012, month: 4, day: 5 });
 
         let day = time.nthWeekDay(Time.TUESDAY, -3);
         let date = new Date(2012, 3, day);
 
-        assert.deepEqual(
-          date,
-          new Date(2012, 3, 10)
-        );
+        assert.deepEqual(date, new Date(2012, 3, 10));
       });
-
     });
 
-    suite('positive', function() {
-
-      test('1st wed in Feb 2012 (start is day)', function() {
+    suite('positive', function () {
+      test('1st wed in Feb 2012 (start is day)', function () {
         let time = Time.fromData({ year: 2012, month: 2, day: 1 });
         let day = time.nthWeekDay(Time.WEDNESDAY, 0);
 
         let date = new Date(2012, 1, day);
-        assert.deepEqual(
-          date,
-          new Date(2012, 1, 1)
-        );
+        assert.deepEqual(date, new Date(2012, 1, 1));
       });
 
-      test('1st monday in Feb 2012 (start is after day)', function() {
+      test('1st monday in Feb 2012 (start is after day)', function () {
         let time = Time.fromData({ year: 2012, month: 2, day: 1 });
         let day = time.nthWeekDay(Time.MONDAY, 0);
 
         let date = new Date(2012, 1, day);
 
-        assert.deepEqual(
-          date,
-          new Date(2012, 1, 6)
-        );
+        assert.deepEqual(date, new Date(2012, 1, 6));
       });
 
-      test('20th monday of year (multiple months)', function() {
+      test('20th monday of year (multiple months)', function () {
         let time = Time.fromData({ year: 2012, month: 1, day: 1 });
 
         let day = time.nthWeekDay(Time.MONDAY, 20);
         let date = new Date(2012, 0, day);
 
-        assert.deepEqual(
-          date,
-          new Date(2012, 4, 14)
-        );
+        assert.deepEqual(date, new Date(2012, 4, 14));
       });
 
-      test('3rd monday (multiple)', function() {
+      test('3rd monday (multiple)', function () {
         let time = Time.fromData({ year: 2012, month: 1, day: 1 });
 
         let day = time.nthWeekDay(Time.MONDAY, 3);
         let date = new Date(2012, 0, day);
 
-        assert.deepEqual(
-          date,
-          new Date(2012, 0, 16)
-        );
+        assert.deepEqual(date, new Date(2012, 0, 16));
       });
     });
   });
 
-  suite('#isNthWeekDay', function() {
-
-    test('each day of the week', function() {
+  suite('#isNthWeekDay', function () {
+    test('each day of the week', function () {
       // Remember 1 === SUNDAY not MONDAY
       let start = new Date(2012, 3, 8);
       let time;
 
       for (let dow = 1; dow <= 7; dow++) {
-        time = Time.fromJSDate(new Date(
-          start.getFullYear(),
-          start.getMonth(),
-          7 + dow //8, 9, etc..
-        ));
+        time = Time.fromJSDate(
+          new Date(
+            start.getFullYear(),
+            start.getMonth(),
+            7 + dow //8, 9, etc..
+          )
+        );
 
         assert.isTrue(
           time.isNthWeekDay(dow, 2, 31),
           time.toJSDate().toString() +
-          ' should be 2nd occurrence of ' + dow + ' weekday'
+            ' should be 2nd occurrence of ' +
+            dow +
+            ' weekday'
         );
       }
     });
 
-    test('on any weekday', function() {
+    test('on any weekday', function () {
       let dt = Time.fromString('2013-01-08');
       assert.isTrue(dt.isNthWeekDay(Time.TUESDAY, 0));
     });
-    test('not weekday at all', function() {
+    test('not weekday at all', function () {
       let dt = Time.fromString('2013-01-08');
       assert.isFalse(dt.isNthWeekDay(Time.WEDNESDAY, 0));
     });
-    test('not nth weekday', function() {
+    test('not nth weekday', function () {
       let dt = Time.fromString('2013-01-08');
       assert.isFalse(dt.isNthWeekDay(Time.TUESDAY, 3));
     });
-
   });
 
-  suite('#toUnixTime', function() {
-    test('without timezone', function() {
+  suite('#toUnixTime', function () {
+    test('without timezone', function () {
       let date = new Date(2012, 0, 22, 1, 7, 39);
       let time = new ICAL.Time({
         year: date.getUTCFullYear(),
@@ -767,22 +690,21 @@ suite('icaltime', function() {
         second: date.getUTCSeconds()
       });
 
-      assert.equal(
-        time.toUnixTime(),
-        date.valueOf() / 1000
-      );
+      assert.equal(time.toUnixTime(), date.valueOf() / 1000);
     });
 
-    suite('with timezone', function() {
+    suite('with timezone', function () {
       let icsData;
-      suiteSetup(async function() {
-        icsData = await testSupport.loadSample('timezones/America/Los_Angeles.ics');
+      suiteSetup(async function () {
+        icsData = await testSupport.loadSample(
+          'timezones/America/Los_Angeles.ics'
+        );
       });
 
       let subject;
       let zone;
 
-      setup(function() {
+      setup(function () {
         let parsed = ICAL.parse(icsData);
         let vcalendar = new ICAL.Component(parsed);
         let comp = vcalendar.getFirstSubcomponent('vtimezone');
@@ -792,32 +714,27 @@ suite('icaltime', function() {
           component: comp
         });
 
-        subject = new ICAL.Time({
-          year: 2012,
-          month: 1,
-          day: 1,
-          hour: 10
-        }, zone);
+        subject = new ICAL.Time(
+          {
+            year: 2012,
+            month: 1,
+            day: 1,
+            hour: 10
+          },
+          zone
+        );
       });
 
-      test('result', function() {
+      test('result', function () {
         // we know that subject is -8
-        let expectedTime = Date.UTC(
-          2012,
-          0,
-          1,
-          18
-        ) / 1000;
+        let expectedTime = Date.UTC(2012, 0, 1, 18) / 1000;
 
-        assert.equal(
-          subject.toUnixTime(),
-          expectedTime
-        );
+        assert.equal(subject.toUnixTime(), expectedTime);
       });
     });
   });
 
-  test('#fromUnixTime', function() {
+  test('#fromUnixTime', function () {
     let time = new ICAL.Time({
       year: 2012,
       month: 1,
@@ -831,95 +748,72 @@ suite('icaltime', function() {
     let otherTime = new ICAL.Time();
     otherTime.fromUnixTime(time.toUnixTime());
 
-    assert.deepEqual(
-      time.toJSDate(),
-      otherTime.toJSDate()
-    );
+    assert.deepEqual(time.toJSDate(), otherTime.toJSDate());
 
     otherTime.fromUnixTime(time.toUnixTime() + 0.123);
 
     assert.equal(time.toUnixTime(), otherTime.toUnixTime());
-    assert.deepEqual(
-      time.toJSDate(),
-      otherTime.toJSDate()
-    );
-    assert.deepEqual(
-      time.second,
-      otherTime.second
-    );
+    assert.deepEqual(time.toJSDate(), otherTime.toJSDate());
+    assert.deepEqual(time.second, otherTime.second);
   });
 
-  suite('#adjust', function() {
+  suite('#adjust', function () {
     let date = new Date(2012, 0, 25);
 
-    test('overflow days - negative', function() {
+    test('overflow days - negative', function () {
       let time = Time.fromJSDate(date);
       time.adjust(-35, 0, 0, 0);
 
-      assert.deepEqual(
-        time.toJSDate(),
-        new Date(2011, 11, 21)
-      );
+      assert.deepEqual(time.toJSDate(), new Date(2011, 11, 21));
     });
 
-    test('overflow days - positive', function() {
+    test('overflow days - positive', function () {
       let time = Time.fromJSDate(date);
 
       time.adjust(20, 0, 0, 0);
 
-      assert.deepEqual(
-        time.toJSDate(),
-        new Date(2012, 1, 14)
-      );
+      assert.deepEqual(time.toJSDate(), new Date(2012, 1, 14));
     });
 
-    test('overflow years normalization  - negative', function() {
+    test('overflow years normalization  - negative', function () {
       let time = Time.fromJSDate(date);
 
       time.month = 0;
       time.adjust(0, 0, 0, 0);
 
-      assert.deepEqual(
-        time.toJSDate(),
-        new Date(2011, 11, 25)
-      );
+      assert.deepEqual(time.toJSDate(), new Date(2011, 11, 25));
     });
 
-    test('overflow years normalization  - positive', function() {
+    test('overflow years normalization  - positive', function () {
       let time = Time.fromJSDate(date);
 
       time.month = 13;
       time.adjust(0, 0, 0, 0);
 
-      assert.deepEqual(
-        time.toJSDate(),
-        new Date(2013, 0, 25)
-      );
+      assert.deepEqual(time.toJSDate(), new Date(2013, 0, 25));
     });
-
   });
 
-  suite('#startDoyWeek', function() {
-
-    test('forward (using defaults)', function() {
+  suite('#startDoyWeek', function () {
+    test('forward (using defaults)', function () {
       let subject = Time.fromData({ year: 2012, month: 1, day: 20 });
       let result = subject.startDoyWeek();
       assert.equal(result, 15, 'should start on sunday of that week');
     });
-    test('with different wkst', function() {
+    test('with different wkst', function () {
       let subject = Time.fromData({ year: 2012, month: 1, day: 1 });
       let result = subject.startDoyWeek(ICAL.Time.MONDAY);
       assert.equal(result, -5);
     });
-    test('falls on zero', function() {
+    test('falls on zero', function () {
       let subject = Time.fromData({ year: 2013, month: 1, day: 1 });
       let result = subject.startDoyWeek(ICAL.Time.MONDAY);
       assert.equal(result, 0);
     });
   });
 
-  suite('#toString', function() {
-    test('from fractional seconds', function() {
+  suite('#toString', function () {
+    test('from fractional seconds', function () {
       let subject = new ICAL.Time({
         year: 2012,
         month: 10,
@@ -930,27 +824,24 @@ suite('icaltime', function() {
         isDate: false
       });
 
-      assert.equal(
-        subject.toString(),
-        '2012-10-10T00:50:08'
-      );
+      assert.equal(subject.toString(), '2012-10-10T00:50:08');
     });
   });
 
-  suite('#toICALString', function() {
-    test('date', function() {
+  suite('#toICALString', function () {
+    test('date', function () {
       let subject = ICAL.Time.fromString('2012-10-12');
       assert.equal(subject.toICALString(), '20121012');
     });
 
-    test('date-time', function() {
+    test('date-time', function () {
       let subject = ICAL.Time.fromString('2012-10-12T07:08:09');
       assert.equal(subject.toICALString(), '20121012T070809');
     });
   });
 
-  suite('#toJSON', function() {
-    test('with utc time', function() {
+  suite('#toJSON', function () {
+    test('with utc time', function () {
       let time = new Time({
         year: 2012,
         day: 1,
@@ -962,13 +853,10 @@ suite('icaltime', function() {
       let after = new Time(time.toJSON());
       assert.equal(after.zone, Timezone.utcTimezone);
 
-      assert.deepEqual(
-        after.toJSDate(),
-        time.toJSDate()
-      );
+      assert.deepEqual(after.toJSDate(), time.toJSDate());
     });
 
-    test('with floating time', function() {
+    test('with floating time', function () {
       let time = new Time({
         year: 2012,
         month: 1,
@@ -996,13 +884,10 @@ suite('icaltime', function() {
       let after = new Time(time.toJSON());
       assert.equal(after.zone, Timezone.localTimezone);
 
-      assert.deepEqual(
-        time.toJSDate(),
-        after.toJSDate()
-      );
+      assert.deepEqual(time.toJSDate(), after.toJSDate());
     });
 
-    test('with null timezone', function() {
+    test('with null timezone', function () {
       let time = new Time({
         year: 2012,
         month: 1,
@@ -1010,7 +895,7 @@ suite('icaltime', function() {
         hour: 2,
         minute: 15,
         second: 1,
-        isDate: false,
+        isDate: false
       });
       time.zone = null;
 
@@ -1021,24 +906,25 @@ suite('icaltime', function() {
         hour: 2,
         minute: 15,
         second: 1,
-        isDate: false,
+        isDate: false
       };
 
       assert.deepEqual(time.toJSON(), expected);
     });
   });
 
-  test('calculations', function() {
-
-    let test_data = [{
-      str: '2012-01-01T00:00:00',
-      expect_unixtime: 1325376000,
-      expect_1s: '2012-01-01T00:00:01',
-      expect_1m: '2012-01-01T00:01:00',
-      expect_1h: '2012-01-01T01:00:00',
-      expect_1d: '2012-01-02T00:00:00',
-      expect_1w: '2012-01-08T00:00:00'
-    }];
+  test('calculations', function () {
+    let test_data = [
+      {
+        str: '2012-01-01T00:00:00',
+        expect_unixtime: 1325376000,
+        expect_1s: '2012-01-01T00:00:01',
+        expect_1m: '2012-01-01T00:01:00',
+        expect_1h: '2012-01-01T01:00:00',
+        expect_1d: '2012-01-02T00:00:00',
+        expect_1w: '2012-01-08T00:00:00'
+      }
+    ];
 
     for (let datakey in test_data) {
       let data = test_data[datakey];
@@ -1059,7 +945,9 @@ suite('icaltime', function() {
       cp = dt.clone();
       cp.year += 2;
       diff = cp.subtractDate(dt);
-      yearseconds = (365 + Time.isLeapYear(dt.year) + 365 + Time.isLeapYear(dt.year + 1)) * 86400;
+      yearseconds =
+        (365 + Time.isLeapYear(dt.year) + 365 + Time.isLeapYear(dt.year + 1)) *
+        86400;
       assert.equal(diff.toSeconds(), yearseconds);
 
       cp = dt.clone();
@@ -1099,7 +987,6 @@ suite('icaltime', function() {
       cp.addDuration(ICAL.Duration.fromString('-P1W'));
       assert.equal(cp.toString(), dt.toString());
 
-
       cp = dt.clone();
       cp.addDuration(ICAL.Duration.fromString('PT24H'));
       cp.isDate = true;
@@ -1113,30 +1000,33 @@ suite('icaltime', function() {
     }
   });
 
-  test('#normalize', function() {
-    let test_data = [{
+  test('#normalize', function () {
+    let test_data = [
+      {
         str: '2012-12-31T23:59:59',
         add_seconds: 1,
         expect: '2013-01-01T00:00:00'
-    }, {
+      },
+      {
         str: '2011-01-01T00:00:00',
         add_seconds: -1,
         expect: '2010-12-31T23:59:59'
-    }];
+      }
+    ];
 
     for (let datakey in test_data) {
-        let data = test_data[datakey];
-        let dt = Time.fromString(data.str);
-        let add_seconds = data.add_seconds || 0;
+      let data = test_data[datakey];
+      let dt = Time.fromString(data.str);
+      let add_seconds = data.add_seconds || 0;
 
-        dt.second += add_seconds;
-        assert.equal(dt, data.expect);
+      dt.second += add_seconds;
+      assert.equal(dt, data.expect);
     }
   });
 
-  suite('date properites', function() {
+  suite('date properites', function () {
     function testDateProperties(str, data, only) {
-      (only ? test.only : test)(str, function() {
+      (only ? test.only : test)(str, function () {
         let dt = Time.fromString(str);
         assert.equal(data.isDate, dt.isDate);
         assert.equal(data.year, dt.year);
@@ -1160,8 +1050,15 @@ suite('icaltime', function() {
         // TODO nthWeekDay
 
         dt = new Time();
-        dt.resetTo(data.year, data.month, data.day, data.hour, data.minute,
-                   data.second, Timezone.utcTimezone);
+        dt.resetTo(
+          data.year,
+          data.month,
+          data.day,
+          data.hour,
+          data.minute,
+          data.second,
+          Timezone.utcTimezone
+        );
         assert.equal(data.year, dt.year);
         assert.equal(data.month, dt.month);
         assert.equal(data.day, dt.day);
@@ -1170,7 +1067,7 @@ suite('icaltime', function() {
         assert.equal(data.second, dt.second);
       });
     }
-    testDateProperties.only = function(str, data) {
+    testDateProperties.only = function (str, data) {
       testDateProperties(str, data, true);
     };
 
@@ -1242,10 +1139,11 @@ suite('icaltime', function() {
     });
   });
 
-  test('startOfWeek with different first day of week', function() {
-    let test_data = [{ /* A Sunday */
-      str: '2012-01-01T12:01:00',
-      firstDayOfWeek: {
+  test('startOfWeek with different first day of week', function () {
+    let test_data = [
+      {
+        /* A Sunday */ str: '2012-01-01T12:01:00',
+        firstDayOfWeek: {
           SUNDAY: '2012-01-01',
           MONDAY: '2011-12-26',
           TUESDAY: '2011-12-27',
@@ -1253,10 +1151,11 @@ suite('icaltime', function() {
           THURSDAY: '2011-12-29',
           FRIDAY: '2011-12-30',
           SATURDAY: '2011-12-31'
-      }
-    }, { /* A Monday */
-      str: '2012-01-02T12:01:00',
-      firstDayOfWeek: {
+        }
+      },
+      {
+        /* A Monday */ str: '2012-01-02T12:01:00',
+        firstDayOfWeek: {
           SUNDAY: '2012-01-01',
           MONDAY: '2012-01-02',
           TUESDAY: '2011-12-27',
@@ -1264,10 +1163,11 @@ suite('icaltime', function() {
           THURSDAY: '2011-12-29',
           FRIDAY: '2011-12-30',
           SATURDAY: '2011-12-31'
-      }
-    }, { /* A Tuesday */
-      str: '2012-01-03T12:01:00',
-      firstDayOfWeek: {
+        }
+      },
+      {
+        /* A Tuesday */ str: '2012-01-03T12:01:00',
+        firstDayOfWeek: {
           SUNDAY: '2012-01-01',
           MONDAY: '2012-01-02',
           TUESDAY: '2012-01-03',
@@ -1275,10 +1175,11 @@ suite('icaltime', function() {
           THURSDAY: '2011-12-29',
           FRIDAY: '2011-12-30',
           SATURDAY: '2011-12-31'
-      }
-    }, { /* A Wednesday */
-      str: '2012-01-04T12:01:00',
-      firstDayOfWeek: {
+        }
+      },
+      {
+        /* A Wednesday */ str: '2012-01-04T12:01:00',
+        firstDayOfWeek: {
           SUNDAY: '2012-01-01',
           MONDAY: '2012-01-02',
           TUESDAY: '2012-01-03',
@@ -1286,10 +1187,11 @@ suite('icaltime', function() {
           THURSDAY: '2011-12-29',
           FRIDAY: '2011-12-30',
           SATURDAY: '2011-12-31'
-      }
-    }, { /* A Thursday */
-      str: '2012-01-05T12:01:00',
-      firstDayOfWeek: {
+        }
+      },
+      {
+        /* A Thursday */ str: '2012-01-05T12:01:00',
+        firstDayOfWeek: {
           SUNDAY: '2012-01-01',
           MONDAY: '2012-01-02',
           TUESDAY: '2012-01-03',
@@ -1297,10 +1199,11 @@ suite('icaltime', function() {
           THURSDAY: '2012-01-05',
           FRIDAY: '2011-12-30',
           SATURDAY: '2011-12-31'
-      }
-    }, { /* A Friday */
-      str: '2012-01-06T12:01:00',
-      firstDayOfWeek: {
+        }
+      },
+      {
+        /* A Friday */ str: '2012-01-06T12:01:00',
+        firstDayOfWeek: {
           SUNDAY: '2012-01-01',
           MONDAY: '2012-01-02',
           TUESDAY: '2012-01-03',
@@ -1308,10 +1211,11 @@ suite('icaltime', function() {
           THURSDAY: '2012-01-05',
           FRIDAY: '2012-01-06',
           SATURDAY: '2011-12-31'
-      }
-    }, { /* A Saturday */
-      str: '2012-01-07T12:01:00',
-      firstDayOfWeek: {
+        }
+      },
+      {
+        /* A Saturday */ str: '2012-01-07T12:01:00',
+        firstDayOfWeek: {
           SUNDAY: '2012-01-01',
           MONDAY: '2012-01-02',
           TUESDAY: '2012-01-03',
@@ -1319,22 +1223,27 @@ suite('icaltime', function() {
           THURSDAY: '2012-01-05',
           FRIDAY: '2012-01-06',
           SATURDAY: '2012-01-07'
+        }
       }
-    }];
+    ];
 
     for (let datakey in test_data) {
       let data = test_data[datakey];
       let dt = Time.fromString(data.str);
       for (let day in data.firstDayOfWeek) {
-          assert.equal(data.firstDayOfWeek[day], dt.startOfWeek(ICAL.Time[day]).toString());
+        assert.equal(
+          data.firstDayOfWeek[day],
+          dt.startOfWeek(ICAL.Time[day]).toString()
+        );
       }
     }
   });
 
-  test('endOfWeek with different first day of week', function() {
-    let test_data = [{ /* A Sunday */
-      str: '2012-01-01T12:01:00',
-      firstDayOfWeek: {
+  test('endOfWeek with different first day of week', function () {
+    let test_data = [
+      {
+        /* A Sunday */ str: '2012-01-01T12:01:00',
+        firstDayOfWeek: {
           SUNDAY: '2012-01-07',
           MONDAY: '2012-01-01',
           TUESDAY: '2012-01-02',
@@ -1342,10 +1251,11 @@ suite('icaltime', function() {
           THURSDAY: '2012-01-04',
           FRIDAY: '2012-01-05',
           SATURDAY: '2012-01-06'
-      }
-    }, { /* A Monday */
-      str: '2012-01-02T12:01:00',
-      firstDayOfWeek: {
+        }
+      },
+      {
+        /* A Monday */ str: '2012-01-02T12:01:00',
+        firstDayOfWeek: {
           SUNDAY: '2012-01-07',
           MONDAY: '2012-01-08',
           TUESDAY: '2012-01-02',
@@ -1353,10 +1263,11 @@ suite('icaltime', function() {
           THURSDAY: '2012-01-04',
           FRIDAY: '2012-01-05',
           SATURDAY: '2012-01-06'
-      }
-    }, { /* A Tuesday */
-      str: '2012-01-03T12:01:00',
-      firstDayOfWeek: {
+        }
+      },
+      {
+        /* A Tuesday */ str: '2012-01-03T12:01:00',
+        firstDayOfWeek: {
           SUNDAY: '2012-01-07',
           MONDAY: '2012-01-08',
           TUESDAY: '2012-01-09',
@@ -1364,10 +1275,11 @@ suite('icaltime', function() {
           THURSDAY: '2012-01-04',
           FRIDAY: '2012-01-05',
           SATURDAY: '2012-01-06'
-      }
-    }, { /* A Wednesday */
-      str: '2012-01-04T12:01:00',
-      firstDayOfWeek: {
+        }
+      },
+      {
+        /* A Wednesday */ str: '2012-01-04T12:01:00',
+        firstDayOfWeek: {
           SUNDAY: '2012-01-07',
           MONDAY: '2012-01-08',
           TUESDAY: '2012-01-09',
@@ -1375,10 +1287,11 @@ suite('icaltime', function() {
           THURSDAY: '2012-01-04',
           FRIDAY: '2012-01-05',
           SATURDAY: '2012-01-06'
-      }
-    }, { /* A Thursday */
-      str: '2012-01-05T12:01:00',
-      firstDayOfWeek: {
+        }
+      },
+      {
+        /* A Thursday */ str: '2012-01-05T12:01:00',
+        firstDayOfWeek: {
           SUNDAY: '2012-01-07',
           MONDAY: '2012-01-08',
           TUESDAY: '2012-01-09',
@@ -1386,10 +1299,11 @@ suite('icaltime', function() {
           THURSDAY: '2012-01-11',
           FRIDAY: '2012-01-05',
           SATURDAY: '2012-01-06'
-      }
-    }, { /* A Friday */
-      str: '2012-01-06T12:01:00',
-      firstDayOfWeek: {
+        }
+      },
+      {
+        /* A Friday */ str: '2012-01-06T12:01:00',
+        firstDayOfWeek: {
           SUNDAY: '2012-01-07',
           MONDAY: '2012-01-08',
           TUESDAY: '2012-01-09',
@@ -1397,10 +1311,11 @@ suite('icaltime', function() {
           THURSDAY: '2012-01-11',
           FRIDAY: '2012-01-12',
           SATURDAY: '2012-01-06'
-      }
-    }, { /* A Saturday */
-      str: '2012-01-07T12:01:00',
-      firstDayOfWeek: {
+        }
+      },
+      {
+        /* A Saturday */ str: '2012-01-07T12:01:00',
+        firstDayOfWeek: {
           SUNDAY: '2012-01-07',
           MONDAY: '2012-01-08',
           TUESDAY: '2012-01-09',
@@ -1408,22 +1323,26 @@ suite('icaltime', function() {
           THURSDAY: '2012-01-11',
           FRIDAY: '2012-01-12',
           SATURDAY: '2012-01-13'
+        }
       }
-    }];
+    ];
 
     for (let datakey in test_data) {
       let data = test_data[datakey];
       let dt = Time.fromString(data.str);
       for (let day in data.firstDayOfWeek) {
-          assert.equal(data.firstDayOfWeek[day], dt.endOfWeek(ICAL.Time[day]).toString());
+        assert.equal(
+          data.firstDayOfWeek[day],
+          dt.endOfWeek(ICAL.Time[day]).toString()
+        );
       }
     }
   });
 
-  suite('#compare', function() {
+  suite('#compare', function () {
     testSupport.useTimezones('America/New_York', 'America/Los_Angeles');
 
-    test('simple comparison', function() {
+    test('simple comparison', function () {
       let a = Time.fromString('2001-01-01T00:00:00');
       let b = Time.fromString('2001-01-01T00:00:00');
       assert.equal(a.compare(b), 0);
@@ -1453,7 +1372,7 @@ suite('icaltime', function() {
       assert.equal(b.compare(a), 1);
     });
 
-    test('simple comparison one with a timezone, one without', function() {
+    test('simple comparison one with a timezone, one without', function () {
       // Floating timezone is effectively UTC. New York is 5 hours behind.
       let a = Time.fromString('2001-01-01T00:00:00');
       a.zone = ICAL.TimezoneService.get('America/New_York');
@@ -1486,7 +1405,7 @@ suite('icaltime', function() {
       assert.equal(b.compare(a), 1);
     });
 
-    test('date-only comparison', function() {
+    test('date-only comparison', function () {
       let a = Time.fromString('2001-01-01');
       let b = Time.fromString('2001-01-01');
       assert.equal(a.compareDateOnlyTz(b, Timezone.localTimezone), 0);
@@ -1504,7 +1423,7 @@ suite('icaltime', function() {
       assert.equal(b.compareDateOnlyTz(a, Timezone.localTimezone), 1);
     });
 
-    test('both are dates', function() {
+    test('both are dates', function () {
       let a = Time.fromString('2014-07-20');
       a.zone = ICAL.TimezoneService.get('America/New_York');
       let b = Time.fromString('2014-07-20');
@@ -1523,7 +1442,7 @@ suite('icaltime', function() {
       assert.equal(b.compare(a), -1);
     });
 
-    test('one is date, one isnt', function() {
+    test('one is date, one isnt', function () {
       let a = Time.fromString('2014-07-20T12:00:00.000');
       a.zone = ICAL.TimezoneService.get('America/New_York');
       let b = Time.fromString('2014-07-20');
@@ -1542,7 +1461,7 @@ suite('icaltime', function() {
       assert.equal(b.compare(a), -1);
     });
 
-    test('one is date, one isnt', function() {
+    test('one is date, one isnt', function () {
       let a = Time.fromString('2014-07-20T12:00:00.000');
       a.zone = Timezone.localTimezone;
       let b = Time.fromString('2014-07-20');
@@ -1561,7 +1480,7 @@ suite('icaltime', function() {
       assert.equal(b.compare(a), -1);
     });
 
-    test('both are not dates', function() {
+    test('both are not dates', function () {
       let a = Time.fromString('2014-07-20T12:00:00.000');
       a.zone = ICAL.TimezoneService.get('America/New_York');
       let b = Time.fromString('2014-07-20T12:00:00.000');
@@ -1580,7 +1499,7 @@ suite('icaltime', function() {
       assert.equal(b.compare(a), -1);
     });
 
-    test('two timezones', function() {
+    test('two timezones', function () {
       let a = Time.fromString('2014-07-20T02:00:00.000');
       a.zone = ICAL.TimezoneService.get('America/New_York');
       let b = Time.fromString('2014-07-19T23:00:00.000');
@@ -1608,7 +1527,7 @@ suite('icaltime', function() {
     });
   });
 
-  test('cache cleared', function() {
+  test('cache cleared', function () {
     // This test ensures the cached Unix time is cleared whenever the time is changed.
     let time = new Time({
       year: 2015,
@@ -1664,38 +1583,38 @@ suite('icaltime', function() {
     assert.equal(time.toUnixTime(), 1234567890);
   });
 
-  suite("static functions", function() {
-    test('daysInMonth', function() {
+  suite('static functions', function () {
+    test('daysInMonth', function () {
       assert.equal(Time.daysInMonth(0, 2011), 30);
       assert.equal(Time.daysInMonth(2, 2012), 29);
       assert.equal(Time.daysInMonth(2, 2013), 28);
       assert.equal(Time.daysInMonth(13, 2014), 30);
     });
 
-    test('isLeapYear', function() {
+    test('isLeapYear', function () {
       assert.isTrue(Time.isLeapYear(1752));
       assert.isTrue(Time.isLeapYear(2000));
       assert.isTrue(Time.isLeapYear(2004));
       assert.isFalse(Time.isLeapYear(2100));
     });
 
-    test('fromDayOfYear', function() {
-      assert.equal(Time.fromDayOfYear(-730, 2001).toICALString(), "19990101");
-      assert.equal(Time.fromDayOfYear(-366, 2001).toICALString(), "19991231");
-      assert.equal(Time.fromDayOfYear(-365, 2001).toICALString(), "20000101");
-      assert.equal(Time.fromDayOfYear(0, 2001).toICALString(), "20001231");
-      assert.equal(Time.fromDayOfYear(365, 2001).toICALString(), "20011231");
-      assert.equal(Time.fromDayOfYear(366, 2001).toICALString(), "20020101");
-      assert.equal(Time.fromDayOfYear(730, 2001).toICALString(), "20021231");
-      assert.equal(Time.fromDayOfYear(731, 2001).toICALString(), "20030101");
-      assert.equal(Time.fromDayOfYear(1095, 2001).toICALString(), "20031231");
-      assert.equal(Time.fromDayOfYear(1096, 2001).toICALString(), "20040101");
-      assert.equal(Time.fromDayOfYear(1461, 2001).toICALString(), "20041231");
-      assert.equal(Time.fromDayOfYear(1826, 2001).toICALString(), "20051231");
+    test('fromDayOfYear', function () {
+      assert.equal(Time.fromDayOfYear(-730, 2001).toICALString(), '19990101');
+      assert.equal(Time.fromDayOfYear(-366, 2001).toICALString(), '19991231');
+      assert.equal(Time.fromDayOfYear(-365, 2001).toICALString(), '20000101');
+      assert.equal(Time.fromDayOfYear(0, 2001).toICALString(), '20001231');
+      assert.equal(Time.fromDayOfYear(365, 2001).toICALString(), '20011231');
+      assert.equal(Time.fromDayOfYear(366, 2001).toICALString(), '20020101');
+      assert.equal(Time.fromDayOfYear(730, 2001).toICALString(), '20021231');
+      assert.equal(Time.fromDayOfYear(731, 2001).toICALString(), '20030101');
+      assert.equal(Time.fromDayOfYear(1095, 2001).toICALString(), '20031231');
+      assert.equal(Time.fromDayOfYear(1096, 2001).toICALString(), '20040101');
+      assert.equal(Time.fromDayOfYear(1461, 2001).toICALString(), '20041231');
+      assert.equal(Time.fromDayOfYear(1826, 2001).toICALString(), '20051231');
     });
 
-    test('fromStringv2', function() {
-      let subject = Time.fromStringv2("2015-01-01");
+    test('fromStringv2', function () {
+      let subject = Time.fromStringv2('2015-01-01');
       let expected = {
         year: 2015,
         month: 1,
@@ -1704,18 +1623,16 @@ suite('icaltime', function() {
         minute: 0,
         second: 0,
         isDate: true,
-        timezone: "floating"
+        timezone: 'floating'
       };
 
-      assert.deepEqual(
-        subject.toJSON(), expected
-      );
+      assert.deepEqual(subject.toJSON(), expected);
     });
 
-    suite("weekOneStarts", function() {
+    suite('weekOneStarts', function () {
       function testWeekOne(year, dates, only) {
         let dom = ICAL.Time.getDominicalLetter(year);
-        (only ? test.only : test)(year + " (" + dom + ")", function() {
+        (only ? test.only : test)(year + ' (' + dom + ')', function () {
           for (let wkday in dates) {
             let icalwkday = ICAL.Time[wkday];
             let w1st = Time.weekOneStarts(year, icalwkday);
@@ -1728,16 +1645,17 @@ suite('icaltime', function() {
           }
         });
       }
-      testWeekOne.only = function(year, dates) {
+      testWeekOne.only = function (year, dates) {
         testWeekOne(year, dates, true);
       };
 
-      test('default week start', function() {
+      test('default week start', function () {
         let w1st = Time.weekOneStarts(1989);
         assert.equal('1989-01-02', w1st.toString());
       });
 
-      testWeekOne(1989, { // A and AG
+      testWeekOne(1989, {
+        // A and AG
         SUNDAY: '1989-01-01',
         MONDAY: '1989-01-02',
         TUESDAY: '1989-01-03',
@@ -1746,7 +1664,8 @@ suite('icaltime', function() {
         FRIDAY: '1988-12-30',
         SATURDAY: '1988-12-31'
       });
-      testWeekOne(1994, { // B and BA
+      testWeekOne(1994, {
+        // B and BA
         SUNDAY: '1994-01-02',
         MONDAY: '1994-01-03',
         TUESDAY: '1994-01-04',
@@ -1755,7 +1674,8 @@ suite('icaltime', function() {
         FRIDAY: '1993-12-31',
         SATURDAY: '1994-01-01'
       });
-      testWeekOne(1993, { // C and CB
+      testWeekOne(1993, {
+        // C and CB
         SUNDAY: '1993-01-03',
         MONDAY: '1993-01-04',
         TUESDAY: '1993-01-05',
@@ -1764,7 +1684,8 @@ suite('icaltime', function() {
         FRIDAY: '1993-01-01',
         SATURDAY: '1993-01-02'
       });
-      testWeekOne(1998, { // D and DC
+      testWeekOne(1998, {
+        // D and DC
         SUNDAY: '1997-12-28',
         MONDAY: '1997-12-29',
         TUESDAY: '1997-12-30',
@@ -1773,7 +1694,8 @@ suite('icaltime', function() {
         FRIDAY: '1997-12-26',
         SATURDAY: '1997-12-27'
       });
-      testWeekOne(1997, { // E and ED
+      testWeekOne(1997, {
+        // E and ED
         SUNDAY: '1996-12-29',
         MONDAY: '1996-12-30',
         TUESDAY: '1996-12-31',
@@ -1782,7 +1704,8 @@ suite('icaltime', function() {
         FRIDAY: '1996-12-27',
         SATURDAY: '1996-12-28'
       });
-      testWeekOne(1991, { // F and FE
+      testWeekOne(1991, {
+        // F and FE
         SUNDAY: '1990-12-30',
         MONDAY: '1990-12-31',
         TUESDAY: '1991-01-01',
@@ -1791,7 +1714,8 @@ suite('icaltime', function() {
         FRIDAY: '1990-12-28',
         SATURDAY: '1990-12-29'
       });
-      testWeekOne(1990, { // G and GF
+      testWeekOne(1990, {
+        // G and GF
         SUNDAY: '1989-12-31',
         MONDAY: '1990-01-01',
         TUESDAY: '1990-01-02',

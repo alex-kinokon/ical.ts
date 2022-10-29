@@ -1,56 +1,33 @@
-suite('Property', function() {
+suite('Property', function () {
   let fixtures;
 
-  setup(function() {
+  setup(function () {
     fixtures = {
       component: ['vevent', [], []],
       vcardComponent: ['vcard', [], []],
 
-      noValue: [
-        'x-foo',
-        { prop: 'prop' },
-        'text'
-      ],
+      noValue: ['x-foo', { prop: 'prop' }, 'text'],
 
-      textProp: [
-        'description',
-        {},
-        'text',
-        'foo'
-      ],
+      textProp: ['description', {}, 'text', 'foo'],
 
       withParams: [
         'x-foo',
         {
-          'rsvp': 'TRUE',
-          'meta': 'foo'
+          rsvp: 'TRUE',
+          meta: 'foo'
         },
         'date',
         '2012-10-01'
       ],
 
-      decoratedMultiValue: [
-        'rdate',
-        {},
-        'date',
-        '2012-10-10',
-        '2012-10-11'
-      ],
+      decoratedMultiValue: ['rdate', {}, 'date', '2012-10-10', '2012-10-11'],
 
-      mutliTextValue: [
-        'categories',
-        {},
-        'text',
-        'one',
-        'two',
-        'three'
-      ]
+      mutliTextValue: ['categories', {}, 'text', 'one', 'two', 'three']
     };
   });
 
-  suite('initialization', function() {
-
-    test('undecorated', function() {
+  suite('initialization', function () {
+    test('undecorated', function () {
       let subject = new ICAL.Property(
         fixtures.textProp,
         new ICAL.Component(fixtures.component)
@@ -63,31 +40,23 @@ suite('Property', function() {
       assert.isFalse(subject.isDecorated);
     });
 
-    test('multi value', function() {
+    test('multi value', function () {
       let subject = new ICAL.Property('categories');
-      assert.isTrue(
-        subject.isMultiValue, 'is multiValue'
-      );
+      assert.isTrue(subject.isMultiValue, 'is multiValue');
 
       subject = new ICAL.Property('url');
-      assert.isFalse(
-        subject.isMultiValue, 'is not multiValue'
-      );
+      assert.isFalse(subject.isMultiValue, 'is not multiValue');
     });
 
-    test('structured value', function() {
+    test('structured value', function () {
       let subject = new ICAL.Property('request-status');
-      assert.isTrue(
-        subject.isStructuredValue, 'is structured value'
-      );
+      assert.isTrue(subject.isStructuredValue, 'is structured value');
 
       subject = new ICAL.Property('url');
-      assert.isFalse(
-        subject.isStructuredValue, 'is not structured value'
-      );
+      assert.isFalse(subject.isStructuredValue, 'is not structured value');
     });
 
-    test('decorated', function() {
+    test('decorated', function () {
       let subject = new ICAL.Property(
         fixtures.withParams,
         new ICAL.Component(fixtures.component)
@@ -96,21 +65,21 @@ suite('Property', function() {
       assert.isTrue(subject.isDecorated);
     });
 
-    test('new property by name with type', function() {
+    test('new property by name with type', function () {
       let subject = new ICAL.Property('dtstart');
       assert.equal(subject.type, 'date-time');
       assert.equal(subject.jCal[2], 'date-time');
       assert.equal(subject._designSet, ICAL.design.icalendar);
     });
 
-    test('new vcard property without parent (unknown type)', function() {
+    test('new vcard property without parent (unknown type)', function () {
       let subject = new ICAL.Property('anniversary');
       assert.equal(subject.type, 'unknown');
       assert.equal(subject.jCal[2], 'unknown');
       assert.equal(subject._designSet, ICAL.design.icalendar);
     });
 
-    test('new vcard property with vcard parent (known type)', function() {
+    test('new vcard property with vcard parent (known type)', function () {
       let parent = new ICAL.Component(fixtures.vcardComponent);
       let subject = new ICAL.Property('anniversary', parent);
       assert.equal(subject.type, 'date-and-or-time');
@@ -118,7 +87,7 @@ suite('Property', function() {
       assert.equal(subject._designSet, ICAL.design.vcard);
     });
 
-    test('custom design value without defaultType', function() {
+    test('custom design value without defaultType', function () {
       ICAL.design.defaultSet.property.custom = {};
       let subject = new ICAL.Property('custom');
       assert.equal(subject.type, ICAL.design.defaultType);
@@ -126,15 +95,10 @@ suite('Property', function() {
       delete ICAL.design.defaultSet.property.custom;
     });
 
-    test('new property by name (typeless)', function() {
-      let subject = new ICAL.Property(
-        'description'
-      );
+    test('new property by name (typeless)', function () {
+      let subject = new ICAL.Property('description');
 
-      assert.equal(
-        subject.name,
-        'description'
-      );
+      assert.equal(subject.name, 'description');
 
       assert.equal(subject.type, 'text');
       assert.equal(subject.jCal[2], 'text');
@@ -142,7 +106,7 @@ suite('Property', function() {
       assert.ok(!subject.getFirstValue());
     });
 
-    test('types change when changing design set', function() {
+    test('types change when changing design set', function () {
       let property = new ICAL.Property('fn');
       let component = new ICAL.Component('vcard');
 
@@ -154,33 +118,31 @@ suite('Property', function() {
       assert.equal(property.type, 'text');
     });
 
-    suite('#fromString', function() {
-      test('x-prop with known type', function() {
-        let prop = ICAL.Property.fromString("X-FOO;VALUE=BOOLEAN:TRUE");
-        assert.equal(prop.name, "x-foo");
-        assert.equal(prop.type, "boolean");
+    suite('#fromString', function () {
+      test('x-prop with known type', function () {
+        let prop = ICAL.Property.fromString('X-FOO;VALUE=BOOLEAN:TRUE');
+        assert.equal(prop.name, 'x-foo');
+        assert.equal(prop.type, 'boolean');
         assert.isTrue(prop.getFirstValue());
       });
 
-      test("invalid prop", function() {
-        assert.throws(function() {
-          ICAL.Property.fromString("BWAHAHAHAHA");
+      test('invalid prop', function () {
+        assert.throws(function () {
+          ICAL.Property.fromString('BWAHAHAHAHA');
         }, /invalid line/);
       });
     });
   });
 
-  test('#getParameter', function() {
-    let subject = new ICAL.Property(
-      fixtures.withParams
-    );
+  test('#getParameter', function () {
+    let subject = new ICAL.Property(fixtures.withParams);
 
     assert.equal(subject.getParameter('rsvp'), 'TRUE');
     assert.equal(subject.getParameter('wtf'), undefined);
   });
 
-  suite('#getFirstParameter', function() {
-    test('with multivalue parameter', function() {
+  suite('#getFirstParameter', function () {
+    test('with multivalue parameter', function () {
       let subject = new ICAL.Property('categories');
 
       subject.setParameter('categories', ['Home', 'Work']);
@@ -188,91 +150,55 @@ suite('Property', function() {
       assert.equal(subject.getFirstParameter('categories'), 'Home');
     });
 
-    test('with string parameter', function() {
-      let subject = new ICAL.Property(
-        fixtures.withParams
-      );
+    test('with string parameter', function () {
+      let subject = new ICAL.Property(fixtures.withParams);
 
       assert.equal(subject.getFirstParameter('rsvp'), 'TRUE');
     });
   });
 
-  test('#removeParameter', function() {
-    let subject = new ICAL.Property(
-      fixtures.withParams
-    );
+  test('#removeParameter', function () {
+    let subject = new ICAL.Property(fixtures.withParams);
 
     subject.removeParameter('rsvp');
     assert.ok(!subject.getParameter('rsvp'));
   });
 
-  test('#setParameter', function() {
-    let subject = new ICAL.Property(
-      fixtures.textProp
-    );
+  test('#setParameter', function () {
+    let subject = new ICAL.Property(fixtures.textProp);
 
-    subject.setParameter(
-      'my-prop',
-      'woot?'
-    );
+    subject.setParameter('my-prop', 'woot?');
 
-    assert.equal(
-      subject.getParameter('my-prop'),
-      'woot?'
-    );
+    assert.equal(subject.getParameter('my-prop'), 'woot?');
 
-    assert.deepEqual(
-      subject.jCal[1],
-      { 'my-prop': 'woot?' }
-    );
+    assert.deepEqual(subject.jCal[1], { 'my-prop': 'woot?' });
   });
 
-  test('#setMultiValueParameterByString', function() {
-    let subject = new ICAL.Property(
-      fixtures.withParams
-    );
+  test('#setMultiValueParameterByString', function () {
+    let subject = new ICAL.Property(fixtures.withParams);
 
-    subject.setParameter(
-      'member',
-      'mailto:users@example.net'
-    );
+    subject.setParameter('member', 'mailto:users@example.net');
 
-    assert.equal(
-      subject.getParameter('member')[0],
-      'mailto:users@example.net'
-    );
+    assert.equal(subject.getParameter('member')[0], 'mailto:users@example.net');
   });
 
-  test('#setMultiValueParameter', function() {
-    let subject = new ICAL.Property(
-      fixtures.withParams
-    );
+  test('#setMultiValueParameter', function () {
+    let subject = new ICAL.Property(fixtures.withParams);
 
-    subject.setParameter(
-      'member',
-      ['mailto:users@example.net']
-    );
+    subject.setParameter('member', ['mailto:users@example.net']);
 
-    assert.equal(
-      subject.getParameter('member')[0],
-     'mailto:users@example.net'
-    );
+    assert.equal(subject.getParameter('member')[0], 'mailto:users@example.net');
   });
 
-  suite('getFirstValue', function() {
-
-    test('with no value', function() {
-      let subject = new ICAL.Property(
-        fixtures.noValue
-      );
+  suite('getFirstValue', function () {
+    test('with no value', function () {
+      let subject = new ICAL.Property(fixtures.noValue);
 
       assert.ok(!subject.getFirstValue());
     });
 
-    test('with decorated type', function() {
-      let subject = new ICAL.Property(
-        fixtures.withParams
-      );
+    test('with decorated type', function () {
+      let subject = new ICAL.Property(fixtures.withParams);
 
       let value = subject.getFirstValue();
 
@@ -291,18 +217,15 @@ suite('Property', function() {
       );
     });
 
-    test('without decorated type', function() {
+    test('without decorated type', function () {
       let subject = new ICAL.Property(fixtures.textProp);
       let value = subject.getFirstValue();
 
-      assert.equal(
-        value,
-        subject.jCal[3]
-      );
+      assert.equal(value, subject.jCal[3]);
     });
   });
 
-  test('#resetType', function() {
+  test('#resetType', function () {
     let subject = new ICAL.Property('dtstart');
     subject.setValue(new ICAL.Time({ year: 2012, hour: 10, minute: 1 }));
 
@@ -315,8 +238,8 @@ suite('Property', function() {
     subject.setValue(new ICAL.Time({ year: 2012 }));
   });
 
-  suite('#getDefaultType', function() {
-    test('known type', function() {
+  suite('#getDefaultType', function () {
+    test('known type', function () {
       let subject = new ICAL.Property('dtstart');
       subject.setValue(new ICAL.Time({ year: 2012, hour: 20 }));
 
@@ -329,7 +252,7 @@ suite('Property', function() {
       assert.equal(subject.getDefaultType(), 'date-time');
     });
 
-    test('unknown type', function() {
+    test('unknown type', function () {
       let subject = new ICAL.Property('x-unknown');
       subject.setValue(new ICAL.Time({ year: 2012, hour: 20 }));
 
@@ -338,7 +261,7 @@ suite('Property', function() {
       assert.equal(subject.getDefaultType(), 'unknown');
     });
 
-    test('vcard type', function() {
+    test('vcard type', function () {
       let parent = new ICAL.Component(fixtures.vcardComponent);
       let subject = new ICAL.Property('anniversary', parent);
       subject.resetType('text');
@@ -347,95 +270,77 @@ suite('Property', function() {
     });
   });
 
-  suite('#getFirstValue', function() {
-    test('with value', function() {
+  suite('#getFirstValue', function () {
+    test('with value', function () {
       let subject = new ICAL.Property('description');
       subject.setValue('foo');
 
       assert.equal(subject.getFirstValue(), 'foo');
     });
 
-    test('without value', function() {
+    test('without value', function () {
       let subject = new ICAL.Property('dtstart');
       assert.ok(!subject.getFirstValue());
     });
   });
 
-  suite('#getValues', function() {
-    test('decorated', function() {
-      let subject = new ICAL.Property(
-        fixtures.decoratedMultiValue
-      );
+  suite('#getValues', function () {
+    test('decorated', function () {
+      let subject = new ICAL.Property(fixtures.decoratedMultiValue);
 
       let result = subject.getValues();
       assert.lengthOf(result, 2);
 
       // 2012-10-10
-      assert.hasProperties(
-        result[0],
-        {
-          year: 2012,
-          month: 10,
-          day: 10,
-          isDate: true
-        }
-      );
+      assert.hasProperties(result[0], {
+        year: 2012,
+        month: 10,
+        day: 10,
+        isDate: true
+      });
 
       //2012-10-11
-      assert.hasProperties(
-        result[1],
-        {
-          year: 2012,
-          month: 10,
-          day: 11,
-          isDate: true
-        }
-      );
+      assert.hasProperties(result[1], {
+        year: 2012,
+        month: 10,
+        day: 11,
+        isDate: true
+      });
     });
 
-    test('undecorated', function() {
-      let subject = new ICAL.Property(
-        fixtures.mutliTextValue
-      );
+    test('undecorated', function () {
+      let subject = new ICAL.Property(fixtures.mutliTextValue);
 
       let result = subject.getValues();
       assert.lengthOf(result, 3);
-      assert.deepEqual(
-        result,
-        ['one', 'two', 'three']
-      );
+      assert.deepEqual(result, ['one', 'two', 'three']);
     });
 
-    test('single value', function() {
-      let subject = new ICAL.Property(
-        fixtures.textProp
-      );
-      assert.deepEqual(
-        subject.getValues(),
-        [subject.jCal[3]]
-      );
+    test('single value', function () {
+      let subject = new ICAL.Property(fixtures.textProp);
+      assert.deepEqual(subject.getValues(), [subject.jCal[3]]);
     });
 
-    test('no values', function() {
+    test('no values', function () {
       let subject = new ICAL.Property(fixtures.noValue);
       assert.deepEqual(subject.getValues(), []);
-      assert.equal(subject.toICALString(), "X-FOO;PROP=prop:");
+      assert.equal(subject.toICALString(), 'X-FOO;PROP=prop:');
     });
 
-    test('foldable value', function() {
+    test('foldable value', function () {
       let subject = new ICAL.Property(fixtures.textProp);
       assert.deepEqual(subject.getValues(), ['foo']);
-      assert.equal(subject.toICALString(), "DESCRIPTION:foo");
+      assert.equal(subject.toICALString(), 'DESCRIPTION:foo');
       // Fold length should not fold the property here
       let oldLength = ICAL.foldLength;
       ICAL.foldLength = 1;
-      assert.equal(subject.toICALString(), "DESCRIPTION:foo");
+      assert.equal(subject.toICALString(), 'DESCRIPTION:foo');
       ICAL.foldLength = oldLength;
     });
   });
 
-  suite('#setValues', function() {
-    test('decorated value', function() {
+  suite('#setValues', function () {
+    test('decorated value', function () {
       let subject = new ICAL.Property('rdate');
       let undecorate = ICAL.design.icalendar.value['date-time'].undecorate;
 
@@ -446,38 +351,29 @@ suite('Property', function() {
 
       subject.setValues(values);
 
-      assert.deepEqual(
-        subject.jCal.slice(3),
-        [undecorate(values[0]), undecorate(values[1])]
-      );
+      assert.deepEqual(subject.jCal.slice(3), [
+        undecorate(values[0]),
+        undecorate(values[1])
+      ]);
 
-      assert.equal(
-        subject.getFirstValue(),
-        values[0]
-      );
+      assert.equal(subject.getFirstValue(), values[0]);
     });
 
-    test('text', function() {
+    test('text', function () {
       let subject = new ICAL.Property('categories');
 
       subject.setValues(['a', 'b', 'c']);
 
-      assert.deepEqual(
-        subject.getValues(),
-        ['a', 'b', 'c']
-      );
+      assert.deepEqual(subject.getValues(), ['a', 'b', 'c']);
 
       subject.setValues(['a']);
       assert.deepEqual(subject.getValues(), ['a']);
     });
   });
 
-  suite('#setValue', function() {
-
-    test('decorated value as string', function() {
-      let subject = new ICAL.Property(
-        'dtstart'
-      );
+  suite('#setValue', function () {
+    test('decorated value as string', function () {
+      let subject = new ICAL.Property('dtstart');
 
       subject.setValue('2012-09-01T13:00:00');
       let value = subject.getFirstValue();
@@ -493,10 +389,8 @@ suite('Property', function() {
       });
     });
 
-    test('decorated value as object', function() {
-      let subject = new ICAL.Property(
-        'dtstart'
-      );
+    test('decorated value as object', function () {
+      let subject = new ICAL.Property('dtstart');
 
       let time = new ICAL.Time({
         year: 2012,
@@ -512,43 +406,38 @@ suite('Property', function() {
         ICAL.design.icalendar.value.date.undecorate(time)
       );
 
-      assert.equal(
-        subject.getFirstValue(),
-        time
-      );
+      assert.equal(subject.getFirstValue(), time);
     });
 
-    test('text', function() {
+    test('text', function () {
       let subject = new ICAL.Property('description');
       assert.ok(!subject.getFirstValue());
       subject.setValue('xxx');
       assert.equal(subject.getFirstValue(), 'xxx');
     });
 
-    test('multivalue property', function() {
-      let subject = new ICAL.Property("categories");
-      subject.setValues(["work", "play"]);
-      subject.setValue("home");
-      assert.deepEqual(subject.getValues(), ["home"]);
-      assert.equal(subject.getFirstValue(), "home");
+    test('multivalue property', function () {
+      let subject = new ICAL.Property('categories');
+      subject.setValues(['work', 'play']);
+      subject.setValue('home');
+      assert.deepEqual(subject.getValues(), ['home']);
+      assert.equal(subject.getFirstValue(), 'home');
     });
 
-    test('single-value property setting multiple values', function() {
-      let subject = new ICAL.Property("location");
-      assert.throws(function() {
-        subject.setValues(["foo", "bar"]);
+    test('single-value property setting multiple values', function () {
+      let subject = new ICAL.Property('location');
+      assert.throws(function () {
+        subject.setValues(['foo', 'bar']);
       }, 'does not not support mulitValue');
     });
   });
 
-  test('#toJSON', function() {
+  test('#toJSON', function () {
     let subject = new ICAL.Property(['description', {}, 'text', 'foo']);
 
     assert.deepEqual(subject.toJSON(), subject.jCal);
 
-    let fromJSON = new ICAL.Property(
-      JSON.parse(JSON.stringify(subject))
-    );
+    let fromJSON = new ICAL.Property(JSON.parse(JSON.stringify(subject)));
 
     assert.deepEqual(fromJSON.jCal, subject.jCal);
   });

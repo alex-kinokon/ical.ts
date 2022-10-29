@@ -1,11 +1,11 @@
-suite('google birthday events', function() {
+suite('google birthday events', function () {
   let icsData;
 
-  suiteSetup(async function() {
+  suiteSetup(async function () {
     icsData = await testSupport.loadSample('google_birthday.ics');
   });
 
-  test('expanding malformatted recurring event', function(done) {
+  test('expanding malformatted recurring event', function (done) {
     // just verify it can parse forced types
     let parser = new ICAL.ComponentParser();
     let primary;
@@ -17,7 +17,7 @@ suite('google birthday events', function() {
       new Date(2014, 11, 10)
     ];
 
-    parser.onevent = function(event) {
+    parser.onevent = function (event) {
       if (event.isRecurrenceException()) {
         exceptions.push(event);
       } else {
@@ -25,8 +25,8 @@ suite('google birthday events', function() {
       }
     };
 
-    parser.oncomplete = function() {
-      exceptions.forEach(function(item) {
+    parser.oncomplete = function () {
+      exceptions.forEach(function (item) {
         primary.relateException(item);
       });
 
@@ -37,10 +37,7 @@ suite('google birthday events', function() {
         dates.push(next.toJSDate());
       }
 
-      assert.deepEqual(
-        dates,
-        expectedDates
-      );
+      assert.deepEqual(dates, expectedDates);
 
       done();
     };

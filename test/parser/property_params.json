@@ -1,12 +1,10 @@
-["vcalendar",
+[
+  "vcalendar",
   [
     [
       "attendee",
       {
-        "delegated-to": [
-          "mailto:foo7@bar",
-          "mailto:foo8@bar"
-        ],
+        "delegated-to": ["mailto:foo7@bar", "mailto:foo8@bar"],
         "cn": "Foo, Bar"
       },
       "cal-address",
@@ -15,10 +13,7 @@
     [
       "attendee",
       {
-        "delegated-to": [
-          "mailto:foo7@bar",
-          "mailto:foo8@bar"
-        ],
+        "delegated-to": ["mailto:foo7@bar", "mailto:foo8@bar"],
         "cn": "Foo; Bar"
       },
       "cal-address",

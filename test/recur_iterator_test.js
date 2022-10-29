@@ -1,29 +1,30 @@
-suite('recur_iterator', function() {
-  suite('#fromData', function() {
-    test("required rule", function() {
-      assert.throws(function() {
+suite('recur_iterator', function () {
+  suite('#fromData', function () {
+    test('required rule', function () {
+      assert.throws(function () {
         new ICAL.RecurIterator({}); // eslint-disable-line no-new
       }, /iterator requires a \(ICAL.Recur\) rule/);
     });
-    test("required time", function() {
-      assert.throws(function() {
-        new ICAL.RecurIterator({ // eslint-disable-line no-new
+    test('required time', function () {
+      assert.throws(function () {
+        new ICAL.RecurIterator({
+          // eslint-disable-line no-new
           rule: new ICAL.Recur()
         });
       }, /iterator requires a \(ICAL.Time\) dtstart/);
     });
   });
 
-  suite('#toJSON', function() {
+  suite('#toJSON', function () {
     let recur, iterator;
 
-    setup(function() {
+    setup(function () {
       let start = ICAL.Time.fromString('2012-02-01T09:00:00');
       recur = ICAL.Recur.fromString('FREQ=MONTHLY;COUNT=12;INTERVAL=3');
       iterator = recur.iterator(start);
     });
 
-    test('completed', function() {
+    test('completed', function () {
       while (iterator.next()) {
         // Continue until completed
       }
@@ -37,7 +38,7 @@ suite('recur_iterator', function() {
       assert.isTrue(newIter.completed, true, 'new iter completed');
     });
 
-    test('INTERVAL: mid iteration (two iterations)', function() {
+    test('INTERVAL: mid iteration (two iterations)', function () {
       iterator.next();
       iterator.next();
 
@@ -54,7 +55,7 @@ suite('recur_iterator', function() {
       }
     });
 
-    test('from the begining of iteration', function() {
+    test('from the begining of iteration', function () {
       let expected = {
         rule: iterator.rule.toJSON(),
         dtstart: iterator.dtstart.toJSON(),
@@ -80,54 +81,47 @@ suite('recur_iterator', function() {
         );
       }
     });
-
   });
 
-  suite('#normalizeByMonthDayRules', function() {
+  suite('#normalizeByMonthDayRules', function () {
     let recur, iterator;
 
-    setup(function() {
+    setup(function () {
       let start = ICAL.Time.fromString('2012-02-01T09:00:00');
       recur = ICAL.Recur.fromString('FREQ=MONTHLY;COUNT=2');
       iterator = recur.iterator(start);
     });
 
-    test('positive rules', function() {
-      let result = iterator.normalizeByMonthDayRules(
-        2012, 2, [21, 15]
-      );
+    test('positive rules', function () {
+      let result = iterator.normalizeByMonthDayRules(2012, 2, [21, 15]);
 
       assert.deepEqual(result, [15, 21]);
     });
 
-    test('when given zero', function() {
-      let result = iterator.normalizeByMonthDayRules(
-        2012, 2, [21, 0]
-      );
+    test('when given zero', function () {
+      let result = iterator.normalizeByMonthDayRules(2012, 2, [21, 0]);
 
       assert.deepEqual(result, [21]);
     });
 
-    test('extra days', function() {
-      let result = iterator.normalizeByMonthDayRules(
-        2012, 2, [1, 31]
-      );
+    test('extra days', function () {
+      let result = iterator.normalizeByMonthDayRules(2012, 2, [1, 31]);
 
       assert.deepEqual(result, [1]);
     });
 
-    test('negative and positive days', function() {
-      let result = iterator.normalizeByMonthDayRules(
-        2012, 2, [1, -1]
-      );
+    test('negative and positive days', function () {
+      let result = iterator.normalizeByMonthDayRules(2012, 2, [1, -1]);
 
       assert.deepEqual(result, [1, 29]);
     });
 
-    test('duplicates', function() {
+    test('duplicates', function () {
       let result = iterator.normalizeByMonthDayRules(
         // -29 === 1st day
-        2012, 2, [2, 2, 1, -29]
+        2012,
+        2,
+        [2, 2, 1, -29]
       );
 
       assert.deepEqual(result, [1, 2]);
@@ -136,7 +130,7 @@ suite('recur_iterator', function() {
 
   function testRRULE(ruleString, options) {
     let runner = options.only ? test.only : test;
-    runner(ruleString, function() {
+    runner(ruleString, function () {
       if (!options.dtStart) {
         options.dtStart = options.dates[0];
       }
@@ -166,13 +160,13 @@ suite('recur_iterator', function() {
       assert.deepEqual(dates, options.dates || []);
     });
   }
-  testRRULE.only = function(ruleString, options) {
+  testRRULE.only = function (ruleString, options) {
     options.only = true;
     testRRULE(ruleString, options);
   };
 
-  suite("#recurrence rules", function() {
-    suite('SECONDLY/MINUTELY/HOURLY', function() {
+  suite('#recurrence rules', function () {
+    suite('SECONDLY/MINUTELY/HOURLY', function () {
       // Simple secondly
       testRRULE('FREQ=SECONDLY;INTERVAL=3;COUNT=3', {
         byCount: true,
@@ -204,7 +198,7 @@ suite('recur_iterator', function() {
       });
     });
 
-    suite('DAILY', function() {
+    suite('DAILY', function () {
       //daily for 10 occurrences'
       testRRULE('FREQ=DAILY;COUNT=10', {
         byCount: true,
@@ -267,14 +261,11 @@ suite('recur_iterator', function() {
       });
     });
 
-    suite('WEEKLY', function() {
+    suite('WEEKLY', function () {
       // weekly until
       testRRULE('FREQ=WEEKLY;UNTIL=20120424T065959Z;BYDAY=TU', {
         until: true,
-        dates: [
-          '2012-04-10T09:00:00',
-          '2012-04-17T09:00:00'
-        ]
+        dates: ['2012-04-10T09:00:00', '2012-04-17T09:00:00']
       });
       //weekly for 10 occurrences
       testRRULE('FREQ=WEEKLY;COUNT=10', {
@@ -328,20 +319,40 @@ suite('recur_iterator', function() {
       });
 
       //every other week on mo,we,fi until dec 24th 1997
-      testRRULE('FREQ=WEEKLY;INTERVAL=2;UNTIL=19971224T090000Z;WKST=SU;BYDAY=MO,WE,FR', {
-        until: true,
-        dates: [
-          '1997-09-01T09:00:00', '1997-09-03T09:00:00', '1997-09-05T09:00:00',
-          '1997-09-15T09:00:00', '1997-09-17T09:00:00', '1997-09-19T09:00:00',
-          '1997-09-29T09:00:00', '1997-10-01T09:00:00', '1997-10-03T09:00:00',
-          '1997-10-13T09:00:00', '1997-10-15T09:00:00', '1997-10-17T09:00:00',
-          '1997-10-27T09:00:00', '1997-10-29T09:00:00', '1997-10-31T09:00:00',
-          '1997-11-10T09:00:00', '1997-11-12T09:00:00', '1997-11-14T09:00:00',
-          '1997-11-24T09:00:00', '1997-11-26T09:00:00', '1997-11-28T09:00:00',
-          '1997-12-08T09:00:00', '1997-12-10T09:00:00', '1997-12-12T09:00:00',
-          '1997-12-22T09:00:00', '1997-12-24T09:00:00'
-        ]
-      });
+      testRRULE(
+        'FREQ=WEEKLY;INTERVAL=2;UNTIL=19971224T090000Z;WKST=SU;BYDAY=MO,WE,FR',
+        {
+          until: true,
+          dates: [
+            '1997-09-01T09:00:00',
+            '1997-09-03T09:00:00',
+            '1997-09-05T09:00:00',
+            '1997-09-15T09:00:00',
+            '1997-09-17T09:00:00',
+            '1997-09-19T09:00:00',
+            '1997-09-29T09:00:00',
+            '1997-10-01T09:00:00',
+            '1997-10-03T09:00:00',
+            '1997-10-13T09:00:00',
+            '1997-10-15T09:00:00',
+            '1997-10-17T09:00:00',
+            '1997-10-27T09:00:00',
+            '1997-10-29T09:00:00',
+            '1997-10-31T09:00:00',
+            '1997-11-10T09:00:00',
+            '1997-11-12T09:00:00',
+            '1997-11-14T09:00:00',
+            '1997-11-24T09:00:00',
+            '1997-11-26T09:00:00',
+            '1997-11-28T09:00:00',
+            '1997-12-08T09:00:00',
+            '1997-12-10T09:00:00',
+            '1997-12-12T09:00:00',
+            '1997-12-22T09:00:00',
+            '1997-12-24T09:00:00'
+          ]
+        }
+      );
 
       /* TODO byweekno is not well supported
       testRRULE('FREQ=WEEKLY;BYWEEKNO=2,4,6', {
@@ -391,18 +402,42 @@ suite('recur_iterator', function() {
       //buisness days for 31 occurances'
       testRRULE('FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR', {
         dates: [
-          '2012-01-02T09:00:00', '2012-01-03T09:00:00', '2012-01-04T09:00:00', '2012-01-05T09:00:00', '2012-01-06T09:00:00',
-          '2012-01-09T09:00:00', '2012-01-10T09:00:00', '2012-01-11T09:00:00', '2012-01-12T09:00:00', '2012-01-13T09:00:00',
-          '2012-01-16T09:00:00', '2012-01-17T09:00:00', '2012-01-18T09:00:00', '2012-01-19T09:00:00', '2012-01-20T09:00:00',
-          '2012-01-23T09:00:00', '2012-01-24T09:00:00', '2012-01-25T09:00:00', '2012-01-26T09:00:00', '2012-01-27T09:00:00',
-          '2012-01-30T09:00:00', '2012-01-31T09:00:00', '2012-02-01T09:00:00', '2012-02-02T09:00:00', '2012-02-03T09:00:00',
-          '2012-02-06T09:00:00', '2012-02-07T09:00:00', '2012-02-08T09:00:00', '2012-02-09T09:00:00', '2012-02-10T09:00:00',
+          '2012-01-02T09:00:00',
+          '2012-01-03T09:00:00',
+          '2012-01-04T09:00:00',
+          '2012-01-05T09:00:00',
+          '2012-01-06T09:00:00',
+          '2012-01-09T09:00:00',
+          '2012-01-10T09:00:00',
+          '2012-01-11T09:00:00',
+          '2012-01-12T09:00:00',
+          '2012-01-13T09:00:00',
+          '2012-01-16T09:00:00',
+          '2012-01-17T09:00:00',
+          '2012-01-18T09:00:00',
+          '2012-01-19T09:00:00',
+          '2012-01-20T09:00:00',
+          '2012-01-23T09:00:00',
+          '2012-01-24T09:00:00',
+          '2012-01-25T09:00:00',
+          '2012-01-26T09:00:00',
+          '2012-01-27T09:00:00',
+          '2012-01-30T09:00:00',
+          '2012-01-31T09:00:00',
+          '2012-02-01T09:00:00',
+          '2012-02-02T09:00:00',
+          '2012-02-03T09:00:00',
+          '2012-02-06T09:00:00',
+          '2012-02-07T09:00:00',
+          '2012-02-08T09:00:00',
+          '2012-02-09T09:00:00',
+          '2012-02-10T09:00:00',
           '2012-02-13T09:00:00'
         ]
       });
     });
 
-    suite('MONTHLY', function() {
+    suite('MONTHLY', function () {
       //monthly on first friday for 10 occurrences
       testRRULE('FREQ=MONTHLY;COUNT=10;BYDAY=1FR', {
         dtStart: '2012-01-07T00:00:00',
@@ -453,7 +488,6 @@ suite('recur_iterator', function() {
         ]
       });
 
-
       // monthly, the third instance of tu,we,th
       testRRULE('FREQ=MONTHLY;COUNT=3;BYDAY=TU,WE,TH;BYSETPOS=3', {
         byCount: true,
@@ -467,10 +501,7 @@ suite('recur_iterator', function() {
       //monthly, each month last day that is monday
       testRRULE('FREQ=MONTHLY;BYMONTHDAY=-1;BYDAY=MO', {
         dtStart: '2012-01-01T09:00:00',
-        dates: [
-          '2012-04-30T09:00:00',
-          '2012-12-31T09:00:00'
-        ]
+        dates: ['2012-04-30T09:00:00', '2012-12-31T09:00:00']
       });
 
       //every friday 13th forever'
@@ -626,7 +657,7 @@ suite('recur_iterator', function() {
           '2022-12-31T08:00:00',
           '2023-03-31T08:00:00',
           '2023-06-30T08:00:00',
-          '2023-09-30T08:00:00',
+          '2023-09-30T08:00:00'
         ]
       });
 
@@ -639,7 +670,7 @@ suite('recur_iterator', function() {
           '2022-12-30T08:00:00',
           '2023-03-30T08:00:00',
           '2023-06-29T08:00:00',
-          '2023-09-29T08:00:00',
+          '2023-09-29T08:00:00'
         ]
       });
 
@@ -654,60 +685,70 @@ suite('recur_iterator', function() {
         ]
       });
 
-      testRRULE('FREQ=MONTHLY;BYDAY=MO,FR;BYMONTHDAY=1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31;COUNT=4', {
-        dtStart: '2015-03-01T08:00:00Z',
-        byCount: true,
-        dates: [
-          '2015-03-09T08:00:00Z',
-          '2015-03-13T08:00:00Z',
-          '2015-03-23T08:00:00Z',
-          '2015-03-27T08:00:00Z',
-        ]
-      });
-      testRRULE('FREQ=MONTHLY;BYDAY=MO,FR;BYMONTHDAY=1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31;COUNT=4', {
-        dtStart: '2015-04-01T08:00:00Z',
-        byCount: true,
-        dates: [
-          '2015-04-03T08:00:00Z',
-          '2015-04-13T08:00:00Z',
-          '2015-04-17T08:00:00Z',
-          '2015-04-27T08:00:00Z'
-        ]
-      });
-      testRRULE('FREQ=MONTHLY;BYDAY=MO,SA;BYMONTHDAY=1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31;COUNT=4', {
-        dtStart: '2015-04-01T08:00:00Z',
-        byCount: true,
-        dates: [
-          '2015-04-11T08:00:00Z',
-          '2015-04-13T08:00:00Z',
-          '2015-04-25T08:00:00Z',
-          '2015-04-27T08:00:00Z'
-        ]
-      });
-      testRRULE('FREQ=MONTHLY;BYDAY=SU,FR;BYMONTHDAY=1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31;COUNT=9', {
-        dtStart: '2015-02-28T08:00:00Z',
-        byCount: true,
-        dates: [
-          "2015-03-01T08:00:00Z",
-          "2015-03-13T08:00:00Z",
-          "2015-03-15T08:00:00Z",
-          "2015-03-27T08:00:00Z",
-          "2015-03-29T08:00:00Z",
-          "2015-04-03T08:00:00Z",
-          "2015-04-05T08:00:00Z",
-          "2015-04-17T08:00:00Z",
-          "2015-04-19T08:00:00Z"
-        ]
-      });
+      testRRULE(
+        'FREQ=MONTHLY;BYDAY=MO,FR;BYMONTHDAY=1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31;COUNT=4',
+        {
+          dtStart: '2015-03-01T08:00:00Z',
+          byCount: true,
+          dates: [
+            '2015-03-09T08:00:00Z',
+            '2015-03-13T08:00:00Z',
+            '2015-03-23T08:00:00Z',
+            '2015-03-27T08:00:00Z'
+          ]
+        }
+      );
+      testRRULE(
+        'FREQ=MONTHLY;BYDAY=MO,FR;BYMONTHDAY=1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31;COUNT=4',
+        {
+          dtStart: '2015-04-01T08:00:00Z',
+          byCount: true,
+          dates: [
+            '2015-04-03T08:00:00Z',
+            '2015-04-13T08:00:00Z',
+            '2015-04-17T08:00:00Z',
+            '2015-04-27T08:00:00Z'
+          ]
+        }
+      );
+      testRRULE(
+        'FREQ=MONTHLY;BYDAY=MO,SA;BYMONTHDAY=1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31;COUNT=4',
+        {
+          dtStart: '2015-04-01T08:00:00Z',
+          byCount: true,
+          dates: [
+            '2015-04-11T08:00:00Z',
+            '2015-04-13T08:00:00Z',
+            '2015-04-25T08:00:00Z',
+            '2015-04-27T08:00:00Z'
+          ]
+        }
+      );
+      testRRULE(
+        'FREQ=MONTHLY;BYDAY=SU,FR;BYMONTHDAY=1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31;COUNT=9',
+        {
+          dtStart: '2015-02-28T08:00:00Z',
+          byCount: true,
+          dates: [
+            '2015-03-01T08:00:00Z',
+            '2015-03-13T08:00:00Z',
+            '2015-03-15T08:00:00Z',
+            '2015-03-27T08:00:00Z',
+            '2015-03-29T08:00:00Z',
+            '2015-04-03T08:00:00Z',
+            '2015-04-05T08:00:00Z',
+            '2015-04-17T08:00:00Z',
+            '2015-04-19T08:00:00Z'
+          ]
+        }
+      );
     });
 
-    suite('YEARLY', function() {
+    suite('YEARLY', function () {
       //yearly & by month with one by day
       testRRULE('FREQ=YEARLY;BYMONTH=3;BYDAY=TU', {
         dtStart: '1970-03-08T02:00:00',
-        dates: [
-          '1970-03-10T02:00:00'
-        ]
+        dates: ['1970-03-10T02:00:00']
       });
 
       //every monday in January, for 3 years
@@ -757,15 +798,24 @@ suite('recur_iterator', function() {
       //Yearly, every WE and FR of January and March (more BYMONTH and more BYDAY)
       testRRULE('FREQ=YEARLY;BYMONTH=1,3;BYDAY=WE,FR', {
         dates: [
-          '2014-01-01T08:00:00', '2014-01-03T08:00:00',
-          '2014-01-08T08:00:00', '2014-01-10T08:00:00',
-          '2014-01-15T08:00:00', '2014-01-17T08:00:00',
-          '2014-01-22T08:00:00', '2014-01-24T08:00:00',
-          '2014-01-29T08:00:00', '2014-01-31T08:00:00',
-          '2014-03-05T08:00:00', '2014-03-07T08:00:00',
-          '2014-03-12T08:00:00', '2014-03-14T08:00:00',
-          '2014-03-19T08:00:00', '2014-03-21T08:00:00',
-          '2014-03-26T08:00:00', '2014-03-28T08:00:00'
+          '2014-01-01T08:00:00',
+          '2014-01-03T08:00:00',
+          '2014-01-08T08:00:00',
+          '2014-01-10T08:00:00',
+          '2014-01-15T08:00:00',
+          '2014-01-17T08:00:00',
+          '2014-01-22T08:00:00',
+          '2014-01-24T08:00:00',
+          '2014-01-29T08:00:00',
+          '2014-01-31T08:00:00',
+          '2014-03-05T08:00:00',
+          '2014-03-07T08:00:00',
+          '2014-03-12T08:00:00',
+          '2014-03-14T08:00:00',
+          '2014-03-19T08:00:00',
+          '2014-03-21T08:00:00',
+          '2014-03-26T08:00:00',
+          '2014-03-28T08:00:00'
         ]
       });
 
@@ -809,26 +859,22 @@ suite('recur_iterator', function() {
 
       //Weekly Sunday, Monday, Tuesday with count=3
       testRRULE('FREQ=WEEKLY;COUNT=3;BYDAY=MO,SU,TU', {
-              dtStart: '2017-07-30',
-              byCount: true,
-              dates: [
-                '2017-07-30',
-                '2017-07-31',
-                '2017-08-01'
-              ]
+        dtStart: '2017-07-30',
+        byCount: true,
+        dates: ['2017-07-30', '2017-07-31', '2017-08-01']
       });
 
       //Weekly Sunday, Wednesday with count=5
       testRRULE('FREQ=WEEKLY;COUNT=5;BYDAY=SU,WE', {
-              dtStart: '2017-04-23',
-              byCount: true,
-              dates: [
-                '2017-04-23',
-                '2017-04-26',
-                '2017-04-30',
-                '2017-05-03',
-                '2017-05-07'
-              ]
+        dtStart: '2017-04-23',
+        byCount: true,
+        dates: [
+          '2017-04-23',
+          '2017-04-26',
+          '2017-04-30',
+          '2017-05-03',
+          '2017-05-07'
+        ]
       });
 
       //yearly, byMonth, byweekNo
@@ -910,70 +956,63 @@ suite('recur_iterator', function() {
       //yearly, byDay,byMonthday
       testRRULE('FREQ=YEARLY;BYDAY=+1MO;BYMONTHDAY=7', {
         dtStart: '2015-01-01T08:00:00',
-        dates: [
-          '2019-01-07T08:00:00'
-        ]
+        dates: ['2019-01-07T08:00:00']
       });
 
       // Tycho brahe days - yearly, byYearDay with negative offsets
-      testRRULE('FREQ=YEARLY;BYYEARDAY=1,2,4,6,11,12,20,42,48,49,-306,-303,' +
-                '-293,-292,-266,-259,-258,-239,-228,-209,-168,-164,-134,-133,' +
-                '-113,-105,-87,-56,-44,-26,-21,-14', {
-        dtStart: '2015-01-01',
-        dates: [
-          '2015-01-01',
-          '2015-01-02',
-          '2015-01-04',
-          '2015-01-06',
-          '2015-01-11',
-          '2015-01-12',
-          '2015-01-20',
-          '2015-02-11',
-          '2015-02-17',
-          '2015-02-18',
-          '2015-03-01',
-          '2015-03-04',
-          '2015-03-14',
-          '2015-03-15',
-          '2015-04-10',
-          '2015-04-17',
-          '2015-04-18',
-          '2015-05-07',
-          '2015-05-18',
-          '2015-06-06',
-          '2015-07-17',
-          '2015-07-21',
-          '2015-08-20',
-          '2015-08-21',
-          '2015-09-10',
-          '2015-09-18',
-          '2015-10-06',
-          '2015-11-06',
-          '2015-11-18',
-          '2015-12-06',
-          '2015-12-11',
-          '2015-12-18'
-        ]
-      });
+      testRRULE(
+        'FREQ=YEARLY;BYYEARDAY=1,2,4,6,11,12,20,42,48,49,-306,-303,' +
+          '-293,-292,-266,-259,-258,-239,-228,-209,-168,-164,-134,-133,' +
+          '-113,-105,-87,-56,-44,-26,-21,-14',
+        {
+          dtStart: '2015-01-01',
+          dates: [
+            '2015-01-01',
+            '2015-01-02',
+            '2015-01-04',
+            '2015-01-06',
+            '2015-01-11',
+            '2015-01-12',
+            '2015-01-20',
+            '2015-02-11',
+            '2015-02-17',
+            '2015-02-18',
+            '2015-03-01',
+            '2015-03-04',
+            '2015-03-14',
+            '2015-03-15',
+            '2015-04-10',
+            '2015-04-17',
+            '2015-04-18',
+            '2015-05-07',
+            '2015-05-18',
+            '2015-06-06',
+            '2015-07-17',
+            '2015-07-21',
+            '2015-08-20',
+            '2015-08-21',
+            '2015-09-10',
+            '2015-09-18',
+            '2015-10-06',
+            '2015-11-06',
+            '2015-11-18',
+            '2015-12-06',
+            '2015-12-11',
+            '2015-12-18'
+          ]
+        }
+      );
 
       // Leap year - yearly, byYearDay with negative offsets
       testRRULE('FREQ=YEARLY;BYYEARDAY=-308,-307,-306', {
         dtStart: '2012-01-01',
-        dates: [
-          '2012-02-28',
-          '2012-02-29',
-          '2012-03-01',
-        ]
+        dates: ['2012-02-28', '2012-02-29', '2012-03-01']
       });
 
       // Non-leap year - yearly, byYearDay with negative offsets
       testRRULE('FREQ=YEARLY;BYYEARDAY=-307,-306,-305', {
         dtStart: '2013-01-01',
-        dates: [
-          '2013-02-28',
-          '2013-03-01',
-          '2013-03-02',
-        ]
+        dates: ['2013-02-28', '2013-03-01', '2013-03-02']
       });
 
       /*
@@ -994,8 +1033,6 @@ suite('recur_iterator', function() {
         ]
       });
       */
-
-
     });
   });
 });

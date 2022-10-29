@@ -1,12 +1,1 @@
-[
-  "vcalendar",
-  [
-    [
-      "group1.x-test",
-      {},
-      "text",
-      "test!"
-    ]
-  ],
-  []
-]
+["vcalendar", [["group1.x-test", {}, "text", "test!"]], []]

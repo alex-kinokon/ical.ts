@@ -1,11 +1,11 @@
-suite('ics - blank description', function() {
+suite('ics - blank description', function () {
   let icsData;
 
-  suiteSetup(async function() {
+  suiteSetup(async function () {
     icsData = await testSupport.loadSample('blank_description.ics');
   });
 
-  test('summary', function() {
+  test('summary', function () {
     // just verify it can parse blank lines
     ICAL.parse(icsData);
   });

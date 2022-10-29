@@ -1,11 +1,1 @@
-["vcalendar",
-  [
-    [
-      "location",
-      {},
-      "text",
-      ""
-    ]
-  ],
-  []
-]
+["vcalendar", [["location", {}, "text", ""]], []]

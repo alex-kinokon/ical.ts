@@ -1,6 +1,5 @@
-suite('ICAL.Time', function() {
-
-  perfTest('subtract date', function() {
+suite('ICAL.Time', function () {
+  perfTest('subtract date', function () {
     let time = new ICAL.Time({
       year: 2012,
       month: 1,
@@ -26,7 +25,7 @@ suite('ICAL.Time', function() {
     minutes: 3
   });
 
-  perfTest('add duration', function() {
+  perfTest('add duration', function () {
     let time = new ICAL.Time({
       year: 2012,
       month: 1,
@@ -40,7 +39,7 @@ suite('ICAL.Time', function() {
     time.year; // eslint-disable-line no-unused-expressions
   });
 
-  perfTest('create and clone time', function() {
+  perfTest('create and clone time', function () {
     let time = new ICAL.Time({
       year: 2012,
       month: 1,
@@ -66,19 +65,19 @@ suite('ICAL.Time', function() {
     seconds: 1
   });
 
-  perfTest('toUnixTime', function() {
+  perfTest('toUnixTime', function () {
     _time.toUnixTime();
   });
 
-  perfTest('fromUnixTime', function() {
+  perfTest('fromUnixTime', function () {
     _time.fromUnixTime(1234567890);
   });
 
-  perfTest('dayOfWeek', function() {
+  perfTest('dayOfWeek', function () {
     _time.dayOfWeek();
   });
 
-  perfTest('weekNumber', function() {
+  perfTest('weekNumber', function () {
     _time.weekNumber();
   });
 });
