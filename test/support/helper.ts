@@ -3,9 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-let crossGlobal = typeof window === 'undefined' ? global : window;
-
-import ICAL from '../../lib/ical/module';
+import * as ICAL from '../../lib/ical/module';
 import chai, { assert } from 'chai';
 import Benchmark from 'benchmark';
 import { URL } from 'url';

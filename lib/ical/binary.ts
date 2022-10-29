@@ -5,43 +5,40 @@
 
 /**
  * Represents the BINARY value type, which contains extra methods for encoding and decoding.
- *
- * @class
- * @alias ICAL.Binary
  */
 class Binary {
+  private value: string;
+
   /**
    * Creates a binary value from the given string.
    *
-   * @param {String} aString        The binary value string
-   * @return {ICAL.Binary}          The binary value instance
+   * @param aString The binary value string
+   * @return The binary value instance
    */
-  static fromString(aString) {
+  static fromString(aString: string): Binary {
     return new Binary(aString);
   }
 
   /**
    * Creates a new ICAL.Binary instance
    *
-   * @param {String} aValue     The binary data for this value
+   * @param aValue The binary data for this value
    */
-  constructor(aValue) {
+  constructor(aValue: string) {
     this.value = aValue;
   }
 
   /**
    * The type name, to be used in the jCal object.
-   * @default "binary"
-   * @constant
    */
-  icaltype = 'binary';
+  readonly icaltype = 'binary';
 
   /**
    * Base64 decode the current value
    *
-   * @return {String}         The base64-decoded value
+   * @return The base64-decoded value
    */
-  decodeValue() {
+  decodeValue(): string {
     return this._b64_decode(this.value);
   }
 
@@ -51,7 +48,7 @@ class Binary {
    *
    * @param {String} aValue      The raw binary value to encode
    */
-  setEncodedValue(aValue) {
+  setEncodedValue(aValue: string) {
     this.value = this._b64_encode(aValue);
   }
 
@@ -185,8 +182,9 @@ class Binary {
    * The string representation of this value
    * @return {String}
    */
-  toString() {
+  toString(): string {
     return this.value;
   }
 }
+
 export default Binary;

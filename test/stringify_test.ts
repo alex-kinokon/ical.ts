@@ -91,12 +91,12 @@ suite('ICAL.stringify', function () {
     });
 
     test('folding', function () {
-      let oldLength = ICAL.foldLength;
+      let oldLength = ICAL.config.foldLength;
       let subject = new ICAL.Property('description');
-      let N = ICAL.newLineChar + ' ';
+      let N = ICAL.config.newLineChar + ' ';
       subject.setValue('foobar');
 
-      ICAL.foldLength = 19;
+      ICAL.config.foldLength = 19;
       assert.equal(subject.toICALString(), 'DESCRIPTION:foobar');
       assert.equal(
         ICAL.stringify.property(subject.toJSON(), ICAL.design.icalendar, false),
@@ -107,7 +107,7 @@ suite('ICAL.stringify', function () {
         'DESCRIPTION:foobar'
       );
 
-      ICAL.foldLength = 15;
+      ICAL.config.foldLength = 15;
       assert.equal(subject.toICALString(), 'DESCRIPTION:foobar');
       assert.equal(
         ICAL.stringify.property(subject.toJSON(), ICAL.design.icalendar, false),
@@ -123,7 +123,7 @@ suite('ICAL.stringify', function () {
       assert.equal(
         ICAL.stringify.property(subject.toJSON(), ICAL.design.icalendar, false),
         'DESCRIPTION:' + N + utf16_muscle
-      ); //verify new line is after ':', as otherwise the whole line is longer than ICAL.foldLength
+      ); //verify new line is after ':', as otherwise the whole line is longer than ICAL.config.foldLength
       subject.setValue(
         'aa' + utf16_muscle + utf16_muscle + 'a' + utf16_muscle + utf16_muscle
       );
@@ -139,7 +139,7 @@ suite('ICAL.stringify', function () {
           utf16_muscle
       ); //verify that the utf16_muscle is moved as whole to a new line as it is 4 UTF-8 bytes
 
-      ICAL.foldLength = oldLength;
+      ICAL.config.foldLength = oldLength;
     });
 
     test('property groups', function () {

@@ -336,10 +336,10 @@ suite('Property', function () {
       assert.deepEqual(subject.getValues(), ['foo']);
       assert.equal(subject.toICALString(), 'DESCRIPTION:foo');
       // Fold length should not fold the property here
-      let oldLength = ICAL.foldLength;
-      ICAL.foldLength = 1;
+      let oldLength = ICAL.config.foldLength;
+      ICAL.config.foldLength = 1;
       assert.equal(subject.toICALString(), 'DESCRIPTION:foo');
-      ICAL.foldLength = oldLength;
+      ICAL.config.foldLength = oldLength;
     });
   });
 
