@@ -1,7 +1,7 @@
 import { suite, setup, test } from 'mocha';
 import assert from 'assert/strict';
 import { ICAL } from './support/helper';
-import type Binary from '../lib/ical/binary';
+import type { Binary } from '../lib/ical/';
 
 suite('ICAL.Binary', function () {
   let subject: Binary;

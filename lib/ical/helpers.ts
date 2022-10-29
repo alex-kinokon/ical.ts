@@ -3,8 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import TimezoneService from './timezone_service';
-import { config } from './module';
+import { TimezoneService } from './timezone_service';
+import { config } from './index';
 
 /**
  * Helper functions used in various places within ical.js

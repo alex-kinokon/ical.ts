@@ -100,5 +100,8 @@
     "repository": "https://github.com/kewisch/ical.js.git",
     "branch": "main",
     "commit": "3f0838cc27a7e82d9e61f548dc1cc91d7cf2d546"
-  }
+  },
+  "eslintignore": [
+    "dist"
+  ]
 }

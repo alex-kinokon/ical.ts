@@ -3,10 +3,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import UtcOffset from './utc_offset';
-import Time from './time';
-import Timezone from './timezone';
-import design from './design';
+import { UtcOffset } from './utc_offset';
+import { Time } from './time';
+import { Timezone } from './timezone';
+import { design } from './design';
 import { pad2, strictParseInt } from './helpers';
 
 /**
@@ -24,7 +24,7 @@ import { pad2, strictParseInt } from './helpers';
  * @extends {ICAL.Time}
  * @class
  */
-class VCardTime extends Time {
+export class VCardTime extends Time {
   /**
    * Returns a new ICAL.VCardTime instance from a date and/or time string.
    *
@@ -226,4 +226,3 @@ class VCardTime extends Time {
     return null;
   }
 }
-export default VCardTime;

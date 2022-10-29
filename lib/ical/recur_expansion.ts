@@ -3,8 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import Time from './time';
-import RecurIterator from './recur_iterator';
+import { Time } from './time';
+import { RecurIterator } from './recur_iterator';
 import { formatClassType, binsearchInsert } from './helpers';
 
 /**
@@ -48,7 +48,7 @@ import { formatClassType, binsearchInsert } from './helpers';
  * @class
  * @alias ICAL.RecurExpansion
  */
-class RecurExpansion {
+export class RecurExpansion {
   /**
    * Creates a new ICAL.RecurExpansion instance.
    *
@@ -467,4 +467,3 @@ class RecurExpansion {
     return chosenIter;
   }
 }
-export default RecurExpansion;

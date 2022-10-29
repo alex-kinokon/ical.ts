@@ -4,7 +4,7 @@
  * Portions Copyright (C) Philipp Kewisch */
 
 import { strictParseInt, trunc, pad2 } from './helpers';
-import design from './design';
+import { design } from './design';
 
 /**
  * This class represents the "utc-offset" value type, with various calculation and manipulation
@@ -13,7 +13,7 @@ import design from './design';
  * @class
  * @alias ICAL.UtcOffset
  */
-class UtcOffset {
+export class UtcOffset {
   /**
    * Creates a new {@link ICAL.UtcOffset} instance from the passed string.
    *
@@ -189,4 +189,3 @@ class UtcOffset {
     );
   }
 }
-export default UtcOffset;

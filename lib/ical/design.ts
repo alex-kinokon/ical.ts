@@ -4,13 +4,13 @@
  * Portions Copyright (C) Philipp Kewisch */
 
 import { isStrictlyNaN, extend } from './helpers';
-import UtcOffset from './utc_offset';
-import VCardTime from './vcard_time';
-import Recur from './recur';
-import Period from './period';
-import Duration from './duration';
-import Time from './time';
-import Binary from './binary';
+import { UtcOffset } from './utc_offset';
+import { VCardTime } from './vcard_time';
+import { Recur } from './recur';
+import { Period } from './period';
+import { Duration } from './duration';
+import { Time } from './time';
+import { Binary } from './binary';
 
 /** @module ICAL.design */
 
@@ -1000,7 +1000,7 @@ let vcard3Set = {
  * @alias ICAL.design
  * @exports module:ICAL.design
  */
-const design = {
+export const design = {
   /**
    * A designSet describes value, parameter and property data. It is used by
    * ther parser and stringifier in components and properties to determine they
@@ -1093,4 +1093,3 @@ const design = {
     return isInDesign ? design.components[componentName] : design.defaultSet;
   }
 };
-export default design;

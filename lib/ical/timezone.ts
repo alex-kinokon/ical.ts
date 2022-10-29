@@ -3,9 +3,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import Time from './time';
-import Component from './component';
-import ICALParse from './parse';
+import { Time } from './time';
+import { Component } from './component';
+import { parse } from './parse';
 import { clone, binsearchInsert } from './helpers';
 
 const OPTIONS = ['tzid', 'location', 'tznames', 'latitude', 'longitude'];
@@ -26,7 +26,7 @@ const OPTIONS = ['tzid', 'location', 'tznames', 'latitude', 'longitude'];
  * @class
  * @alias ICAL.Timezone
  */
-class Timezone {
+export class Timezone {
   static _compare_change_fn(a, b) {
     if (a.year < b.year) return -1;
     else if (a.year > b.year) return 1;
@@ -252,7 +252,7 @@ class Timezone {
       if (aData && 'component' in aData) {
         if (typeof aData.component == 'string') {
           // If a string was passed, parse it as a component
-          let jCal = ICALParse(aData.component);
+          let jCal = parse(aData.component);
           this.component = new Component(jCal);
         } else if (aData.component instanceof Component) {
           // If it was a component already, then just set it
@@ -526,4 +526,3 @@ class Timezone {
     return this.tznames ? this.tznames : this.tzid;
   }
 }
-export default Timezone;

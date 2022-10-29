@@ -4,10 +4,10 @@
  * Portions Copyright (C) Philipp Kewisch */
 
 import { binsearchInsert } from './helpers';
-import Component from './component';
-import Property from './property';
-import Timezone from './timezone';
-import RecurExpansion from './recur_expansion';
+import { Component } from './component';
+import { Property } from './property';
+import { Timezone } from './timezone';
+import { RecurExpansion } from './recur_expansion';
 
 /**
  * ICAL.js is organized into multiple layers. The bottom layer is a raw jCal
@@ -18,7 +18,7 @@ import RecurExpansion from './recur_expansion';
  * @class
  * @alias ICAL.Event
  */
-class Event {
+export class Event {
   /**
    * Creates a new ICAL.Event instance.
    *
@@ -556,7 +556,6 @@ class Event {
     return this.component.toString();
   }
 }
-export default Event;
 
 function compareRangeException(a, b) {
   if (a[0] > b[0]) return 1;

@@ -22,7 +22,7 @@ const DATA_PROPS_TO_COPY = [
  * @class
  * @alias ICAL.Duration
  */
-class Duration {
+export class Duration {
   /**
    * Returns a new ICAL.Duration instance from the passed seconds value.
    *
@@ -308,7 +308,6 @@ class Duration {
     return this.toString();
   }
 }
-export default Duration;
 
 /**
  * Internal helper function to handle a chunk of a duration.

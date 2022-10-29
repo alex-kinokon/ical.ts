@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import design from './design';
+import { design } from './design';
 import { unescapedIndexOf } from './helpers';
 
 const CHAR = /[^ \t]/;
@@ -26,7 +26,7 @@ const RFC6868_REPLACE_MAP = { "^'": '"', '^n': '\n', '^^': '^' };
  * @param {String} input      The string data to parse
  * @return {Object|Object[]}  A single jCal object, or an array thereof
  */
-export default function parse(input) {
+export function parse(input) {
   let state = {};
   let root = (state.component = []);
 

@@ -3,10 +3,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import Timezone from './timezone';
-import Duration from './duration';
-import design from './design';
-import TimezoneService from './timezone_service';
+import { Timezone } from './timezone';
+import { Duration } from './duration';
+import { design } from './design';
+import { TimezoneService } from './timezone_service';
 import { strictParseInt, trunc, pad2 } from './helpers';
 
 /**
@@ -29,7 +29,7 @@ import { strictParseInt, trunc, pad2 } from './helpers';
  * @alias ICAL.Time
  * @class
  */
-class Time {
+export class Time {
   static _dowCache = {};
   static _wnCache = {};
 
@@ -1271,7 +1271,6 @@ class Time {
     return result;
   }
 }
-export default Time;
 
 (function setupNormalizeAttributes() {
   // This needs to run before any instances are created!

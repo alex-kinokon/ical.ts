@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import design from './design';
+import { design } from './design';
 import { foldline, unescapedIndexOf } from './helpers';
 
 const LINE_ENDING = '\r\n';
@@ -18,7 +18,7 @@ const RFC6868_REPLACE_MAP = { '"': "^'", '\n': '^n', '^': '^^' };
  * @param {Array} jCal    The jCal/jCard document
  * @return {String}       The stringified iCalendar/vCard document
  */
-export default function stringify(jCal) {
+export function stringify(jCal) {
   if (typeof jCal[0] == 'string') {
     // This is a single component
     jCal = [jCal];

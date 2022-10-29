@@ -3,8 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import Timezone from './timezone';
-import Component from './component';
+import { Timezone } from './timezone';
+import { Component } from './component';
 
 let zones = {};
 
@@ -35,7 +35,7 @@ Object.defineProperties(zones, {
  * @exports module:ICAL.TimezoneService
  * @alias ICAL.TimezoneService
  */
-const TimezoneService = {
+export const TimezoneService = {
   get count() {
     return Object.keys(zones).length;
   },
@@ -103,5 +103,3 @@ const TimezoneService = {
     return delete zones[tzid];
   }
 };
-
-export default TimezoneService;

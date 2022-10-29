@@ -3,8 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import Time from './time';
-import Duration from './duration';
+import { Time } from './time';
+import { Duration } from './duration';
 
 /**
  * This class represents the "period" value type, with various calculation and manipulation methods.
@@ -12,7 +12,7 @@ import Duration from './duration';
  * @class
  * @alias ICAL.Period
  */
-class Period {
+export class Period {
   /**
    * Creates a new {@link ICAL.Period} instance from the passed string.
    *
@@ -233,4 +233,3 @@ class Period {
     );
   }
 }
-export default Period;

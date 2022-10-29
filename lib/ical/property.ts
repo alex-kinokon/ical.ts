@@ -8,9 +8,9 @@ const PROP_INDEX = 1;
 const TYPE_INDEX = 2;
 const VALUE_INDEX = 3;
 
-import design from './design';
-import ICALStringify from './stringify';
-import ICALParse from './parse';
+import { design } from './design';
+import { stringify } from './stringify';
+import { parse } from './parse';
 
 /**
  * Provides a layer on top of the raw jCal object for manipulating a single property, with its
@@ -19,7 +19,7 @@ import ICALParse from './parse';
  * @class
  * @alias ICAL.Property
  */
-class Property {
+export class Property {
   /**
    * Create an {@link ICAL.Property} by parsing the passed iCalendar string.
    *
@@ -28,7 +28,7 @@ class Property {
    * @return {ICAL.Property}                    The created iCalendar property
    */
   static fromString(str, designSet) {
-    return new Property(ICALParse.property(str, designSet));
+    return new Property(parse.property(str, designSet));
   }
 
   /**
@@ -403,7 +403,6 @@ class Property {
    * @return {String}
    */
   toICALString() {
-    return ICALStringify.property(this.jCal, this._designSet, true);
+    return stringify.property(this.jCal, this._designSet, true);
   }
 }
-export default Property;

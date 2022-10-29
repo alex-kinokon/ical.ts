@@ -3,9 +3,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import RecurIterator from './recur_iterator';
-import Time from './time';
-import design from './design';
+import { RecurIterator } from './recur_iterator';
+import { Time } from './time';
+import { design } from './design';
 import { strictParseInt, clone } from './helpers';
 
 const VALID_DAY_NAMES = /^(SU|MO|TU|WE|TH|FR|SA)$/;
@@ -50,7 +50,7 @@ const ALLOWED_FREQ = [
  * @class
  * @alias ICAL.Recur
  */
-class Recur {
+export class Recur {
   /**
    * Creates a new {@link ICAL.Recur} instance from the passed string.
    *
@@ -475,7 +475,6 @@ class Recur {
     return str;
   }
 }
-export default Recur;
 
 function parseNumericValue(type, min, max, value) {
   let result = value;

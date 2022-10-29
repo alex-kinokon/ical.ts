@@ -6,7 +6,7 @@
 /**
  * Represents the BINARY value type, which contains extra methods for encoding and decoding.
  */
-class Binary {
+export class Binary {
   private value: string;
 
   /**
@@ -186,5 +186,3 @@ class Binary {
     return this.value;
   }
 }
-
-export default Binary;

@@ -3,10 +3,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import ICALParse from './parse';
-import Component from './component';
-import Event from './event';
-import Timezone from './timezone';
+import { parse } from './parse';
+import { Component } from './component';
+import { Event } from './event';
+import { Timezone } from './timezone';
 
 /**
  * The ComponentParser is used to process a String or jCal Object,
@@ -36,7 +36,7 @@ import Timezone from './timezone';
  * @class
  * @alias ICAL.ComponentParser
  */
-class ComponentParser {
+export class ComponentParser {
   /**
    * Creates a new ICAL.ComponentParser instance.
    *
@@ -112,7 +112,7 @@ class ComponentParser {
   process(ical) {
     //TODO: this is sync now in the future we will have a incremental parser.
     if (typeof ical === 'string') {
-      ical = ICALParse(ical);
+      ical = parse(ical);
     }
 
     if (!(ical instanceof Component)) {
@@ -156,4 +156,3 @@ class ComponentParser {
     this.oncomplete();
   }
 }
-export default ComponentParser;

@@ -3,10 +3,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import Property from './property';
-import ICALParse from './parse';
-import stringify from './stringify';
-import design from './design';
+import { Property } from './property';
+import { parse } from './parse';
+import { stringify } from './stringify';
+import { design } from './design';
 
 const NAME_INDEX = 0;
 const PROPERTY_INDEX = 1;
@@ -19,14 +19,14 @@ const COMPONENT_INDEX = 2;
  * @class
  * @alias ICAL.Component
  */
-class Component {
+export class Component {
   /**
    * Create an {@link ICAL.Component} by parsing the passed iCalendar string.
    *
    * @param {String} str        The iCalendar string to parse
    */
   static fromString(str) {
-    return new Component(ICALParse.component(str));
+    return new Component(parse.component(str));
   }
 
   /**
@@ -493,4 +493,3 @@ class Component {
     return stringify.component(this.jCal, this._designSet);
   }
 }
-export default Component;

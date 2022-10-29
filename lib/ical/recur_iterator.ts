@@ -4,8 +4,8 @@
  * Portions Copyright (C) Philipp Kewisch */
 
 import { formatClassType, clone, trunc } from './helpers';
-import Recur from './recur';
-import Time from './time';
+import { Recur } from './recur';
+import { Time } from './time';
 
 /**
  * An iterator for a single recurrence rule. This class usually doesn't have to be instanciated
@@ -14,7 +14,7 @@ import Time from './time';
  * @class
  * @alias ICAL.RecurIterator
  */
-class RecurIterator {
+export class RecurIterator {
   static _indexMap = {
     BYSECOND: 0,
     BYMINUTE: 1,
@@ -1407,4 +1407,3 @@ class RecurIterator {
     return result;
   }
 }
-export default RecurIterator;
