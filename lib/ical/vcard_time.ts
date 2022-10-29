@@ -3,11 +3,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import UtcOffset from './utc_offset.js';
-import Time from './time.js';
-import Timezone from './timezone.js';
-import design from './design.js';
-import { pad2, strictParseInt } from './helpers.js';
+import UtcOffset from './utc_offset';
+import Time from './time';
+import Timezone from './timezone';
+import design from './design';
+import { pad2, strictParseInt } from './helpers';
 
 /**
  * Describes a vCard time, which has slight differences to the ICAL.Time.

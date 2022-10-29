@@ -3,9 +3,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import { formatClassType, clone, trunc } from './helpers.js';
-import Recur from './recur.js';
-import Time from './time.js';
+import { formatClassType, clone, trunc } from './helpers';
+import Recur from './recur';
+import Time from './time';
 
 /**
  * An iterator for a single recurrence rule. This class usually doesn't have to be instanciated

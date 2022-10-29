@@ -3,11 +3,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import { binsearchInsert } from './helpers.js';
-import Component from './component.js';
-import Property from './property.js';
-import Timezone from './timezone.js';
-import RecurExpansion from './recur_expansion.js';
+import { binsearchInsert } from './helpers';
+import Component from './component';
+import Property from './property';
+import Timezone from './timezone';
+import RecurExpansion from './recur_expansion';
 
 /**
  * ICAL.js is organized into multiple layers. The bottom layer is a raw jCal

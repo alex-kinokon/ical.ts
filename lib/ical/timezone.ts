@@ -3,10 +3,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import Time from './time.js';
-import Component from './component.js';
-import ICALParse from './parse.js';
-import { clone, binsearchInsert } from './helpers.js';
+import Time from './time';
+import Component from './component';
+import ICALParse from './parse';
+import { clone, binsearchInsert } from './helpers';
 
 const OPTIONS = ['tzid', 'location', 'tznames', 'latitude', 'longitude'];
 

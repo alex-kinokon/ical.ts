@@ -15,16 +15,13 @@ export default {
       file: 'dist/ical.es5.cjs',
       exports: 'default',
       format: 'cjs',
-      plugins: [getBabelOutputPlugin({ presets: ['@babel/preset-env'] })]
+      plugins: [getBabelOutputPlugin()]
     },
     {
       file: 'dist/ical.es5.min.cjs',
       exports: 'default',
       format: 'cjs',
-      plugins: [
-        getBabelOutputPlugin({ presets: ['@babel/preset-env'] }),
-        terser()
-      ]
+      plugins: [getBabelOutputPlugin(), terser()]
     }
   ]
 };

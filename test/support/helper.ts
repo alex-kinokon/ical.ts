@@ -7,25 +7,18 @@
 
 let crossGlobal = typeof window === 'undefined' ? global : window;
 let testSupport = (crossGlobal.testSupport = {
-  isNode: typeof global !== 'undefined',
-  isKarma:
-    typeof window !== 'undefined' && typeof window.__karma__ !== 'undefined'
+  isNode: typeof global !== 'undefined'
 });
-
-if (testSupport.isKarma) {
-  // Need to do this before the first await, browser/karma won't wait on top level await
-  window.__karma__.loaded = function () {};
-}
 
 /* eslint-disable no-var, no-redeclare */
 if (testSupport.isNode) {
-  var ICAL = (await import('../../lib/ical/module.js')).default;
-  var chai = (await import('chai')).default;
-  var Benchmark = (await import('benchmark')).default;
-  var { URL } = await import('url');
-  var { readFile, readdir } = await import('fs/promises');
+  var ICAL = require('../../lib/ical/module').default;
+  var chai = require('chai');
+  var Benchmark = require('benchmark');
+  var { URL } = require('url');
+  var { readFile, readdir } = require('fs/promises');
 } else {
-  var ICAL = (await import('/base/lib/ical/module.js')).default;
+  var ICAL = require('/base/lib/ical/module').default;
   var chai = window.chai;
 }
 /* eslint-enable no-var, no-redeclare*/
@@ -115,12 +108,16 @@ testSupport.useTimezones = function (zones) {
   });
 };
 
+const $import = {
+  meta: { url: require('url').pathToFileURL(__filename).href }
+};
+
 /**
  * @param {String} path relative to root (/) of project.
  */
 testSupport.load = async function (path) {
   if (testSupport.isNode) {
-    let root = new URL('../../' + path, import.meta.url).pathname;
+    let root = new URL('../../' + path, $import.meta.url).pathname;
     return readFile(root, 'utf8');
   } else {
     let response = await fetch('/base/' + path);
@@ -188,8 +185,8 @@ if (!testSupport.isNode) {
   try {
     for (let file in window.__karma__.files) {
       if (Object.hasOwn(window.__karma__.files, file)) {
-        if (/_test\.js$/.test(file)) {
-          await import(file);
+        if (/_test\.[jt]s$/.test(file)) {
+          require(file);
         }
       }
     }
@@ -202,7 +199,7 @@ if (!testSupport.isNode) {
 
 export const mochaHooks = {
   async beforeAll() {
-    let benchmark = new URL('../../tools/benchmark', import.meta.url).pathname;
+    let benchmark = new URL('../../tools/benchmark', $import.meta.url).pathname;
     let files = await readdir(benchmark);
     for (let file of files) {
       let match = file.match(/^ical_(\w+).c?js$/);

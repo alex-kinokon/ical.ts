@@ -3,9 +3,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import Time from './time.js';
-import RecurIterator from './recur_iterator.js';
-import { formatClassType, binsearchInsert } from './helpers.js';
+import Time from './time';
+import RecurIterator from './recur_iterator';
+import { formatClassType, binsearchInsert } from './helpers';
 
 /**
  * Primary class for expanding recurring rules.  Can take multiple rrules, rdates, exdate(s) and

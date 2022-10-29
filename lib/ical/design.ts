@@ -3,14 +3,14 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import { isStrictlyNaN, extend } from './helpers.js';
-import UtcOffset from './utc_offset.js';
-import VCardTime from './vcard_time.js';
-import Recur from './recur.js';
-import Period from './period.js';
-import Duration from './duration.js';
-import Time from './time.js';
-import Binary from './binary.js';
+import { isStrictlyNaN, extend } from './helpers';
+import UtcOffset from './utc_offset';
+import VCardTime from './vcard_time';
+import Recur from './recur';
+import Period from './period';
+import Duration from './duration';
+import Time from './time';
+import Binary from './binary';
 
 /** @module ICAL.design */
 

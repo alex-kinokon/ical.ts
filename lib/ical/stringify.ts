@@ -3,8 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import design from './design.js';
-import { foldline, unescapedIndexOf } from './helpers.js';
+import design from './design';
+import { foldline, unescapedIndexOf } from './helpers';
 
 const LINE_ENDING = '\r\n';
 const DEFAULT_VALUE_TYPE = 'unknown';

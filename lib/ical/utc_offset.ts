@@ -3,8 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import { strictParseInt, trunc, pad2 } from './helpers.js';
-import design from './design.js';
+import { strictParseInt, trunc, pad2 } from './helpers';
+import design from './design';
 
 /**
  * This class represents the "utc-offset" value type, with various calculation and manipulation

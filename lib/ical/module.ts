@@ -3,25 +3,25 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import Binary from './binary.js';
-import Component from './component.js';
-import ComponentParser from './component_parser.js';
-import design from './design.js';
-import Duration from './duration.js';
-import Event from './event.js';
-import * as helpers from './helpers.js';
-import parse from './parse.js';
-import Period from './period.js';
-import Property from './property.js';
-import Recur from './recur.js';
-import RecurExpansion from './recur_expansion.js';
-import RecurIterator from './recur_iterator.js';
-import stringify from './stringify.js';
-import Time from './time.js';
-import Timezone from './timezone.js';
-import TimezoneService from './timezone_service.js';
-import UtcOffset from './utc_offset.js';
-import VCardTime from './vcard_time.js';
+import Binary from './binary';
+import Component from './component';
+import ComponentParser from './component_parser';
+import design from './design';
+import Duration from './duration';
+import Event from './event';
+import * as helpers from './helpers';
+import parse from './parse';
+import Period from './period';
+import Property from './property';
+import Recur from './recur';
+import RecurExpansion from './recur_expansion';
+import RecurIterator from './recur_iterator';
+import stringify from './stringify';
+import Time from './time';
+import Timezone from './timezone';
+import TimezoneService from './timezone_service';
+import UtcOffset from './utc_offset';
+import VCardTime from './vcard_time';
 
 /**
  * The main ICAL module. Provides access to everything else.

@@ -3,8 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import Time from './time.js';
-import Duration from './duration.js';
+import Time from './time';
+import Duration from './duration';
 
 /**
  * This class represents the "period" value type, with various calculation and manipulation methods.

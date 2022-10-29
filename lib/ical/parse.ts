@@ -3,8 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import design from './design.js';
-import { unescapedIndexOf } from './helpers.js';
+import design from './design';
+import { unescapedIndexOf } from './helpers';
 
 const CHAR = /[^ \t]/;
 const VALUE_DELIMITER = ':';

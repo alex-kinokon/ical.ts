@@ -1,6 +1,7 @@
 {
   "env": {
     "es6": true,
+    "node": true
   },
   "parserOptions": {
     "ecmaVersion": 13,
@@ -10,7 +11,7 @@
   "rules": {
     // Enforce one true brace style (opening brace on the same line)
     // Allow single line (for now) because of the vast number of changes needed
-    "brace-style": [2, "1tbs", {"allowSingleLine": true}],
+    "brace-style": [2, "1tbs", { "allowSingleLine": true }],
 
     // Enforce newline at the end of file, with no multiple empty lines.
     "eol-last": 2,
@@ -23,7 +24,7 @@
     "comma-dangle": 0,
 
     // Enforce spacing before and after comma
-    "comma-spacing": [2, {"before": false, "after": true}],
+    "comma-spacing": [2, { "before": false, "after": true }],
 
     // Enforce one true comma style.
     "comma-style": [2, "last"],
@@ -38,7 +39,10 @@
     "arrow-spacing": [2, { "before": true, "after": true }],
 
     // Enforces spacing between keys and values in object literal properties.
-    "key-spacing": [2, {"beforeColon": false, "afterColon": true, "mode": "minimum"}],
+    "key-spacing": [
+      2,
+      { "beforeColon": false, "afterColon": true, "mode": "minimum" }
+    ],
 
     // Disallow the omission of parentheses when invoking a constructor with no
     // arguments.
@@ -144,7 +148,7 @@
     //"space-unary-ops": [2, { "words": true, "nonwords": false }],
 
     // Enforce spacing after semicolons.
-    "semi-spacing": [2, {"before": false, "after": true}],
+    "semi-spacing": [2, { "before": false, "after": true }],
 
     // Disallow the use of Boolean literals in conditional expressions.
     "no-unneeded-ternary": 2,
@@ -185,7 +189,10 @@
 
     // Require space after keyword for anonymous functions, but disallow space
     // after name of named functions.
-    "space-before-function-paren": [2, {"anonymous": "never", "named": "never"}],
+    "space-before-function-paren": [
+      2,
+      { "anonymous": "never", "named": "never" }
+    ],
 
     // Disallow unreachable statements after a return, throw, continue, or break
     // statement.
@@ -208,7 +215,7 @@
     "no-shadow": 2,
 
     // Disallow global and local variables that aren't used, but allow unused function arguments.
-    "no-unused-vars": [2, {"vars": "all", "args": "none" }],
+    "no-unused-vars": [2, { "vars": "all", "args": "none" }],
 
     // Require padding inside curly braces
     "object-curly-spacing": [2, "always"],
@@ -347,7 +354,11 @@
     "space-before-blocks": 2,
 
     // Operators always before the line break
-    "operator-linebreak": [2, "after", { "overrides": { ":": "before", "?": "ignore"}}],
+    "operator-linebreak": [
+      2,
+      "after",
+      { "overrides": { ":": "before", "?": "ignore" } }
+    ],
 
     // Restricts the use of parentheses to only where they are necessary
     //"no-extra-parens": [2, "all", { "conditionalAssign": false, "returnAssign": false, "nestedBinaryExpressions": false }],

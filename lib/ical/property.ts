@@ -8,9 +8,9 @@ const PROP_INDEX = 1;
 const TYPE_INDEX = 2;
 const VALUE_INDEX = 3;
 
-import design from './design.js';
-import ICALStringify from './stringify.js';
-import ICALParse from './parse.js';
+import design from './design';
+import ICALStringify from './stringify';
+import ICALParse from './parse';
 
 /**
  * Provides a layer on top of the raw jCal object for manipulating a single property, with its

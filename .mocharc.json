@@ -1,0 +1,6 @@
+{
+  "require": ["./tools/babel-register.js"],
+  "extension": ["js", "ts"],
+  "ui": "tdd",
+  "reporter": "spec"
+}

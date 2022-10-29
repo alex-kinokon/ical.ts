@@ -3,10 +3,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import Property from './property.js';
-import ICALParse from './parse.js';
-import stringify from './stringify.js';
-import design from './design.js';
+import Property from './property';
+import ICALParse from './parse';
+import stringify from './stringify';
+import design from './design';
 
 const NAME_INDEX = 0;
 const PROPERTY_INDEX = 1;

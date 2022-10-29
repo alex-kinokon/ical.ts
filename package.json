@@ -26,6 +26,7 @@
     "@babel/register": "^7.18.9",
     "@octokit/core": "^4.1.0",
     "@rollup/plugin-babel": "^6.0.0",
+    "@types/mocha": "github:alex-kinokon/mocha-types",
     "@types/node": "^18.11.7",
     "benchmark": "^2.1.4",
     "c8": "^7.11.0",
@@ -46,8 +47,8 @@
   "scripts": {
     "test": "npm run test-unit && npm run test-acceptance",
     "test-unit": "c8 mocha",
-    "test-acceptance": "mocha test/acceptance/*_test.js",
-    "test-performance": "mocha --reporter test/support/perfReporter.cjs test/performance/*_test.js",
+    "test-acceptance": "mocha test/acceptance/*_test.ts",
+    "test-performance": "mocha --reporter test/support/perfReporter.ts test/performance/*_test.ts",
     "test-all": "npm run test-unit && npm run test-acceptance && npm run test-performance",
     "build": "rollup -c",
     "lint": "eslint lib/ical test tools/scriptutils.js",
@@ -89,5 +90,10 @@
     "singleQuote": true,
     "trailingComma": "none",
     "arrowParens": "avoid"
+  },
+  "upstream": {
+    "repository": "https://github.com/kewisch/ical.js.git",
+    "branch": "main",
+    "commit": "3f0838cc27a7e82d9e61f548dc1cc91d7cf2d546"
   }
 }

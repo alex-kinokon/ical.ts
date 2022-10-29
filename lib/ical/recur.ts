@@ -3,10 +3,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import RecurIterator from './recur_iterator.js';
-import Time from './time.js';
-import design from './design.js';
-import { strictParseInt, clone } from './helpers.js';
+import RecurIterator from './recur_iterator';
+import Time from './time';
+import design from './design';
+import { strictParseInt, clone } from './helpers';
 
 const VALID_DAY_NAMES = /^(SU|MO|TU|WE|TH|FR|SA)$/;
 const VALID_BYDAY_PART =

@@ -3,10 +3,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import ICALParse from './parse.js';
-import Component from './component.js';
-import Event from './event.js';
-import Timezone from './timezone.js';
+import ICALParse from './parse';
+import Component from './component';
+import Event from './event';
+import Timezone from './timezone';
 
 /**
  * The ComponentParser is used to process a String or jCal Object,
@@ -74,7 +74,7 @@ class ComponentParser {
    * Fired when parsing is complete
    * @callback
    */
-  oncomplete = /* c8 ignore next */ function () {};
+  oncomplete = /* c8 ignore next */ function() {};
 
   /**
    * Fired if an error occurs during parsing.
@@ -82,7 +82,7 @@ class ComponentParser {
    * @callback
    * @param {Error} err details of error
    */
-  onerror = /* c8 ignore next */ function (err) {};
+  onerror = /* c8 ignore next */ function(err) {};
 
   /**
    * Fired when a top level component (VTIMEZONE) is found
@@ -90,7 +90,7 @@ class ComponentParser {
    * @callback
    * @param {ICAL.Timezone} component     Timezone object
    */
-  ontimezone = /* c8 ignore next */ function (component) {};
+  ontimezone = /* c8 ignore next */ function(component) {};
 
   /**
    * Fired when a top level component (VEVENT) is found.
@@ -98,7 +98,7 @@ class ComponentParser {
    * @callback
    * @param {ICAL.Event} component    Top level component
    */
-  onevent = /* c8 ignore next */ function (component) {};
+  onevent = /* c8 ignore next */ function(component) {};
 
   /**
    * Process a string or parse ical object.  This function itself will return

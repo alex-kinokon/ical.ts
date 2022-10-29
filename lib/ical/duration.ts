@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import { isStrictlyNaN, trunc } from './helpers.js';
+import { isStrictlyNaN, trunc } from './helpers';
 
 const DURATION_LETTERS = /([PDWHMTS]{1,1})/;
 const DATA_PROPS_TO_COPY = [

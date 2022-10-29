@@ -3,8 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import Timezone from './timezone.js';
-import Component from './component.js';
+import Timezone from './timezone';
+import Component from './component';
 
 let zones = {};
 

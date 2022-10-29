@@ -1,6 +1,4 @@
-'use strict';
-
-const Mocha = require('mocha');
+import Mocha from 'mocha';
 const {
   EVENT_RUN_BEGIN,
   EVENT_RUN_END,

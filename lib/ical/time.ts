@@ -3,11 +3,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import Timezone from './timezone.js';
-import Duration from './duration.js';
-import design from './design.js';
-import TimezoneService from './timezone_service.js';
-import { strictParseInt, trunc, pad2 } from './helpers.js';
+import Timezone from './timezone';
+import Duration from './duration';
+import design from './design';
+import TimezoneService from './timezone_service';
+import { strictParseInt, trunc, pad2 } from './helpers';
 
 /**
  * @classdesc
