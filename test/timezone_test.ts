@@ -1,8 +1,8 @@
-import { suite, setup, test } from 'mocha';
+import { setup, suite, test } from 'mocha';
 import { assert } from 'chai';
 import { ICAL, loadSample } from './support/helper';
 
-suite('timezone', function () {
+suite('timezone', () => {
   let timezone;
 
   function timezoneTest(tzid, name, testCb) {
@@ -11,22 +11,22 @@ suite('timezone', function () {
       name = 'parse';
     }
 
-    suite(tzid, function () {
+    suite(tzid, () => {
       if (tzid == 'UTC') {
-        setup(function () {
+        setup(() => {
           timezone = ICAL.Timezone.utcTimezone;
         });
       } else if (tzid == 'floating') {
-        setup(function () {
+        setup(() => {
           timezone = ICAL.Timezone.localTimezone;
         });
       } else {
-        setup(async function () {
-          let icsData = await loadSample('timezones/' + tzid + '.ics');
+        setup(async () => {
+          const icsData = await loadSample('timezones/' + tzid + '.ics');
 
-          let parsed = ICAL.parse(icsData);
-          let vcalendar = new ICAL.Component(parsed);
-          let comp = vcalendar.getFirstSubcomponent('vtimezone');
+          const parsed = ICAL.parse(icsData);
+          const vcalendar = new ICAL.Component(parsed);
+          const comp = vcalendar.getFirstSubcomponent('vtimezone');
 
           timezone = new ICAL.Timezone(comp);
         });
@@ -37,13 +37,13 @@ suite('timezone', function () {
   }
 
   function utcHours(time) {
-    let seconds = timezone.utcOffset(new ICAL.Time(time));
+    const seconds = timezone.utcOffset(new ICAL.Time(time));
 
     // in hours
     return seconds / 3600;
   }
 
-  let sanityChecks = [
+  const sanityChecks = [
     {
       // just before US DST
       time: { year: 2012, month: 3, day: 11, hour: 1, minute: 59 },
@@ -147,23 +147,23 @@ suite('timezone', function () {
   ];
 
   // simple format checks
-  sanityChecks.forEach(function (item) {
-    let title = 'time: ' + JSON.stringify(item.time);
+  sanityChecks.forEach(item => {
+    const title = 'time: ' + JSON.stringify(item.time);
 
     suite(title, function () {
-      for (let tzid in item.offsets) {
+      for (const tzid in item.offsets) {
         timezoneTest(
           tzid,
           tzid + ' offset ' + item.offsets[tzid],
-          function (testTzid) {
+          (testTzid => {
             assert.equal(utcHours(item.time), item.offsets[testTzid]);
-          }.bind(this, tzid)
+          }).bind(this, tzid)
         );
       }
     });
   });
 
-  timezoneTest('America/Los_Angeles', '#expandedUntilYear', function () {
+  timezoneTest('America/Los_Angeles', '#expandedUntilYear', () => {
     function calcYear(yr) {
       return (
         Math.max(ICAL.Timezone._minimumExpansionYear, yr) +
@@ -204,44 +204,36 @@ suite('timezone', function () {
     assert.equal(timezone.expandedUntilYear, expectedCoverage);
   });
 
-  suite('#convertTime', function () {
-    timezoneTest(
-      'America/Los_Angeles',
-      'convert date-time from utc',
-      function () {
-        let subject = ICAL.Time.fromString('2012-03-11T01:59:00Z');
-        let subject2 = subject.convertToZone(timezone);
-        assert.equal(subject2.zone.tzid, timezone.tzid);
-        assert.equal(subject2.toString(), '2012-03-10T17:59:00');
-      }
-    );
+  suite('#convertTime', () => {
+    timezoneTest('America/Los_Angeles', 'convert date-time from utc', () => {
+      const subject = ICAL.Time.fromString('2012-03-11T01:59:00Z');
+      const subject2 = subject.convertToZone(timezone);
+      assert.equal(subject2.zone.tzid, timezone.tzid);
+      assert.equal(subject2.toString(), '2012-03-10T17:59:00');
+    });
 
-    timezoneTest('America/Los_Angeles', 'convert date from utc', function () {
-      let subject = ICAL.Time.fromString('2012-03-11');
-      let subject2 = subject.convertToZone(timezone);
+    timezoneTest('America/Los_Angeles', 'convert date from utc', () => {
+      const subject = ICAL.Time.fromString('2012-03-11');
+      const subject2 = subject.convertToZone(timezone);
       assert.equal(subject2.zone.tzid, timezone.tzid);
       assert.equal(subject2.toString(), '2012-03-11');
     });
-    timezoneTest(
-      'America/Los_Angeles',
-      'convert local time to zone',
-      function () {
-        let subject = ICAL.Time.fromString('2012-03-11T01:59:00');
-        subject.zone = ICAL.Timezone.localTimezone;
-        assert.equal(subject.toString(), '2012-03-11T01:59:00');
+    timezoneTest('America/Los_Angeles', 'convert local time to zone', () => {
+      const subject = ICAL.Time.fromString('2012-03-11T01:59:00');
+      subject.zone = ICAL.Timezone.localTimezone;
+      assert.equal(subject.toString(), '2012-03-11T01:59:00');
 
-        let subject2 = subject.convertToZone(timezone);
-        assert.equal(subject2.toString(), '2012-03-11T01:59:00');
+      const subject2 = subject.convertToZone(timezone);
+      assert.equal(subject2.toString(), '2012-03-11T01:59:00');
 
-        let subject3 = subject2.convertToZone(ICAL.Timezone.localTimezone);
-        assert.equal(subject3.toString(), '2012-03-11T01:59:00');
-      }
-    );
+      const subject3 = subject2.convertToZone(ICAL.Timezone.localTimezone);
+      assert.equal(subject3.toString(), '2012-03-11T01:59:00');
+    });
   });
 
-  suite('#fromData', function () {
-    timezoneTest('America/Los_Angeles', 'string component', function () {
-      let subject = new ICAL.Timezone({
+  suite('#fromData', () => {
+    timezoneTest('America/Los_Angeles', 'string component', () => {
+      const subject = new ICAL.Timezone({
         component: timezone.component.toString(),
         tzid: 'Makebelieve/Different'
       });
@@ -254,8 +246,8 @@ suite('timezone', function () {
       );
     });
 
-    timezoneTest('America/Los_Angeles', 'component in data', function () {
-      let subject = new ICAL.Timezone({
+    timezoneTest('America/Los_Angeles', 'component in data', () => {
+      const subject = new ICAL.Timezone({
         component: timezone.component
       });
 
@@ -263,8 +255,8 @@ suite('timezone', function () {
       assert.deepEqual(subject.component, timezone.component);
     });
 
-    timezoneTest('America/Los_Angeles', 'with strange component', function () {
-      let subject = new ICAL.Timezone({
+    timezoneTest('America/Los_Angeles', 'with strange component', () => {
+      const subject = new ICAL.Timezone({
         component: 123
       });
 
@@ -272,17 +264,17 @@ suite('timezone', function () {
     });
   });
 
-  suite('#utcOffset', function () {
-    test('empty vtimezone', function () {
-      let subject = new ICAL.Timezone({
+  suite('#utcOffset', () => {
+    test('empty vtimezone', () => {
+      const subject = new ICAL.Timezone({
         component: new ICAL.Component('vtimezone')
       });
 
       assert.equal(subject.utcOffset(ICAL.Time.fromString('2012-01-01')), 0);
     });
 
-    test('empty STANDARD/DAYLIGHT', function () {
-      let subject = new ICAL.Timezone({
+    test('empty STANDARD/DAYLIGHT', () => {
+      const subject = new ICAL.Timezone({
         component: new ICAL.Component([
           'vtimezone',
           [],
@@ -297,8 +289,8 @@ suite('timezone', function () {
     });
   });
 
-  suite('#toString', function () {
-    timezoneTest('America/Los_Angeles', 'toString', function () {
+  suite('#toString', () => {
+    timezoneTest('America/Los_Angeles', 'toString', () => {
       assert.equal(timezone.toString(), 'America/Los_Angeles');
       assert.equal(timezone.tzid, 'America/Los_Angeles');
       assert.equal(timezone.tznames, '');
@@ -310,10 +302,10 @@ suite('timezone', function () {
     });
   });
 
-  test('#_compare_change_fn', function () {
-    let subject = ICAL.Timezone._compare_change_fn;
+  test('#_compare_change_fn', () => {
+    const subject = ICAL.Timezone._compare_change_fn;
 
-    let a = new ICAL.Time({
+    const a = new ICAL.Time({
       year: 2015,
       month: 6,
       day: 15,
@@ -323,7 +315,7 @@ suite('timezone', function () {
     });
 
     function vary(prop) {
-      let b = a.clone();
+      const b = a.clone();
       assert.equal(subject(a, b), 0);
       b[prop] += 1;
       assert.equal(subject(a, b), -1);

@@ -1,10 +1,11 @@
-import { suite, setup, test } from 'mocha';
+import { setup, suite, suiteSetup, test } from 'mocha';
 import { assert } from 'chai';
-import { load, ICAL } from './support/helper';
+import { ICAL, load, loadSample, useTimezones } from './support/helper';
 
-suite('parserv2', function () {
-  let subject;
-  setup(function () {
+suite('parserv2', () => {
+  let subject: typeof ICAL.parse;
+
+  setup(() => {
     subject = ICAL.parse;
   });
 
@@ -12,9 +13,9 @@ suite('parserv2', function () {
    * Full parser tests fetch two resources
    * (one to parse, one is expected
    */
-  suite('full parser tests', function () {
-    let root = 'test/parser/';
-    let list = [
+  suite('full parser tests', () => {
+    const root = 'test/parser/';
+    const list = [
       // icalendar tests
       'rfc.ics',
       'single_empty_vcalendar.ics',
@@ -46,19 +47,19 @@ suite('parserv2', function () {
       'escape_semicolon.vcf'
     ];
 
-    list.forEach(function (path) {
-      suite(path.replace('_', ' '), function () {
+    list.forEach(path => {
+      suite(path.replace('_', ' '), () => {
         let input;
         let expected;
 
         // fetch ical
-        setup(async function () {
+        setup(async () => {
           input = await load(root + path);
         });
 
         // fetch json
-        setup(async function () {
-          let data = await load(root + path.replace(/vcf|ics$/, 'json'));
+        setup(async () => {
+          const data = await load(root + path.replace(/vcf|ics$/, 'json'));
           try {
             expected = JSON.parse(data.trim());
           } catch (e) {
@@ -80,9 +81,9 @@ suite('parserv2', function () {
           );
         }
 
-        test('round-trip', function () {
-          let parsed = subject(input);
-          let ical = ICAL.stringify(parsed);
+        test('round-trip', () => {
+          const parsed = subject(input);
+          const ical = ICAL.stringify(parsed);
 
           // NOTE: this is not an absolute test that serialization
           //       works as our parser should be error tolerant and
@@ -91,61 +92,61 @@ suite('parserv2', function () {
           jsonEqual(subject(ical), expected);
         });
 
-        test('compare', function () {
-          let actual = subject(input);
+        test('compare', () => {
+          const actual = subject(input);
           jsonEqual(actual, expected);
         });
       });
     });
   });
 
-  suite('invalid ical', function () {
-    test('invalid property', function () {
+  suite('invalid ical', () => {
+    test('invalid property', () => {
       let ical = 'BEGIN:VCALENDAR\n';
       // no param or value token
       ical += 'DTSTART\n';
       ical += 'DESCRIPTION:1\n';
       ical += 'END:VCALENDAR';
 
-      assert.throws(function () {
+      assert.throws(() => {
         subject(ical);
       }, /invalid line/);
     });
 
-    test('invalid quoted params', function () {
+    test('invalid quoted params', () => {
       let ical = 'BEGIN:VCALENDAR\n';
       ical += 'X-FOO;BAR="quoted\n';
       // an invalid newline inside quoted parameter
       ical += 'params";FOO=baz:realvalue\n';
       ical += 'END:VCALENDAR';
 
-      assert.throws(function () {
+      assert.throws(() => {
         subject(ical);
       }, /invalid line/);
     });
 
-    test('missing value with param delimiter', function () {
-      let ical = 'BEGIN:VCALENDAR\n' + 'X-FOO;\n';
-      assert.throws(function () {
+    test('missing value with param delimiter', () => {
+      const ical = 'BEGIN:VCALENDAR\n' + 'X-FOO;\n';
+      assert.throws(() => {
         subject(ical);
       }, 'Invalid parameters in');
     });
 
-    test('missing param name ', function () {
-      let ical = 'BEGIN:VCALENDAR\n' + 'X-FOO;=\n';
-      assert.throws(function () {
+    test('missing param name ', () => {
+      const ical = 'BEGIN:VCALENDAR\n' + 'X-FOO;=\n';
+      assert.throws(() => {
         subject(ical);
       }, 'Empty parameter name in');
     });
 
-    test('missing param value', function () {
-      let ical = 'BEGIN:VCALENDAR\n' + 'X-FOO;BAR=\n';
-      assert.throws(function () {
+    test('missing param value', () => {
+      const ical = 'BEGIN:VCALENDAR\n' + 'X-FOO;BAR=\n';
+      assert.throws(() => {
         subject(ical);
       }, 'Missing parameter value in');
     });
 
-    test('missing component end', function () {
+    test('missing component end', () => {
       let ical = 'BEGIN:VCALENDAR\n';
       ical += 'BEGIN:VEVENT\n';
       ical += 'BEGIN:VALARM\n';
@@ -154,16 +155,16 @@ suite('parserv2', function () {
       // ended calendar before event
       ical += 'END:VCALENDAR';
 
-      assert.throws(function () {
+      assert.throws(() => {
         subject(ical);
       }, /invalid/);
     });
   });
 
-  suite('#_parseParameters', function () {
-    test('with processed text', function () {
-      let input = ';FOO=x\\na';
-      let expected = {
+  suite('#_parseParameters', () => {
+    test('with processed text', () => {
+      const input = ';FOO=x\\na';
+      const expected = {
         foo: 'x\na'
       };
 
@@ -173,9 +174,9 @@ suite('parserv2', function () {
       );
     });
 
-    test('with multiple vCard TYPE parameters', function () {
-      let input = ';TYPE=work;TYPE=voice';
-      let expected = {
+    test('with multiple vCard TYPE parameters', () => {
+      const input = ';TYPE=work;TYPE=voice';
+      const expected = {
         type: ['work', 'voice']
       };
 
@@ -185,9 +186,9 @@ suite('parserv2', function () {
       );
     });
 
-    test('with multiple iCalendar MEMBER parameters', function () {
-      let input = ';MEMBER="urn:one","urn:two";MEMBER="urn:three"';
-      let expected = {
+    test('with multiple iCalendar MEMBER parameters', () => {
+      const input = ';MEMBER="urn:one","urn:two";MEMBER="urn:three"';
+      const expected = {
         member: ['urn:one', 'urn:two', 'urn:three']
       };
 
@@ -197,9 +198,9 @@ suite('parserv2', function () {
       );
     });
 
-    test('with comma in singleValue parameter', function () {
-      let input = ';LABEL="A, B"';
-      let expected = {
+    test('with comma in singleValue parameter', () => {
+      const input = ';LABEL="A, B"';
+      const expected = {
         label: 'A, B'
       };
 
@@ -209,10 +210,10 @@ suite('parserv2', function () {
       );
     });
 
-    test('with comma in singleValue parameter after multiValue parameter', function () {
+    test('with comma in singleValue parameter after multiValue parameter', () => {
       // TYPE allows multiple values, whereas LABEL doesn't.
-      let input = ';TYPE=home;LABEL="A, B"';
-      let expected = {
+      const input = ';TYPE=home;LABEL="A, B"';
+      const expected = {
         type: 'home',
         label: 'A, B'
       };
@@ -224,9 +225,9 @@ suite('parserv2', function () {
     });
   });
 
-  test('#_parseMultiValue', function () {
-    let values = 'woot\\, category,foo,bar,baz';
-    let result = [];
+  test('#_parseMultiValue', () => {
+    const values = 'woot\\, category,foo,bar,baz';
+    const result = [];
     assert.deepEqual(
       subject._parseMultiValue(
         values,
@@ -240,10 +241,10 @@ suite('parserv2', function () {
     );
   });
 
-  suite('#_parseValue', function () {
-    test('text', function () {
-      let value = 'start \\n next';
-      let expected = 'start \n next';
+  suite('#_parseValue', () => {
+    test('text', () => {
+      const value = 'start \\n next';
+      const expected = 'start \n next';
 
       assert.equal(
         subject._parseValue(value, 'text', ICAL.design.defaultSet),
@@ -252,29 +253,53 @@ suite('parserv2', function () {
     });
   });
 
-  suite('#_eachLine', function () {
+  suite('#_eachLine', () => {
     function unfold(input) {
-      let result = [];
+      const result = [];
 
-      subject._eachLine(input, function (err, line) {
+      subject._eachLine(input, (err, line) => {
         result.push(line);
       });
 
       return result;
     }
 
-    test('unfold single with \\r\\n', function () {
-      let input = 'foo\r\n bar';
-      let expected = ['foobar'];
+    test('unfold single with \\r\\n', () => {
+      const input = 'foo\r\n bar';
+      const expected = ['foobar'];
 
       assert.deepEqual(unfold(input), expected);
     });
 
-    test('with \\n', function () {
-      let input = 'foo\nbar\n  baz';
-      let expected = ['foo', 'bar baz'];
+    test('with \\n', () => {
+      const input = 'foo\nbar\n  baz';
+      const expected = ['foo', 'bar baz'];
 
       assert.deepEqual(unfold(input), expected);
+    });
+  });
+
+  suite('embedded timezones', () => {
+    let icsDataEmbeddedTimezones: string;
+    suiteSetup(async () => {
+      icsDataEmbeddedTimezones = await loadSample('timezone_from_file.ics');
+    });
+
+    test('used in event date', () => {
+      const parsed = ICAL.parse(icsDataEmbeddedTimezones);
+      const component = new ICAL.Component(parsed);
+
+      const event = new ICAL.Event(component.getFirstSubcomponent('vevent'));
+      const startDate = event.startDate.toJSDate();
+      const endDate = event.endDate.toJSDate();
+
+      assert.equal(startDate.getUTCDate(), 6);
+      assert.equal(startDate.getUTCHours(), 21);
+      assert.equal(startDate.getUTCMinutes(), 23);
+
+      assert.equal(endDate.getUTCDate(), 6);
+      assert.equal(endDate.getUTCHours(), 22);
+      assert.equal(endDate.getUTCMinutes(), 23);
     });
   });
 });

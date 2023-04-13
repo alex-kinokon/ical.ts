@@ -9,6 +9,21 @@ import { Timezone } from './timezone';
 import { design } from './design';
 import { pad2, strictParseInt } from './helpers';
 
+interface VCardTimeData {
+  /** The year for this date */
+  year?: number;
+  /** The month for this date */
+  month?: number;
+  /** The day for this date */
+  day?: number;
+  /** The hour for this date */
+  hour?: number;
+  /** The minute for this date */
+  minute?: number;
+  /** The second for this date */
+  second?: number;
+}
+
 /**
  * Describes a vCard time, which has slight differences to the ICAL.Time.
  * Properties can be null if not specified, for example for dates with
@@ -21,75 +36,73 @@ import { pad2, strictParseInt } from './helpers';
  * Also, normalization is not yet implemented for this class!
  *
  * @alias ICAL.VCardTime
- * @extends {ICAL.Time}
+ * @extends {Time}
  * @class
  */
 export class VCardTime extends Time {
   /**
    * Returns a new ICAL.VCardTime instance from a date and/or time string.
    *
-   * @param {String} aValue     The string to create from
-   * @param {String} aIcalType  The type for this instance, e.g. date-and-or-time
-   * @return {ICAL.VCardTime}   The date/time instance
+   * @param aValue     The string to create from
+   * @param aIcalType  The type for this instance, e.g. date-and-or-time
+   * @return The date/time instance
    */
-  static fromDateAndOrTimeString(aValue, aIcalType) {
-    function part(v, s, e) {
+  static fromDateAndOrTimeString(aValue: string, aIcalType: string): VCardTime {
+    function part(v: string, s: number, e: number) {
       return v ? strictParseInt(v.slice(s, s + e)) : null;
     }
-    let parts = aValue.split('T');
-    let dt = parts[0],
-      tmz = parts[1];
-    let splitzone = tmz ? design.vcard.value.time._splitZone(tmz) : [];
-    let zone = splitzone[0],
-      tm = splitzone[1];
+    const parts = aValue.split('T');
+    const [dt, tmz] = parts;
+    const splitZone = tmz ? design.vcard.value.time._splitZone(tmz) : [];
+    let [zone, tm] = splitZone;
 
-    let dtlen = dt ? dt.length : 0;
-    let tmlen = tm ? tm.length : 0;
+    const dtLen = dt ? dt.length : 0;
+    const tmLen = tm ? tm.length : 0;
 
-    let hasDashDate = dt && dt[0] == '-' && dt[1] == '-';
-    let hasDashTime = tm && tm[0] == '-';
+    const hasDashDate = dt && dt[0] === '-' && dt[1] === '-';
+    const hasDashTime = tm && tm[0] === '-';
 
-    let o = {
+    const o = {
       year: hasDashDate ? null : part(dt, 0, 4),
       month:
-        hasDashDate && (dtlen == 4 || dtlen == 7)
+        hasDashDate && (dtLen === 4 || dtLen === 7)
           ? part(dt, 2, 2)
-          : dtlen == 7
+          : dtLen === 7
           ? part(dt, 5, 2)
-          : dtlen == 10
+          : dtLen === 10
           ? part(dt, 5, 2)
           : null,
       day:
-        dtlen == 5
+        dtLen === 5
           ? part(dt, 3, 2)
-          : dtlen == 7 && hasDashDate
+          : dtLen === 7 && hasDashDate
           ? part(dt, 5, 2)
-          : dtlen == 10
+          : dtLen === 10
           ? part(dt, 8, 2)
           : null,
 
       hour: hasDashTime ? null : part(tm, 0, 2),
       minute:
-        hasDashTime && tmlen == 3
+        hasDashTime && tmLen === 3
           ? part(tm, 1, 2)
-          : tmlen > 4
+          : tmLen > 4
           ? hasDashTime
             ? part(tm, 1, 2)
             : part(tm, 3, 2)
           : null,
       second:
-        tmlen == 4
+        tmLen === 4
           ? part(tm, 2, 2)
-          : tmlen == 6
+          : tmLen === 6
           ? part(tm, 4, 2)
-          : tmlen == 8
+          : tmLen === 8
           ? part(tm, 6, 2)
           : null
     };
 
-    if (zone == 'Z') {
+    if (zone === 'Z') {
       zone = Timezone.utcTimezone;
-    } else if (zone && zone[3] == ':') {
+    } else if (zone && zone[3] === ':') {
       zone = UtcOffset.fromString(zone);
     } else {
       zone = null;
@@ -101,46 +114,42 @@ export class VCardTime extends Time {
   /**
    * Creates a new ICAL.VCardTime instance.
    *
-   * @param {Object} data                           The data for the time instance
-   * @param {Number=} data.year                     The year for this date
-   * @param {Number=} data.month                    The month for this date
-   * @param {Number=} data.day                      The day for this date
-   * @param {Number=} data.hour                     The hour for this date
-   * @param {Number=} data.minute                   The minute for this date
-   * @param {Number=} data.second                   The second for this date
-   * @param {ICAL.Timezone|ICAL.UtcOffset} zone     The timezone to use
-   * @param {String} icaltype                       The type for this date/time object
+   * @param data The data for the time instance
+   * @param zone     The timezone to use
+   * @param icalType The type for this date/time object
    */
-  constructor(data, zone, icaltype) {
+  constructor(
+    data: VCardTimeData,
+    zone: Timezone | UtcOffset,
+    icalType: VCardTime['icaltype']
+  ) {
     super(data, zone);
-    this.icaltype = icaltype || 'date-and-or-time';
+    Object.defineProperty(this, 'icaltype', {
+      value: icalType || 'date-and-or-time',
+      writable: true
+    });
   }
 
   /**
    * The class identifier.
-   * @constant
-   * @type {String}
-   * @default "vcardtime"
    */
-  icalclass = 'vcardtime';
+  readonly icalclass = 'vcardtime';
 
   /**
    * The type name, to be used in the jCal object.
-   * @type {String}
-   * @default "date-and-or-time"
    */
-  icaltype = 'date-and-or-time';
+  readonly icaltype: 'date-and-or-time' | 'date' | 'date-time';
 
   /**
    * Returns a clone of the vcard date/time object.
    *
-   * @return {ICAL.VCardTime}     The cloned object
+   * @return The cloned object
    */
-  clone() {
+  clone(): VCardTime {
     return new VCardTime(this._time, this.zone, this.icaltype);
   }
 
-  _normalize() {
+  override _normalize() {
     return this;
   }
 
@@ -151,40 +160,39 @@ export class VCardTime extends Time {
     if (this.zone instanceof UtcOffset) {
       return this.zone.toSeconds();
     } else {
-      return Time.prototype.utcOffset.apply(this, arguments);
+      return super.utcOffset(...arguments);
     }
   }
 
   /**
    * Returns an RFC 6350 compliant representation of this object.
    *
-   * @return {String}         vcard date/time string
+   * @return vcard date/time string
    */
-  toICALString() {
+  toICALString(): string {
     return design.vcard.value[this.icaltype].toICAL(this.toString());
   }
 
   /**
    * The string representation of this date/time, in jCard form
    * (including : and - separators).
-   * @return {String}
    */
-  toString() {
-    let y = this.year,
-      m = this.month,
-      d = this.day;
-    let h = this.hour,
-      mm = this.minute,
-      s = this.second;
+  toString(): string | null {
+    const y = this.year;
+    const m = this.month;
+    const d = this.day;
+    const h = this.hour;
+    const mm = this.minute;
+    const s = this.second;
 
-    let hasYear = y !== null,
-      hasMonth = m !== null,
-      hasDay = d !== null;
-    let hasHour = h !== null,
-      hasMinute = mm !== null,
-      hasSecond = s !== null;
+    const hasYear = y != null,
+      hasMonth = m != null,
+      hasDay = d != null;
+    const hasHour = h != null,
+      hasMinute = mm != null,
+      hasSecond = s != null;
 
-    let datepart =
+    const datePart =
       (hasYear
         ? pad2(y) + (hasMonth || hasDay ? '-' : '')
         : hasMonth || hasDay
@@ -192,7 +200,7 @@ export class VCardTime extends Time {
         : '') +
       (hasMonth ? pad2(m) : '') +
       (hasDay ? '-' + pad2(d) : '');
-    let timepart =
+    const timePart =
       (hasHour ? pad2(h) : '-') +
       (hasHour && hasMinute ? ':' : '') +
       (hasMinute ? pad2(mm) : '') +
@@ -208,21 +216,22 @@ export class VCardTime extends Time {
     } else if (this.zone === Timezone.localTimezone) {
       zone = '';
     } else if (this.zone instanceof Timezone) {
-      let offset = UtcOffset.fromSeconds(this.zone.utcOffset(this));
+      const offset = UtcOffset.fromSeconds(this.zone.utcOffset(this));
       zone = offset.toString();
     } else {
       zone = '';
     }
 
-    switch (this.icaltype) {
+    switch (this.icaltype as string) {
       case 'time':
-        return timepart + zone;
+        return timePart + zone;
       case 'date-and-or-time':
       case 'date-time':
-        return datepart + (timepart == '--' ? '' : 'T' + timepart + zone);
+        return datePart + (timePart === '--' ? '' : 'T' + timePart + zone);
       case 'date':
-        return datepart;
+        return datePart;
     }
+
     return null;
   }
 }

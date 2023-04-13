@@ -5,7 +5,15 @@
 
 import { Time } from './time';
 import { RecurIterator } from './recur_iterator';
-import { formatClassType, binsearchInsert } from './helpers';
+import { binsearchInsert, formatClassType } from './helpers';
+import type { Component } from './component';
+
+interface RecurExpansionOptions {
+  /** Start time of the event */
+  dtstart: Time;
+  /** Component for expansion, required if not resuming. */
+  component?: Component;
+}
 
 /**
  * Primary class for expanding recurring rules.  Can take multiple rrules, rdates, exdate(s) and
@@ -49,6 +57,9 @@ import { formatClassType, binsearchInsert } from './helpers';
  * @alias ICAL.RecurExpansion
  */
 export class RecurExpansion {
+  private ruleDates: Time[];
+  private exDates: Time[];
+
   /**
    * Creates a new ICAL.RecurExpansion instance.
    *
@@ -58,14 +69,9 @@ export class RecurExpansion {
    *
    * @class
    * @alias ICAL.RecurExpansion
-   * @param {Object} options
-   *        Recurrence expansion options
-   * @param {ICAL.Time} options.dtstart
-   *        Start time of the event
-   * @param {ICAL.Component=} options.component
-   *        Component for expansion, required if not resuming.
+   * @param options Recurrence expansion options
    */
-  constructor(options) {
+  constructor(options: RecurExpansionOptions) {
     this.ruleDates = [];
     this.exDates = [];
     this.fromData(options);
@@ -73,77 +79,53 @@ export class RecurExpansion {
 
   /**
    * True when iteration is fully completed.
-   * @type {Boolean}
    */
   complete = false;
 
   /**
    * Array of rrule iterators.
-   *
-   * @type {ICAL.RecurIterator[]}
-   * @private
    */
-  ruleIterators = null;
+  private ruleIterators: RecurIterator[];
 
   /**
    * Array of rdate instances.
-   *
-   * @type {ICAL.Time[]}
-   * @private
    */
-  ruleDates = null;
+  private ruleDates: Time[];
 
   /**
    * Array of exdate instances.
-   *
-   * @type {ICAL.Time[]}
-   * @private
    */
-  exDates = null;
+  private exDates: Time[];
 
   /**
    * Current position in ruleDates array.
-   * @type {Number}
-   * @private
    */
-  ruleDateInc = 0;
+  private ruleDateInc = 0;
 
   /**
    * Current position in exDates array
-   * @type {Number}
-   * @private
    */
-  exDateInc = 0;
+  private exDateInc = 0;
 
   /**
    * Current negative date.
-   *
-   * @type {ICAL.Time}
-   * @private
    */
-  exDate = null;
+  private exDate: Time;
 
   /**
    * Current additional date.
-   *
-   * @type {ICAL.Time}
-   * @private
    */
-  ruleDate = null;
+  private ruleDate: Time;
 
   /**
    * Start date of recurring rules.
-   *
-   * @type {ICAL.Time}
    */
-  dtstart = null;
+  dtstart: Time;
 
   /**
    * Last expanded time
-   *
-   * @type {ICAL.Time}
    */
-  last = null;
+  last: Time;
 
   /**
    * Initialize the recurrence expansion from the data object. The options
@@ -157,8 +139,8 @@ export class RecurExpansion {
    * @param {ICAL.Component=} options.component
    *        Component for expansion, required if not resuming.
    */
-  fromData(options) {
-    let start = formatClassType(options.dtstart, Time);
+  fromData(options: RecurExpansionOptions) {
+    const start = formatClassType(options.dtstart, Time);
 
     if (!start) {
       throw new Error('.dtstart (ICAL.Time) must be given');
@@ -175,9 +157,9 @@ export class RecurExpansion {
         throw new Error('.ruleIterators or .component must be given');
       }
 
-      this.ruleIterators = options.ruleIterators.map(function (item) {
-        return formatClassType(item, RecurIterator);
-      });
+      this.ruleIterators = options.ruleIterators.map(item =>
+        formatClassType(item, RecurIterator)
+      );
 
       this.ruleDateInc = options.ruleDateInc;
       this.exDateInc = options.exDateInc;
@@ -202,14 +184,13 @@ export class RecurExpansion {
 
   /**
    * Retrieve the next occurrence in the series.
-   * @return {ICAL.Time}
    */
-  next() {
+  next(): Time {
     let iter;
     let next;
     let compare;
 
-    let maxTries = 500;
+    const maxTries = 500;
     let currentTry = 0;
 
     while (true) {
@@ -264,7 +245,7 @@ export class RecurExpansion {
         }
       }
 
-      //XXX: The spec states that after we resolve the final
+      // XXX: The spec states that after we resolve the final
       //     list of dates we execute exdate this seems somewhat counter
       //     intuitive to what I have seen most servers do so for now
       //     I exclude based on the original date not the one that may
@@ -276,14 +257,13 @@ export class RecurExpansion {
   /**
    * Converts object into a serialize-able format. This format can be passed
    * back into the expansion to resume iteration.
-   * @return {Object}
    */
-  toJSON() {
+  toJSON(): Record<string, any> {
     function toJSON(item) {
       return item.toJSON();
     }
 
-    let result = Object.create(null);
+    const result = Object.create(null);
     result.ruleIterators = this.ruleIterators.map(toJSON);
 
     if (this.ruleDates) {
@@ -308,17 +288,17 @@ export class RecurExpansion {
    * properties will be filtered by the property name.
    *
    * @private
-   * @param {ICAL.Component} component        The component to search in
-   * @param {String} propertyName             The property name to search for
+   * @param component        The component to search in
+   * @param propertyName             The property name to search for
    * @return {ICAL.Time[]}                    The extracted dates.
    */
-  _extractDates(component, propertyName) {
-    let result = [];
-    let props = component.getAllProperties(propertyName);
+  private _extractDates(component: Component, propertyName: string): Time[] {
+    const result: Time[] = [];
+    const props = component.getAllProperties(propertyName);
 
     for (let i = 0, len = props.length; i < len; i++) {
-      for (let prop of props[i].getValues()) {
-        let idx = binsearchInsert(result, prop, (a, b) => a.compare(b));
+      for (const prop of props[i].getValues()) {
+        const idx = binsearchInsert(result, prop, (a, b) => a.compare(b));
 
         // ordered insert
         result.splice(idx, 0, prop);
@@ -334,7 +314,7 @@ export class RecurExpansion {
    * @private
    * @param {ICAL.Component} component    The component to initialize from.
    */
-  _init(component) {
+  private _init(component: Component) {
     this.ruleIterators = [];
 
     this.last = this.dtstart.clone();
@@ -372,9 +352,9 @@ export class RecurExpansion {
     }
 
     if (component.hasProperty('rrule')) {
-      let rules = component.getAllProperties('rrule');
+      const rules = component.getAllProperties('rrule');
       let i = 0;
-      let len = rules.length;
+      const len = rules.length;
 
       let rule;
       let iter;
@@ -404,17 +384,15 @@ export class RecurExpansion {
 
   /**
    * Advance to the next exdate
-   * @private
    */
-  _nextExDay() {
+  private _nextExDay() {
     this.exDate = this.exDates[++this.exDateInc];
   }
 
   /**
    * Advance to the next rule date
-   * @private
    */
-  _nextRuleDay() {
+  private _nextRuleDay() {
     this.ruleDate = this.ruleDates[++this.ruleDateInc];
   }
 
@@ -422,11 +400,10 @@ export class RecurExpansion {
    * Find and return the recurrence rule with the most recent event and
    * return it.
    *
-   * @private
-   * @return {?ICAL.RecurIterator}    Found iterator.
+   * @return Found iterator.
    */
-  _nextRecurrenceIter() {
-    let iters = this.ruleIterators;
+  private _nextRecurrenceIter(): RecurIterator | null {
+    const iters = this.ruleIterators;
 
     if (iters.length === 0) {
       return null;

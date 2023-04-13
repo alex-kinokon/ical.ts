@@ -1,11 +1,11 @@
 import { suite, suiteSetup } from 'mocha';
 import { loadSample } from '../support/helper';
-import { perfTest, ICAL } from '../support/helper';
+import { ICAL, perfTest } from '../support/helper';
 
-suite('iterator', function () {
+suite('iterator', () => {
   let icsData;
 
-  suiteSetup(async function () {
+  suiteSetup(async () => {
     icsData = await loadSample('parserv2.ics');
   });
 
@@ -15,7 +15,7 @@ suite('iterator', function () {
   let std;
   let rrule;
 
-  suiteSetup(function () {
+  suiteSetup(() => {
     parsed = ICAL.parse(icsData);
     comp = new ICAL.Component(parsed);
     tz = comp.getFirstSubcomponent('vtimezone');
@@ -23,8 +23,8 @@ suite('iterator', function () {
     rrule = std.getFirstPropertyValue('rrule');
   });
 
-  perfTest('timezone iterator & first iteration', function () {
-    let iterator = rrule.iterator(std.getFirstPropertyValue('dtstart'));
+  perfTest('timezone iterator & first iteration', () => {
+    const iterator = rrule.iterator(std.getFirstPropertyValue('dtstart'));
     iterator.next();
   });
 });

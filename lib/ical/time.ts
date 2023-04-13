@@ -7,7 +7,41 @@ import { Timezone } from './timezone';
 import { Duration } from './duration';
 import { design } from './design';
 import { TimezoneService } from './timezone_service';
-import { strictParseInt, trunc, pad2 } from './helpers';
+import { pad2, strictParseInt, trunc } from './helpers';
+import type { Property } from './property';
+
+interface TimeData {
+  /** The year for this date */
+  year?: number;
+  /** The month for this date */
+  month?: number;
+  /** The day for this date */
+  day?: number;
+  /** The hour for this date */
+  hour?: number;
+  /** The minute for this date */
+  minute?: number;
+  /** The second for this date */
+  second?: number;
+  /** If true, the instance represents a date (as opposed to a date-time) */
+  isDate?: boolean;
+  /** Timezone this position occurs in */
+  aZone?: Timezone;
+}
+
+/**
+ * The weekday, 1 = SUNDAY, 7 = SATURDAY. Access via
+ * ICAL.Time.MONDAY, ICAL.Time.TUESDAY, ...
+ */
+export enum WeekDay {
+  SUNDAY = 1,
+  MONDAY = 2,
+  TUESDAY = 3,
+  WEDNESDAY = 4,
+  THURSDAY = 5,
+  FRIDAY = 6,
+  SATURDAY = 7
+}
 
 /**
  * @classdesc
@@ -30,8 +64,21 @@ import { strictParseInt, trunc, pad2 } from './helpers';
  * @class
  */
 export class Time {
-  static _dowCache = {};
-  static _wnCache = {};
+  wrappedJSObject: Time;
+
+  static _dowCache: Record<number, number> = {};
+  static _wnCache: Record<number, number> = {};
+
+  protected _time: Required<TimeData>;
+  private auto_normalize: boolean;
+
+  year!: number;
+  month!: number;
+  day!: number;
+  hour!: number;
+  minute!: number;
+  second!: number;
+  isDate!: boolean;
 
   /**
    * Returns the days in the given month
@@ -40,16 +87,16 @@ export class Time {
    * @param {Number} year       The year to check
    * @return {Number}           The number of days in the month
    */
-  static daysInMonth(month, year) {
-    let _daysInMonth = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  static daysInMonth(month: number, year: number): number {
+    const _daysInMonth = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
     let days = 30;
 
     if (month < 1 || month > 12) return days;
 
     days = _daysInMonth[month];
 
-    if (month == 2) {
-      days += Time.isLeapYear(year);
+    if (month === 2) {
+      days += Time.isLeapYear(year) ? 1 : 0;
     }
 
     return days;
@@ -58,14 +105,14 @@ export class Time {
   /**
    * Checks if the year is a leap year
    *
-   * @param {Number} year       The year to check
-   * @return {Boolean}          True, if the year is a leap year
+   * @param year The year to check
+   * @return True, if the year is a leap year
    */
-  static isLeapYear(year) {
+  static isLeapYear(year: number): boolean {
     if (year <= 1752) {
-      return year % 4 == 0;
+      return year % 4 === 0;
     } else {
-      return (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;
+      return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
     }
   }
 
@@ -73,14 +120,14 @@ export class Time {
    * Create a new ICAL.Time from the day of year and year. The date is returned
    * in floating timezone.
    *
-   * @param {Number} aDayOfYear     The day of year
-   * @param {Number} aYear          The year to create the instance in
-   * @return {ICAL.Time}            The created instance with the calculated date
+   * @param aDayOfYear The day of year
+   * @param aYear      The year to create the instance in
+   * @return           The created instance with the calculated date
    */
-  static fromDayOfYear(aDayOfYear, aYear) {
+  static fromDayOfYear(aDayOfYear: number, aYear: number): Time {
     let year = aYear;
     let doy = aDayOfYear;
-    let tt = new Time();
+    const tt = new Time();
     tt.auto_normalize = false;
     let is_leap = Time.isLeapYear(year) ? 1 : 0;
 
@@ -114,11 +161,11 @@ export class Time {
   /**
    * Returns a new ICAL.Time instance from a date string, e.g 2015-01-02.
    *
-   * @deprecated                Use {@link ICAL.Time.fromDateString} instead
-   * @param {String} str        The string to create from
-   * @return {ICAL.Time}        The date/time instance
+   * @deprecated Use {@link ICAL.Time.fromDateString} instead
+   * @param str  The string to create from
+   * @return     The date/time instance
    */
-  static fromStringv2(str) {
+  static fromStringv2(str: string): Time {
     return new Time({
       year: parseInt(str.slice(0, 4), 10),
       month: parseInt(str.slice(5, 7), 10),
@@ -130,10 +177,10 @@ export class Time {
   /**
    * Returns a new ICAL.Time instance from a date string, e.g 2015-01-02.
    *
-   * @param {String} aValue     The string to create from
-   * @return {ICAL.Time}        The date/time instance
+   * @param aValue The string to create from
+   * @return       The date/time instance
    */
-  static fromDateString(aValue) {
+  static fromDateString(aValue: string): Time {
     // Dates should have no timezone.
     // Google likes to sometimes specify Z on dates
     // we specifically ignore that to avoid issues.
@@ -153,45 +200,68 @@ export class Time {
    * 2015-01-02T03:04:05. If a property is specified, the timezone is set up
    * from the property's TZID parameter.
    *
-   * @param {String} aValue         The string to create from
-   * @param {ICAL.Property=} prop   The property the date belongs to
-   * @return {ICAL.Time}            The date/time instance
+   * @param aValue The string to create from
+   * @param prop   The property the date belongs to
+   * @return       The date/time instance
    */
-  static fromDateTimeString(aValue, prop) {
+  static fromDateTimeString(aValue: string, prop?: Property): Time {
     if (aValue.length < 19) {
       throw new Error('invalid date-time value: "' + aValue + '"');
     }
 
     let zone;
+    let zoneId;
 
     if (aValue[19] && aValue[19] === 'Z') {
-      zone = 'Z';
+      zone = Timezone.utcTimezone;
     } else if (prop) {
-      zone = prop.getParameter('tzid');
+      zoneId = prop.getParameter('tzid');
+
+      if (prop.parent) {
+        if (
+          prop.parent.name === 'standard' ||
+          prop.parent.name === 'daylight'
+        ) {
+          // Per RFC 5545 3.8.2.4 and 3.8.2.2, start/end date-times within
+          // these components MUST be specified in local time.
+          zone = undefined;
+        } else if (zoneId) {
+          // If the desired time zone is defined within the component tree,
+          // fetch its definition and prefer that.
+          zone = prop.parent.getTimeZoneByID(zoneId);
+        }
+      }
     }
 
-    // 2012-10-10T10:10:10(Z)?
-    let time = new Time({
+    const timeData = {
       year: strictParseInt(aValue.slice(0, 4)),
       month: strictParseInt(aValue.slice(5, 7)),
       day: strictParseInt(aValue.slice(8, 10)),
       hour: strictParseInt(aValue.slice(11, 13)),
       minute: strictParseInt(aValue.slice(14, 16)),
-      second: strictParseInt(aValue.slice(17, 19)),
-      timezone: zone
-    });
+      second: strictParseInt(aValue.slice(17, 19))
+    };
 
-    return time;
+    // Although RFC 5545 requires that all TZIDs used within a file have a
+    // corresponding time zone definition, we may not be parsing the full file
+    // or we may be dealing with a non-compliant file; in either case, we can
+    // check our own time zone service for the TZID in a last-ditch effort.
+    if (zoneId && !zone) {
+      timeData.timezone = zoneId;
+    }
+
+    // 2012-10-10T10:10:10(Z)?
+    return new Time(timeData, zone);
   }
 
   /**
    * Returns a new ICAL.Time instance from a date or date-time string,
    *
-   * @param {String} aValue         The string to create from
-   * @param {ICAL.Property=} prop   The property the date belongs to
-   * @return {ICAL.Time}            The date/time instance
+   * @param aValue    The string to create from
+   * @param aProperty The property the date belongs to
+   * @return          The date/time instance
    */
-  static fromString(aValue, aProperty) {
+  static fromString(aValue: string, aProperty?: Property): Time {
     if (aValue.length > 10) {
       return Time.fromDateTimeString(aValue, aProperty);
     } else {
@@ -202,30 +272,22 @@ export class Time {
   /**
    * Creates a new ICAL.Time instance from the given Javascript Date.
    *
-   * @param {?Date} aDate     The Javascript Date to read, or null to reset
+   * @param aDate     The Javascript Date to read, or null to reset
    * @param {Boolean} useUTC  If true, the UTC values of the date will be used
    */
-  static fromJSDate(aDate, useUTC) {
-    let tt = new Time();
+  static fromJSDate(aDate: Date | null, useUTC: boolean) {
+    const tt = new Time();
     return tt.fromJSDate(aDate, useUTC);
   }
 
   /**
    * Creates a new ICAL.Time instance from the the passed data object.
    *
-   * @param {Object} aData            Time initialization
-   * @param {Number=} aData.year      The year for this date
-   * @param {Number=} aData.month     The month for this date
-   * @param {Number=} aData.day       The day for this date
-   * @param {Number=} aData.hour      The hour for this date
-   * @param {Number=} aData.minute    The minute for this date
-   * @param {Number=} aData.second    The second for this date
-   * @param {Boolean=} aData.isDate   If true, the instance represents a date
-   *                                    (as opposed to a date-time)
-   * @param {ICAL.Timezone=} aZone    Timezone this position occurs in
+   * @param aData Time initialization
+   * @param aZone Timezone this position occurs in
    */
-  static fromData = function fromData(aData, aZone) {
-    let t = new Time();
+  static fromData = function fromData(aData: TimeData, aZone?: Timezone) {
+    const t = new Time();
     return t.fromData(aData, aZone);
   };
 
@@ -234,9 +296,8 @@ export class Time {
    * The instance is “floating” - has no timezone relation.
    * To create an instance considering the time zone, call
    * ICAL.Time.fromJSDate(new Date(), true)
-   * @return {ICAL.Time}
    */
-  static now() {
+  static now(): Time {
     return Time.fromJSDate(new Date(), false);
   }
 
@@ -245,19 +306,19 @@ export class Time {
    *
    * @see ICAL.Time#weekNumber
    * @param {Number} aYear                  The year to search in
-   * @param {ICAL.Time.weekDay=} aWeekStart The week start weekday, used for calculation.
-   * @return {ICAL.Time}                    The date on which week number 1 starts
+   * @param {Time.weekDay=} aWeekStart The week start weekday, used for calculation.
+   * @return {Time}                    The date on which week number 1 starts
    */
-  static weekOneStarts(aYear, aWeekStart) {
-    let t = Time.fromData({
+  static weekOneStarts(aYear: number, aWeekStart: WeekDay): Time {
+    const t = Time.fromData({
       year: aYear,
       month: 1,
       day: 1,
       isDate: true
     });
 
-    let dow = t.dayOfWeek();
-    let wkst = aWeekStart || Time.DEFAULT_WEEK_START;
+    const dow = t.dayOfWeek();
+    const wkst = aWeekStart || Time.DEFAULT_WEEK_START;
     if (dow > Time.THURSDAY) {
       t.day += 7;
     }
@@ -277,11 +338,11 @@ export class Time {
    * @param {Number} yr           The year to retrieve the letter for
    * @return {String}             The dominical letter.
    */
-  static getDominicalLetter(yr) {
-    let LTRS = 'GFEDCBA';
-    let dom =
+  static getDominicalLetter(yr: number): string {
+    const LTRS = 'GFEDCBA';
+    const dom =
       (yr + ((yr / 4) | 0) + ((yr / 400) | 0) - ((yr / 100) | 0) - 1) % 7;
-    let isLeap = Time.isLeapYear(yr);
+    const isLeap = Time.isLeapYear(yr);
     if (isLeap) {
       return LTRS[(dom + 6) % 7] + LTRS[dom];
     } else {
@@ -289,10 +350,11 @@ export class Time {
     }
   }
 
-  static #epochTime = null;
+  static #epochTime: Time | null = null;
+
   /**
    * January 1st, 1970 as an ICAL.Time.
-   * @type {ICAL.Time}
+   * @type {Time}
    * @constant
    * @instance
    */
@@ -325,53 +387,36 @@ export class Time {
    * @example
    * var isLeapYear = ICAL.Time.isLeapYear(year);
    * var passedDays = ICAL.Time.daysInYearPassedMonth[isLeapYear][month];
-   * @type {Array.<Array.<Number>>}
    */
-  static daysInYearPassedMonth = [
+  static daysInYearPassedMonth: number[][] = [
     [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365],
     [0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366]
   ];
 
-  /**
-   * The weekday, 1 = SUNDAY, 7 = SATURDAY. Access via
-   * ICAL.Time.MONDAY, ICAL.Time.TUESDAY, ...
-   *
-   * @typedef {Number} weekDay
-   * @memberof ICAL.Time
-   */
-
-  static SUNDAY = 1;
-  static MONDAY = 2;
-  static TUESDAY = 3;
-  static WEDNESDAY = 4;
-  static THURSDAY = 5;
-  static FRIDAY = 6;
-  static SATURDAY = 7;
+  static readonly SUNDAY = WeekDay.SUNDAY;
+  static readonly MONDAY = WeekDay.MONDAY;
+  static readonly TUESDAY = WeekDay.TUESDAY;
+  static readonly WEDNESDAY = WeekDay.WEDNESDAY;
+  static readonly THURSDAY = WeekDay.THURSDAY;
+  static readonly FRIDAY = WeekDay.FRIDAY;
+  static readonly SATURDAY = WeekDay.SATURDAY;
 
   /**
    * The default weekday for the WKST part.
    * @constant
    * @default ICAL.Time.MONDAY
    */
-  static DEFAULT_WEEK_START = 2; // MONDAY
+  static readonly DEFAULT_WEEK_START = 2; // MONDAY
 
   /**
    * Creates a new ICAL.Time instance.
    *
-   * @param {Object} data           Time initialization
-   * @param {Number=} data.year     The year for this date
-   * @param {Number=} data.month    The month for this date
-   * @param {Number=} data.day      The day for this date
-   * @param {Number=} data.hour     The hour for this date
-   * @param {Number=} data.minute   The minute for this date
-   * @param {Number=} data.second   The second for this date
-   * @param {Boolean=} data.isDate  If true, the instance represents a date (as
-   *                                  opposed to a date-time)
-   * @param {ICAL.Timezone} zone timezone this position occurs in
+   * @param data Time initialization
+   * @param zone timezone this position occurs in
    */
-  constructor(data, zone?) {
+  constructor(data?: TimeData, zone?: Timezone) {
     this.wrappedJSObject = this;
-    let time = (this._time = Object.create(null));
+    const time = (this._time = Object.create(null));
 
     /* time defaults */
     time.year = 0;
@@ -387,46 +432,38 @@ export class Time {
 
   /**
    * The class identifier.
-   * @constant
-   * @type {String}
-   * @default "icaltime"
    */
-  icalclass = 'icaltime';
-  _cachedUnixTime = null;
+  readonly icalclass: 'icaltime' | 'vcardtime' = 'icaltime';
+  _cachedUnixTime: number | null = null;
 
   /**
    * The type name, to be used in the jCal object. This value may change and
    * is strictly defined by the {@link ICAL.Time#isDate isDate} member.
-   * @readonly
-   * @type {String}
    * @default "date-time"
    */
-  get icaltype() {
+  get icaltype(): 'date-and-or-time' | 'date' | 'date-time' {
     return this.isDate ? 'date' : 'date-time';
   }
 
   /**
    * The timezone for this time.
-   * @type {ICAL.Timezone}
+   * @type {Timezone}
    */
-  zone = null;
+  zone?: Timezone;
 
   /**
    * Internal uses to indicate that a change has been made and the next read
    * operation must attempt to normalize the value (for example changing the
    * day to 33).
-   *
-   * @type {Boolean}
-   * @private
    */
-  _pendingNormalization = false;
+  private _pendingNormalization = false;
 
   /**
    * Returns a clone of the time object.
    *
-   * @return {ICAL.Time}              The cloned object
+   * @return The cloned object
    */
-  clone() {
+  clone(): Time {
     return new Time(this._time, this.zone);
   }
 
@@ -441,22 +478,30 @@ export class Time {
   /**
    * Reset the time instance to the given date/time values.
    *
-   * @param {Number} year             The year to set
-   * @param {Number} month            The month to set
-   * @param {Number} day              The day to set
-   * @param {Number} hour             The hour to set
-   * @param {Number} minute           The minute to set
-   * @param {Number} second           The second to set
-   * @param {ICAL.Timezone} timezone  The timezone to set
+   * @param year     The year to set
+   * @param month    The month to set
+   * @param day      The day to set
+   * @param hour     The hour to set
+   * @param minute   The minute to set
+   * @param second   The second to set
+   * @param timezone The timezone to set
    */
-  resetTo(year, month, day, hour, minute, second, timezone) {
+  resetTo(
+    year: number,
+    month: number,
+    day: number,
+    hour: number,
+    minute: number,
+    second: number,
+    timezone: Timezone
+  ) {
     this.fromData({
-      year: year,
-      month: month,
-      day: day,
-      hour: hour,
-      minute: minute,
-      second: second,
+      year,
+      month,
+      day,
+      hour,
+      minute,
+      second,
       zone: timezone
     });
   }
@@ -464,30 +509,28 @@ export class Time {
   /**
    * Set up the current instance from the Javascript date value.
    *
-   * @param {?Date} aDate     The Javascript Date to read, or null to reset
-   * @param {Boolean} useUTC  If true, the UTC values of the date will be used
+   * @param aDate   The Javascript Date to read, or null to reset
+   * @param useUTC  If true, the UTC values of the date will be used
    */
-  fromJSDate(aDate, useUTC) {
+  fromJSDate(aDate: Date | null, useUTC?: boolean) {
     if (!aDate) {
       this.reset();
+    } else if (useUTC) {
+      this.zone = Timezone.utcTimezone;
+      this.year = aDate.getUTCFullYear();
+      this.month = aDate.getUTCMonth() + 1;
+      this.day = aDate.getUTCDate();
+      this.hour = aDate.getUTCHours();
+      this.minute = aDate.getUTCMinutes();
+      this.second = aDate.getUTCSeconds();
     } else {
-      if (useUTC) {
-        this.zone = Timezone.utcTimezone;
-        this.year = aDate.getUTCFullYear();
-        this.month = aDate.getUTCMonth() + 1;
-        this.day = aDate.getUTCDate();
-        this.hour = aDate.getUTCHours();
-        this.minute = aDate.getUTCMinutes();
-        this.second = aDate.getUTCSeconds();
-      } else {
-        this.zone = Timezone.localTimezone;
-        this.year = aDate.getFullYear();
-        this.month = aDate.getMonth() + 1;
-        this.day = aDate.getDate();
-        this.hour = aDate.getHours();
-        this.minute = aDate.getMinutes();
-        this.second = aDate.getSeconds();
-      }
+      this.zone = Timezone.localTimezone;
+      this.year = aDate.getFullYear();
+      this.month = aDate.getMonth() + 1;
+      this.day = aDate.getDate();
+      this.hour = aDate.getHours();
+      this.minute = aDate.getMinutes();
+      this.second = aDate.getSeconds();
     }
     this._cachedUnixTime = null;
     return this;
@@ -496,20 +539,12 @@ export class Time {
   /**
    * Sets up the current instance using members from the passed data object.
    *
-   * @param {Object} aData            Time initialization
-   * @param {Number=} aData.year      The year for this date
-   * @param {Number=} aData.month     The month for this date
-   * @param {Number=} aData.day       The day for this date
-   * @param {Number=} aData.hour      The hour for this date
-   * @param {Number=} aData.minute    The minute for this date
-   * @param {Number=} aData.second    The second for this date
-   * @param {Boolean=} aData.isDate   If true, the instance represents a date
-   *                                    (as opposed to a date-time)
-   * @param {ICAL.Timezone=} aZone    Timezone this position occurs in
+   * @param aData Time initialization
+   * @param aZone Timezone this position occurs in
    */
-  fromData(aData, aZone) {
+  fromData(aData?: TimeData, aZone?: Timezone) {
     if (aData) {
-      for (let [key, value] of Object.entries(aData)) {
+      for (const [key, value] of Object.entries(aData)) {
         // ical type cannot be set
         if (key === 'icaltype') continue;
         this[key] = value;
@@ -527,8 +562,7 @@ export class Time {
     }
 
     if (aData && 'timezone' in aData) {
-      let zone = TimezoneService.get(aData.timezone);
-
+      const zone = TimezoneService.get(aData.timezone);
       this.zone = zone || Timezone.localTimezone;
     }
 
@@ -546,28 +580,25 @@ export class Time {
 
   /**
    * Calculate the day of week.
-   * @param {ICAL.Time.weekDay=} aWeekStart
-   *        The week start weekday, defaults to SUNDAY
-   * @return {ICAL.Time.weekDay}
+   * @param aWeekStart The week start weekday, defaults to SUNDAY
    */
-  dayOfWeek(aWeekStart) {
-    let firstDow = aWeekStart || Time.SUNDAY;
-    let dowCacheKey =
+  dayOfWeek(aWeekStart?: WeekDay): WeekDay {
+    const firstDow = aWeekStart || Time.SUNDAY;
+    const dowCacheKey =
       (this.year << 12) + (this.month << 8) + (this.day << 3) + firstDow;
     if (dowCacheKey in Time._dowCache) {
       return Time._dowCache[dowCacheKey];
     }
 
     // Using Zeller's algorithm
-    let q = this.day;
-    let m = this.month + (this.month < 3 ? 12 : 0);
-    let Y = this.year - (this.month < 3 ? 1 : 0);
+    const q = this.day;
+    const m = this.month + (this.month < 3 ? 12 : 0);
+    const Y = this.year - (this.month < 3 ? 1 : 0);
 
     let h = q + Y + trunc(((m + 1) * 26) / 10) + trunc(Y / 4);
     if (true /* gregorian */) {
       // eslint-disable-line no-constant-condition
       h += trunc(Y / 100) * 6 + trunc(Y / 400);
-    } else {
     }
 
     // Normalize to 1 = wkst
@@ -578,11 +609,10 @@ export class Time {
 
   /**
    * Calculate the day of year.
-   * @return {Number}
    */
-  dayOfYear() {
-    let is_leap = Time.isLeapYear(this.year) ? 1 : 0;
-    let diypm = Time.daysInYearPassedMonth;
+  dayOfYear(): number {
+    const is_leap = Time.isLeapYear(this.year) ? 1 : 0;
+    const diypm = Time.daysInYearPassedMonth;
     return diypm[is_leap][this.month - 1] + this.day;
   }
 
@@ -591,13 +621,12 @@ export class Time {
    * week. The resulting ICAL.Time instance is of icaltype date, even if this
    * is a date-time.
    *
-   * @param {ICAL.Time.weekDay=} aWeekStart
-   *        The week start weekday, defaults to SUNDAY
-   * @return {ICAL.Time}      The start of the week (cloned)
+   * @param aWeekStart The week start weekday, defaults to SUNDAY
+   * @return The start of the week (cloned)
    */
-  startOfWeek(aWeekStart) {
-    let firstDow = aWeekStart || Time.SUNDAY;
-    let result = this.clone();
+  startOfWeek(aWeekStart?: WeekDay): Time {
+    const firstDow = aWeekStart || Time.SUNDAY;
+    const result = this.clone();
     result.day -= (this.dayOfWeek() + 7 - firstDow) % 7;
     result.isDate = true;
     result.hour = 0;
@@ -611,13 +640,12 @@ export class Time {
    * The resulting ICAL.Time instance is of icaltype date, even if this is a
    * date-time.
    *
-   * @param {ICAL.Time.weekDay=} aWeekStart
-   *        The week start weekday, defaults to SUNDAY
-   * @return {ICAL.Time}      The end of the week (cloned)
+   * @param aWeekStart The week start weekday, defaults to SUNDAY
+   * @return The end of the week (cloned)
    */
-  endOfWeek(aWeekStart) {
-    let firstDow = aWeekStart || Time.SUNDAY;
-    let result = this.clone();
+  endOfWeek(aWeekStart?: WeekDay): Time {
+    const firstDow = aWeekStart || Time.SUNDAY;
+    const result = this.clone();
     result.day += (7 - this.dayOfWeek() + firstDow - Time.SUNDAY) % 7;
     result.isDate = true;
     result.hour = 0;
@@ -631,10 +659,10 @@ export class Time {
    * month. The resulting ICAL.Time instance is of icaltype date, even if
    * this is a date-time.
    *
-   * @return {ICAL.Time}      The start of the month (cloned)
+   * @return The start of the month (cloned)
    */
-  startOfMonth() {
-    let result = this.clone();
+  startOfMonth(): Time {
+    const result = this.clone();
     result.day = 1;
     result.isDate = true;
     result.hour = 0;
@@ -648,10 +676,10 @@ export class Time {
    * month.  The resulting ICAL.Time instance is of icaltype date, even if
    * this is a date-time.
    *
-   * @return {ICAL.Time}      The end of the month (cloned)
+   * @return The end of the month (cloned)
    */
-  endOfMonth() {
-    let result = this.clone();
+  endOfMonth(): Time {
+    const result = this.clone();
     result.day = Time.daysInMonth(result.month, result.year);
     result.isDate = true;
     result.hour = 0;
@@ -665,10 +693,10 @@ export class Time {
    * year. The resulting ICAL.Time instance is of icaltype date, even if
    * this is a date-time.
    *
-   * @return {ICAL.Time}      The start of the year (cloned)
+   * @return The start of the year (cloned)
    */
-  startOfYear() {
-    let result = this.clone();
+  startOfYear(): Time {
+    const result = this.clone();
     result.day = 1;
     result.month = 1;
     result.isDate = true;
@@ -683,10 +711,10 @@ export class Time {
    * year.  The resulting ICAL.Time instance is of icaltype date, even if
    * this is a date-time.
    *
-   * @return {ICAL.Time}      The end of the year (cloned)
+   * @return The end of the year (cloned)
    */
-  endOfYear() {
-    let result = this.clone();
+  endOfYear(): Time {
+    const result = this.clone();
     result.day = 31;
     result.month = 12;
     result.isDate = true;
@@ -700,12 +728,11 @@ export class Time {
    * First calculates the start of the week, then returns the day of year for
    * this date. If the day falls into the previous year, the day is zero or negative.
    *
-   * @param {ICAL.Time.weekDay=} aFirstDayOfWeek
-   *        The week start weekday, defaults to SUNDAY
-   * @return {Number}     The calculated day of year
+   * @param aFirstDayOfWeek The week start weekday, defaults to SUNDAY
+   * @return The calculated day of year
    */
-  startDoyWeek(aFirstDayOfWeek) {
-    let firstDow = aFirstDayOfWeek || Time.SUNDAY;
+  startDoyWeek(aFirstDayOfWeek?: WeekDay): number {
+    const firstDow = aFirstDayOfWeek || Time.SUNDAY;
     let delta = this.dayOfWeek() - firstDow;
     if (delta < 0) delta += 7;
     return this.dayOfYear() - delta;
@@ -718,7 +745,7 @@ export class Time {
    * @param {Number} yr           The year to retrieve the letter for
    * @return {String}             The dominical letter.
    */
-  getDominicalLetter() {
+  getDominicalLetter(): string {
     return Time.getDominicalLetter(this.year);
   }
 
@@ -736,21 +763,21 @@ export class Time {
    * @return {Number} numeric value indicating a day relative
    *                   to the current month of this time object
    */
-  nthWeekDay(aDayOfWeek, aPos) {
-    let daysInMonth = Time.daysInMonth(this.month, this.year);
+  nthWeekDay(aDayOfWeek: number, aPos: number): number {
+    const daysInMonth = Time.daysInMonth(this.month, this.year);
     let weekday;
     let pos = aPos;
 
     let start = 0;
 
-    let otherDay = this.clone();
+    const otherDay = this.clone();
 
     if (pos >= 0) {
       otherDay.day = 1;
 
       // because 0 means no position has been given
       // 1 and 0 indicate the same day.
-      if (pos != 0) {
+      if (pos !== 0) {
         // remove the extra numeric value
         pos--;
       }
@@ -759,7 +786,7 @@ export class Time {
       start = otherDay.day;
 
       // find the current day of week
-      let startDow = otherDay.dayOfWeek();
+      const startDow = otherDay.dayOfWeek();
 
       // calculate the difference between current
       // day of the week and desired day of the week
@@ -768,10 +795,11 @@ export class Time {
       // if the offset goes into the past
       // week we add 7 so it goes into the next
       // week. We only want to go forward in time here.
-      if (offset < 0)
+      if (offset < 0) {
         // this is really important otherwise we would
         // end up with dates from in the past.
         offset += 7;
+      }
 
       // add offset to start so start is the same
       // day of the week as the desired day of week.
@@ -789,7 +817,7 @@ export class Time {
       otherDay.day = daysInMonth;
 
       // find the ends weekday
-      let endDow = otherDay.dayOfWeek();
+      const endDow = otherDay.dayOfWeek();
 
       pos++;
 
@@ -812,19 +840,19 @@ export class Time {
    * month.  Will always return false when rule resolves outside of current
    * month.
    *
-   * @param {ICAL.Time.weekDay} aDayOfWeek       Day of week to check
+   * @param {Time.weekDay} aDayOfWeek       Day of week to check
    * @param {Number} aPos                        Relative position
    * @return {Boolean}                           True, if it is the nth weekday
    */
-  isNthWeekDay(aDayOfWeek, aPos) {
-    let dow = this.dayOfWeek();
+  isNthWeekDay(aDayOfWeek: WeekDay, aPos: number): boolean {
+    const dow = this.dayOfWeek();
 
     if (aPos === 0 && dow === aDayOfWeek) {
       return true;
     }
 
     // get pos
-    let day = this.nthWeekDay(aDayOfWeek, aPos);
+    const day = this.nthWeekDay(aDayOfWeek, aPos);
 
     if (day === this.day) {
       return true;
@@ -844,11 +872,11 @@ export class Time {
    * number.
    *
    * @see ICAL.Time.weekOneStarts
-   * @param {ICAL.Time.weekDay} aWeekStart        The weekday the week starts with
+   * @param {Time.weekDay} aWeekStart        The weekday the week starts with
    * @return {Number}                             The ISO week number
    */
-  weekNumber(aWeekStart) {
-    let wnCacheKey =
+  weekNumber(aWeekStart: WeekDay): number {
+    const wnCacheKey =
       (this.year << 12) + (this.month << 8) + (this.day << 3) + aWeekStart;
     if (wnCacheKey in Time._wnCache) {
       return Time._wnCache[wnCacheKey];
@@ -858,11 +886,11 @@ export class Time {
     // plus some fixes to be able to use different week starts.
     let week1;
 
-    let dt = this.clone();
+    const dt = this.clone();
     dt.isDate = true;
     let isoyear = this.year;
 
-    if (dt.month == 12 && dt.day > 25) {
+    if (dt.month === 12 && dt.day > 25) {
       week1 = Time.weekOneStarts(isoyear + 1, aWeekStart);
       if (dt.compare(week1) < 0) {
         week1 = Time.weekOneStarts(isoyear, aWeekStart);
@@ -876,8 +904,8 @@ export class Time {
       }
     }
 
-    let daysBetween = dt.subtractDate(week1).toSeconds() / 86400;
-    let answer = trunc(daysBetween / 7) + 1;
+    const daysBetween = dt.subtractDate(week1).toSeconds() / 86400;
+    const answer = trunc(daysBetween / 7) + 1;
     Time._wnCache[wnCacheKey] = answer;
     return answer;
   }
@@ -886,19 +914,19 @@ export class Time {
    * Adds the duration to the current time. The instance is modified in
    * place.
    *
-   * @param {ICAL.Duration} aDuration         The duration to add
+   * @param {Duration} aDuration         The duration to add
    */
-  addDuration(aDuration) {
-    let mult = aDuration.isNegative ? -1 : 1;
+  addDuration(aDuration: Duration) {
+    const mult = aDuration.isNegative ? -1 : 1;
 
     // because of the duration optimizations it is much
     // more efficient to grab all the values up front
     // then set them directly (which will avoid a normalization call).
     // So we don't actually normalize until we need it.
-    let second = this.second;
-    let minute = this.minute;
-    let hour = this.hour;
-    let day = this.day;
+    let { second } = this;
+    let { minute } = this;
+    let { hour } = this;
+    let { day } = this;
 
     second += mult * aDuration.seconds;
     minute += mult * aDuration.minutes;
@@ -919,36 +947,36 @@ export class Time {
    * the relative difference between two time objects excluding their
    * timezone differences.
    *
-   * @param {ICAL.Time} aDate     The date to subtract
-   * @return {ICAL.Duration}      The difference as a duration
+   * @param aDate The date to subtract
+   * @return      The difference as a duration
    */
-  subtractDate(aDate) {
-    let unixTime = this.toUnixTime() + this.utcOffset();
-    let other = aDate.toUnixTime() + aDate.utcOffset();
+  subtractDate(aDate: Time): Duration {
+    const unixTime = this.toUnixTime() + this.utcOffset();
+    const other = aDate.toUnixTime() + aDate.utcOffset();
     return Duration.fromSeconds(unixTime - other);
   }
 
   /**
    * Subtract the date details, taking timezones into account.
    *
-   * @param {ICAL.Time} aDate  The date to subtract
-   * @return {ICAL.Duration}  The difference in duration
+   * @param aDate The date to subtract
+   * @return      The difference in duration
    */
-  subtractDateTz(aDate) {
-    let unixTime = this.toUnixTime();
-    let other = aDate.toUnixTime();
+  subtractDateTz(aDate: Time): Duration {
+    const unixTime = this.toUnixTime();
+    const other = aDate.toUnixTime();
     return Duration.fromSeconds(unixTime - other);
   }
 
   /**
    * Compares the ICAL.Time instance with another one.
    *
-   * @param {ICAL.Duration} aOther        The instance to compare with
-   * @return {Number}                     -1, 0 or 1 for less/equal/greater
+   * @param aOther The instance to compare with
+   * @return       -1, 0 or 1 for less/equal/greater
    */
-  compare(other) {
-    let a = this.toUnixTime();
-    let b = other.toUnixTime();
+  compare(other: Duration): number {
+    const a = this.toUnixTime();
+    const b = other.toUnixTime();
 
     if (a > b) return 1;
     if (b > a) return -1;
@@ -958,18 +986,18 @@ export class Time {
   /**
    * Compares only the date part of this instance with another one.
    *
-   * @param {ICAL.Duration} other         The instance to compare with
-   * @param {ICAL.Timezone} tz            The timezone to compare in
-   * @return {Number}                     -1, 0 or 1 for less/equal/greater
+   * @param other The instance to compare with
+   * @param tz    The timezone to compare in
+   * @return      -1, 0 or 1 for less/equal/greater
    */
-  compareDateOnlyTz(other, tz) {
-    let a = this.convertToZone(tz);
-    let b = other.convertToZone(tz);
+  compareDateOnlyTz(other: Duration, tz: Timezone): number {
+    const a = this.convertToZone(tz);
+    const b = other.convertToZone(tz);
     let rc = 0;
 
-    if ((rc = Time._cmp_attr(a, b, 'year')) != 0) return rc;
-    if ((rc = Time._cmp_attr(a, b, 'month')) != 0) return rc;
-    if ((rc = Time._cmp_attr(a, b, 'day')) != 0) return rc;
+    if ((rc = Time._cmp_attr(a, b, 'year')) !== 0) return rc;
+    if ((rc = Time._cmp_attr(a, b, 'month')) !== 0) return rc;
+    if ((rc = Time._cmp_attr(a, b, 'day')) !== 0) return rc;
 
     return rc;
   }
@@ -978,15 +1006,15 @@ export class Time {
    * Convert the instance into another timezone. The returned ICAL.Time
    * instance is always a copy.
    *
-   * @param {ICAL.Timezone} zone      The zone to convert to
-   * @return {ICAL.Time}              The copy, converted to the zone
+   * @param zone The zone to convert to
+   * @return     The copy, converted to the zone
    */
-  convertToZone(zone) {
-    let copy = this.clone();
-    let zone_equals = this.zone.tzid == zone.tzid;
+  convertToZone(zone: Timezone): Time {
+    const copy = this.clone();
+    const zone_equals = this.zone!.tzid === zone.tzid;
 
     if (!this.isDate && !zone_equals) {
-      Timezone.convert_time(copy, this.zone, zone);
+      Timezone.convert_time(copy, this.zone!, zone);
     }
 
     copy.zone = zone;
@@ -997,26 +1025,26 @@ export class Time {
    * Calculates the UTC offset of the current date/time in the timezone it is
    * in.
    *
-   * @return {Number}     UTC offset in seconds
+   * @return UTC offset in seconds
    */
-  utcOffset() {
+  utcOffset(): number {
     if (
-      this.zone == Timezone.localTimezone ||
-      this.zone == Timezone.utcTimezone
+      this.zone === Timezone.localTimezone ||
+      this.zone === Timezone.utcTimezone
     ) {
       return 0;
     } else {
-      return this.zone.utcOffset(this);
+      return this.zone!.utcOffset(this);
     }
   }
 
   /**
    * Returns an RFC 5545 compliant ical representation of this object.
    *
-   * @return {String} ical date/date-time
+   * @return ical date/date-time
    */
-  toICALString() {
-    let string = this.toString();
+  toICALString(): string {
+    const string = this.toString();
 
     if (string.length > 10) {
       return design.icalendar.value['date-time'].toICAL(string);
@@ -1028,9 +1056,8 @@ export class Time {
   /**
    * The string representation of this date/time, in jCal form
    * (including : and - separators).
-   * @return {String}
    */
-  toString() {
+  toString(): string {
     let result = this.year + '-' + pad2(this.month) + '-' + pad2(this.day);
 
     if (!this.isDate) {
@@ -1052,10 +1079,9 @@ export class Time {
 
   /**
    * Converts the current instance to a Javascript date
-   * @return {Date}
    */
-  toJSDate() {
-    if (this.zone == Timezone.localTimezone) {
+  toJSDate(): Date {
+    if (this.zone === Timezone.localTimezone) {
       if (this.isDate) {
         return new Date(this.year, this.month - 1, this.day);
       } else {
@@ -1074,7 +1100,7 @@ export class Time {
     }
   }
 
-  _normalize() {
+  protected _normalize() {
     if (this._time.isDate) {
       this._time.hour = 0;
       this._time.minute = 0;
@@ -1088,23 +1114,31 @@ export class Time {
   /**
    * Adjust the date/time by the given offset
    *
-   * @param {Number} aExtraDays       The extra amount of days
-   * @param {Number} aExtraHours      The extra amount of hours
-   * @param {Number} aExtraMinutes    The extra amount of minutes
-   * @param {Number} aExtraSeconds    The extra amount of seconds
-   * @param {Number=} aTime           The time to adjust, defaults to the
-   *                                    current instance.
+   * @param aExtraDays    The extra amount of days
+   * @param aExtraHours   The extra amount of hours
+   * @param aExtraMinutes The extra amount of minutes
+   * @param aExtraSeconds The extra amount of seconds
+   * @param aTime         The time to adjust, defaults to the current instance.
    */
-  adjust(aExtraDays, aExtraHours, aExtraMinutes, aExtraSeconds, aTime) {
-    let minutesOverflow,
-      hoursOverflow,
-      daysOverflow = 0,
-      yearsOverflow = 0;
+  adjust(
+    aExtraDays: number,
+    aExtraHours: number,
+    aExtraMinutes: number,
+    aExtraSeconds: number,
+    aTime?: Required<TimeData>
+  ) {
+    let minutesOverflow;
+    let hoursOverflow;
+    let daysOverflow = 0;
+    let yearsOverflow = 0;
 
-    let second, minute, hour, day;
+    let second: number;
+    let minute;
+    let hour;
+    let day;
     let daysInMonth;
 
-    let time = aTime || this._time;
+    const time = aTime || this._time;
 
     if (!time.isDate) {
       second = time.second + aExtraSeconds;
@@ -1164,7 +1198,7 @@ export class Time {
       }
     } else {
       while (day <= 0) {
-        if (time.month == 1) {
+        if (time.month === 1) {
           time.year--;
           time.month = 12;
         } else {
@@ -1185,14 +1219,14 @@ export class Time {
    * Sets up the current instance from unix time, the number of seconds since
    * January 1st, 1970.
    *
-   * @param {Number} seconds      The seconds to set up with
+   * @param seconds The seconds to set up with
    */
-  fromUnixTime(seconds) {
+  fromUnixTime(seconds: number) {
     this.zone = Timezone.utcTimezone;
     // We could use `fromJSDate` here, but this is about twice as fast.
     // We could also clone `epochTime` and use `adjust` for a more
     // ical.js-centric approach, but this is about 100 times as fast.
-    let date = new Date(seconds * 1000);
+    const date = new Date(seconds * 1000);
     this.year = date.getUTCFullYear();
     this.month = date.getUTCMonth() + 1;
     this.day = date.getUTCDate();
@@ -1212,17 +1246,17 @@ export class Time {
   /**
    * Converts the current instance to seconds since January 1st 1970.
    *
-   * @return {Number}         Seconds since 1970
+   * @return Seconds since 1970
    */
-  toUnixTime() {
+  toUnixTime(): number {
     if (this._cachedUnixTime !== null) {
       return this._cachedUnixTime;
     }
-    let offset = this.utcOffset();
+    const offset = this.utcOffset();
 
     // we use the offset trick to ensure
     // that we are getting the actual UTC time
-    let ms = Date.UTC(
+    const ms = Date.UTC(
       this.year,
       this.month - 1,
       this.day,
@@ -1250,13 +1284,13 @@ export class Time {
    *
    * @return {Object}
    */
-  toJSON() {
-    let copy = ['year', 'month', 'day', 'hour', 'minute', 'second', 'isDate'];
+  toJSON(): Record<string, any> {
+    const copy = ['year', 'month', 'day', 'hour', 'minute', 'second', 'isDate'];
 
-    let result = Object.create(null);
+    const result = Object.create(null);
 
     let i = 0;
-    let len = copy.length;
+    const len = copy.length;
     let prop;
 
     for (; i < len; i++) {
@@ -1274,7 +1308,7 @@ export class Time {
 
 (function setupNormalizeAttributes() {
   // This needs to run before any instances are created!
-  function defineAttr(attr) {
+  function defineAttr(attr: string) {
     Object.defineProperty(Time.prototype, attr, {
       get: function getTimeAttr() {
         if (this._pendingNormalization) {

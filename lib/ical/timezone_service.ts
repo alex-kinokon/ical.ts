@@ -6,13 +6,13 @@
 import { Timezone } from './timezone';
 import { Component } from './component';
 
-let zones = {};
+let zones: Record<string, Timezone> = {};
 
-function lazyZone(name) {
+function lazyZone(name: string): PropertyDescriptor {
   return {
     configurable: true,
     enumerable: true,
-    get: function () {
+    get(this: any) {
       delete this[name];
       TimezoneService.reset();
       return this[name];
@@ -40,9 +40,9 @@ export const TimezoneService = {
     return Object.keys(zones).length;
   },
 
-  reset: function () {
+  reset() {
     zones = Object.create(null);
-    let utc = Timezone.utcTimezone;
+    const utc = Timezone.utcTimezone;
 
     zones.Z = utc;
     zones.UTC = utc;
@@ -52,33 +52,34 @@ export const TimezoneService = {
   /**
    * Checks if timezone id has been registered.
    *
-   * @param {String} tzid     Timezone identifier (e.g. America/Los_Angeles)
+   * @param tzid     Timezone identifier (e.g. America/Los_Angeles)
    * @return {Boolean}        False, when not present
    */
-  has: function (tzid) {
+  has(tzid: string): boolean {
     return !!zones[tzid];
   },
 
   /**
    * Returns a timezone by its tzid if present.
    *
-   * @param {String} tzid     Timezone identifier (e.g. America/Los_Angeles)
-   * @return {?ICAL.Timezone} The timezone, or null if not found
+   * @param tzid Timezone identifier (e.g. America/Los_Angeles)
+   * @return The timezone, or null if not found
    */
-  get: function (tzid) {
+  get(tzid: string): Timezone | undefined {
     return zones[tzid];
   },
 
   /**
    * Registers a timezone object or component.
    *
-   * @param {String=} name
-   *        The name of the timezone. Defaults to the component's TZID if not
+   * @param name The name of the timezone. Defaults to the component's TZID if not
    *        passed.
-   * @param {ICAL.Component|ICAL.Timezone} zone
-   *        The initialized zone or vtimezone.
+   * @param timezone The initialized zone or vtimezone.
    */
-  register: function (name, timezone) {
+  register(
+    name: string | Component | undefined,
+    timezone: Component | Timezone
+  ) {
     if (name instanceof Component) {
       if (name.name === 'vtimezone') {
         timezone = new Timezone(name);
@@ -87,7 +88,7 @@ export const TimezoneService = {
     }
 
     if (timezone instanceof Timezone) {
-      zones[name] = timezone;
+      zones[name as string] = timezone;
     } else {
       throw new TypeError('timezone must be ICAL.Timezone or ICAL.Component');
     }
@@ -99,7 +100,7 @@ export const TimezoneService = {
    * @param {String} tzid     Timezone identifier (e.g. America/Los_Angeles)
    * @return {?ICAL.Timezone} The removed timezone, or null if not registered
    */
-  remove: function (tzid) {
+  remove(tzid: string): Timezone | null {
     return delete zones[tzid];
   }
 };

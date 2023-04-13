@@ -3,12 +3,18 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
+import type { DesignSet } from './design';
 import { design } from './design';
 import { foldline, unescapedIndexOf } from './helpers';
 
 const LINE_ENDING = '\r\n';
 const DEFAULT_VALUE_TYPE = 'unknown';
-const RFC6868_REPLACE_MAP = { '"': "^'", '\n': '^n', '^': '^^' };
+const RFC6868_REPLACE_MAP: Record<string, string> = {
+  __proto__: null!,
+  '"': "^'",
+  '\n': '^n',
+  '^': '^^'
+};
 
 /**
  * Convert a full jCal/jCard array into a iCalendar/vCard string.
@@ -18,14 +24,14 @@ const RFC6868_REPLACE_MAP = { '"': "^'", '\n': '^n', '^': '^^' };
  * @param {Array} jCal    The jCal/jCard document
  * @return {String}       The stringified iCalendar/vCard document
  */
-export function stringify(jCal) {
+export function stringify(jCal: any[]): string {
   if (typeof jCal[0] == 'string') {
     // This is a single component
     jCal = [jCal];
   }
 
   let i = 0;
-  let len = jCal.length;
+  const len = jCal.length;
   let result = '';
 
   for (; i < len; i++) {
@@ -43,19 +49,20 @@ export function stringify(jCal) {
  * properties will come before subcomponents.
  *
  * @function ICAL.stringify.component
- * @param {Array} component
- *        jCal/jCard fragment of a component
- * @param {ICAL.design.designSet} designSet
- *        The design data to use for this component
- * @return {String}       The iCalendar/vCard string
+ * @param component jCal/jCard fragment of a component
+ * @param designSet The design data to use for this component
+ * @return The iCalendar/vCard string
  */
-stringify.component = function (component, designSet) {
-  let name = component[0].toUpperCase();
+stringify.component = function (
+  component: any[],
+  designSet: DesignSet
+): string {
+  const name = component[0].toUpperCase();
   let result = 'BEGIN:' + name + LINE_ENDING;
 
-  let props = component[1];
+  const props = component[1];
   let propIdx = 0;
-  let propLen = props.length;
+  const propLen = props.length;
 
   let designSetName = component[0];
   // rfc6350 requires that in vCard 4.0 the first component is the VERSION
@@ -74,9 +81,9 @@ stringify.component = function (component, designSet) {
   }
 
   // Ignore subcomponents if none exist, e.g. in vCard.
-  let comps = component[2] || [];
+  const comps = component[2] || [];
   let compIdx = 0;
-  let compLen = comps.length;
+  const compLen = comps.length;
 
   for (; compIdx < compLen; compIdx++) {
     result += stringify.component(comps[compIdx], designSet) + LINE_ENDING;
@@ -90,24 +97,24 @@ stringify.component = function (component, designSet) {
  * Converts a single jCal/jCard property to a iCalendar/vCard string.
  *
  * @function ICAL.stringify.property
- * @param {Array} property
- *        jCal/jCard property array
- * @param {ICAL.design.designSet} designSet
- *        The design data to use for this property
- * @param {Boolean} noFold
- *        If true, the line is not folded
- * @return {String}       The iCalendar/vCard string
+ * @param property  jCal/jCard property array
+ * @param designSet The design data to use for this property
+ * @param noFold    If true, the line is not folded
+ * @return The iCalendar/vCard string
  */
-stringify.property = function (property, designSet, noFold) {
-  let name = property[0].toUpperCase();
-  let jsName = property[0];
-  let params = property[1];
+stringify.property = function (
+  property: any[],
+  designSet: DesignSet,
+  noFold?: boolean
+): string {
+  const name = property[0].toUpperCase();
+  const [jsName, params] = property;
 
   if (!designSet) {
     designSet = design.defaultSet;
   }
 
-  let groupName = params.group;
+  const groupName = params.group;
   let line;
   if (designSet.propertyGroups && groupName) {
     line = groupName.toUpperCase() + '.' + name;
@@ -116,7 +123,7 @@ stringify.property = function (property, designSet, noFold) {
   }
 
   for (let [paramName, value] of Object.entries(params)) {
-    if (designSet.propertyGroups && paramName == 'group') {
+    if (designSet.propertyGroups && paramName === 'group') {
       continue;
     }
     let multiValue =
@@ -146,7 +153,7 @@ stringify.property = function (property, designSet, noFold) {
     return line + ':';
   }
 
-  let valueType = property[2];
+  const valueType = property[2];
 
   let propDetails;
   let multiValue = false;
@@ -168,15 +175,11 @@ stringify.property = function (property, designSet, noFold) {
       if (valueType === propDetails.defaultType) {
         isDefault = true;
       }
-    } else {
-      if (valueType === DEFAULT_VALUE_TYPE) {
-        isDefault = true;
-      }
-    }
-  } else {
-    if (valueType === DEFAULT_VALUE_TYPE) {
+    } else if (valueType === DEFAULT_VALUE_TYPE) {
       isDefault = true;
     }
+  } else if (valueType === DEFAULT_VALUE_TYPE) {
+    isDefault = true;
   }
 
   // push the VALUE property if type is not the default
@@ -234,7 +237,7 @@ stringify.property = function (property, designSet, noFold) {
  * @param {String} value      Raw property value
  * @return {String}           Given or escaped value when needed
  */
-stringify.propertyValue = function (value) {
+stringify.propertyValue = function (value: string): string {
   if (
     unescapedIndexOf(value, ',') === -1 &&
     unescapedIndexOf(value, ':') === -1 &&
@@ -251,27 +254,23 @@ stringify.propertyValue = function (value) {
  * string based on a type and a delimiter value (like ",").
  *
  * @function ICAL.stringify.multiValue
- * @param {Array} values      List of values to convert
- * @param {String} delim      Used to join the values (",", ";", ":")
- * @param {String} type       Lowecase ical value type
- *        (like boolean, date-time, etc..)
- * @param {?String} innerMulti If set, each value will again be processed
- *        Used for structured values
- * @param {ICAL.design.designSet} designSet
- *        The design data to use for this property
- *
- * @return {String}           iCalendar/vCard string for value
+ * @param values     List of values to convert
+ * @param delim      Used to join the values (",", ";", ":")
+ * @param type       Lowercase ical value type (like boolean, date-time, etc..)
+ * @param innerMulti If set, each value will again be processed. Used for structured values
+ * @param designSet  The design data to use for this property
+ * @return           iCalendar/vCard string for value
  */
 stringify.multiValue = function (
-  values,
-  delim,
-  type,
-  innerMulti,
-  designSet,
-  structuredValue
-) {
+  values: any[],
+  delim: string,
+  type: string,
+  innerMulti: string | undefined,
+  designSet: DesignSet,
+  structuredValue?
+): string {
   let result = '';
-  let len = values.length;
+  const len = values.length;
   let i = 0;
 
   for (; i < len; i++) {
@@ -301,15 +300,20 @@ stringify.multiValue = function (
  * design value type if available to convert the value.
  *
  * @function ICAL.stringify.value
- * @param {String|Number} value       A formatted value
- * @param {String} type               Lowercase iCalendar/vCard value type
- *  (like boolean, date-time, etc..)
- * @return {String}                   iCalendar/vCard value for single value
+ * @param value A formatted value
+ * @param type  Lowercase iCalendar/vCard value type  (like boolean, date-time, etc..)
+ * @return      iCalendar/vCard value for single value
  */
-stringify.value = function (value, type, designSet, structuredValue) {
+stringify.value = function (
+  value: string | number,
+  type: string,
+  designSet: DesignSet,
+  structuredValue
+): string {
   if (type in designSet.value && 'toICAL' in designSet.value[type]) {
     return designSet.value[type].toICAL(value, structuredValue);
   }
+
   return value;
 };
 
@@ -317,11 +321,9 @@ stringify.value = function (value, type, designSet, structuredValue) {
  * Internal helper for rfc6868. Exposing this on ICAL.stringify so that
  * hackers can disable the rfc6868 parsing if the really need to.
  *
- * @param {String} val        The value to unescape
- * @return {String}           The escaped value
+ * @param val The value to unescape
+ * @return The escaped value
  */
-stringify._rfc6868Unescape = function (val) {
-  return val.replace(/[\n^"]/g, function (x) {
-    return RFC6868_REPLACE_MAP[x];
-  });
+stringify._rfc6868Unescape = function (val: string): string {
+  return val.replace(/[\n^"]/g, x => RFC6868_REPLACE_MAP[x]);
 };

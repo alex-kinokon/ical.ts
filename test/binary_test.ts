@@ -1,16 +1,16 @@
-import { suite, setup, test } from 'mocha';
 import assert from 'assert/strict';
+import { setup, suite, test } from 'mocha';
 import { ICAL } from './support/helper';
 import type { Binary } from '../lib/ical/';
 
-suite('ICAL.Binary', function () {
+suite('ICAL.Binary', () => {
   let subject: Binary;
 
-  setup(function () {
+  setup(() => {
     subject = new ICAL.Binary();
   });
 
-  test('setEncodedValue', function () {
+  test('setEncodedValue', () => {
     subject.setEncodedValue('bananas');
     assert.equal(subject.decodeValue(), 'bananas');
     assert.equal(subject.value, 'YmFuYW5hcw==');
@@ -20,7 +20,7 @@ suite('ICAL.Binary', function () {
     assert.equal(subject.value, 'YXBwbGVz');
   });
 
-  test('null values', function () {
+  test('null values', () => {
     subject.setEncodedValue(null);
     assert.equal(subject.decodeValue(), null);
     assert.equal(subject.value, null);

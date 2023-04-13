@@ -29,7 +29,6 @@ export { VCardTime } from './vcard_time';
 export const config = {
   /**
    * The number of characters before iCalendar line folding should occur
-   * @type {Number}
    * @default 75
    */
   foldLength: 75,

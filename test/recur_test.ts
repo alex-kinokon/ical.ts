@@ -1,44 +1,44 @@
 import { suite, test } from 'mocha';
 import { assert } from 'chai';
-import { hasProperties, ICAL } from './support/helper';
+import { ICAL, hasProperties } from './support/helper';
 
-suite('recur', function () {
-  suite('initialization', function () {
-    test('empty init', function () {
-      let recur = new ICAL.Recur();
+suite('recur', () => {
+  suite('initialization', () => {
+    test('empty init', () => {
+      const recur = new ICAL.Recur();
       assert.equal(recur.interval, 1);
       assert.equal(recur.wkst, ICAL.Time.MONDAY);
-      assert.isNull(recur.until);
-      assert.isNull(recur.count);
-      assert.isNull(recur.freq);
+      assert.isUndefined(recur.until);
+      assert.isUndefined(recur.count);
+      assert.isUndefined(recur.freq);
     });
   });
 
-  suite('#iterator', function () {
+  suite('#iterator', () => {
     function checkDate(data, last, dtstart) {
-      let name = JSON.stringify(data);
+      const name = JSON.stringify(data);
       // XXX: better names
-      test('RULE: ' + name, function () {
-        let recur = new ICAL.Recur(data);
+      test('RULE: ' + name, () => {
+        const recur = new ICAL.Recur(data);
         if (dtstart) {
           dtstart = ICAL.Time.fromString(dtstart);
         } else {
           dtstart = ICAL.Time.epochTime.clone();
         }
-        let iter = recur.iterator(dtstart);
+        const iter = recur.iterator(dtstart);
         assert.equal(iter.next().toString(), last);
       });
     }
 
     function checkThrow(data, expectedMessage, dtstart, stack) {
-      test(expectedMessage, function () {
-        let recur = new ICAL.Recur(data);
+      test(expectedMessage, () => {
+        const recur = new ICAL.Recur(data);
         if (dtstart) {
           dtstart = ICAL.Time.fromString(dtstart);
         } else {
           dtstart = ICAL.Time.epochTime.clone();
         }
-        assert.throws(function () {
+        assert.throws(() => {
           recur.iterator(dtstart);
         }, expectedMessage);
       });
@@ -224,17 +224,17 @@ suite('recur', function () {
     // TODO check weekly without byday instances + 1 same wkday
   });
 
-  test('#clone', function () {
-    let until = ICAL.Time.epochTime.clone();
-    let a = new ICAL.Recur({
+  test('#clone', () => {
+    const until = ICAL.Time.epochTime.clone();
+    const a = new ICAL.Recur({
       interval: 2,
       wkst: 3,
-      until: until,
+      until,
       count: 5,
       freq: 'YEARLY'
     });
 
-    let b = a.clone();
+    const b = a.clone();
 
     assert.equal(a.interval, b.interval);
     assert.equal(a.wkst, b.wkst);
@@ -255,13 +255,13 @@ suite('recur', function () {
     assert.notEqual(a.freq, b.freq);
   });
 
-  suite('ICAL.Recur#toJSON', function () {
-    test('round-trip', function () {
-      let recur = ICAL.Recur.fromString(
+  suite('ICAL.Recur#toJSON', () => {
+    test('round-trip', () => {
+      const recur = ICAL.Recur.fromString(
         'FREQ=MONTHLY;BYDAY=1SU,2MO;BYSETPOS=1;COUNT=10;UNTIL=20121001T090000'
       );
 
-      let props = {
+      const props = {
         byday: ['1SU', '2MO'],
         bysetpos: 1,
         until: '2012-10-01T09:00:00',
@@ -269,10 +269,10 @@ suite('recur', function () {
         count: 10
       };
 
-      let result = recur.toJSON();
+      const result = recur.toJSON();
       assert.deepEqual(result, props);
 
-      let fromJSON = new ICAL.Recur(result);
+      const fromJSON = new ICAL.Recur(result);
 
       assert.instanceOf(fromJSON.until, ICAL.Time);
 
@@ -288,12 +288,12 @@ suite('recur', function () {
     });
   });
 
-  test('components', function () {
-    let until = ICAL.Time.epochTime.clone();
-    let a = new ICAL.Recur({
+  test('components', () => {
+    const until = ICAL.Time.epochTime.clone();
+    const a = new ICAL.Recur({
       interval: 2,
       wkst: 3,
-      until: until,
+      until,
       count: 5,
       freq: 'YEARLY',
       parts: {
@@ -314,17 +314,17 @@ suite('recur', function () {
     a.addComponent('BYMONTHDAY', '31');
     assert.deepEqual(a.getComponent('bymonthday'), ['31']);
 
-    let comp = a.getComponent('BYDAY');
+    const comp = a.getComponent('BYDAY');
     assert.equal(comp.length, 2);
   });
 
-  suite('#fromString', function () {
+  suite('#fromString', () => {
     function verify(string, options) {
-      test('parse: "' + string + '"', function () {
-        let result = ICAL.Recur.fromString(string);
+      test('parse: "' + string + '"', () => {
+        const result = ICAL.Recur.fromString(string);
         // HACK for until validation
         if (options.until) {
-          let until = options.until;
+          const { until } = options;
           delete options.until;
           hasProperties(result.until, until);
         }
@@ -333,8 +333,8 @@ suite('recur', function () {
     }
 
     function verifyFail(string, errorParam) {
-      test('invalid input "' + string + '"', function () {
-        assert.throws(function () {
+      test('invalid input "' + string + '"', () => {
+        assert.throws(() => {
           ICAL.Recur.fromString(string);
         }, errorParam);
       });
@@ -409,16 +409,16 @@ suite('recur', function () {
     });
   });
 
-  suite('#fromData', function () {
+  suite('#fromData', () => {
     function verify(data, options) {
-      test('parse: "' + JSON.stringify(data) + '"', function () {
+      test('parse: "' + JSON.stringify(data) + '"', () => {
         hasProperties(ICAL.Recur.fromData(data), options);
       });
     }
 
     function verifyFail(data) {
-      test('invalid input "' + JSON.stringify(data) + '"', function () {
-        assert.throws(function () {
+      test('invalid input "' + JSON.stringify(data) + '"', () => {
+        assert.throws(() => {
           ICAL.Recur.fromString(data);
         });
       });
@@ -433,14 +433,14 @@ suite('recur', function () {
     verifyFail({ interval: 'NaN' });
   });
 
-  suite('#getNextOccurrence', function () {
-    test('basic test', function () {
-      let rec = ICAL.Recur.fromString('FREQ=DAILY;INTERVAL=2');
-      let dtstart = ICAL.Time.epochTime.clone();
-      let recId = dtstart.clone();
+  suite('#getNextOccurrence', () => {
+    test('basic test', () => {
+      const rec = ICAL.Recur.fromString('FREQ=DAILY;INTERVAL=2');
+      const dtstart = ICAL.Time.epochTime.clone();
+      const recId = dtstart.clone();
       recId.day += 20;
 
-      let next = rec.getNextOccurrence(dtstart, recId);
+      const next = rec.getNextOccurrence(dtstart, recId);
       assert.deepEqual(next.toJSON(), {
         year: 1970,
         month: 1,
@@ -453,92 +453,93 @@ suite('recur', function () {
       });
     });
 
-    test('no next occurrence', function () {
-      let rec = ICAL.Recur.fromString(
+    test('no next occurrence', () => {
+      const rec = ICAL.Recur.fromString(
         'FREQ=DAILY;INTERVAL=2;UNTIL=19700103T000000Z'
       );
-      let dtstart = ICAL.Time.epochTime.clone();
-      let recId = dtstart.clone();
+      const dtstart = ICAL.Time.epochTime.clone();
+      const recId = dtstart.clone();
       recId.day += 20;
 
       assert.isNull(rec.getNextOccurrence(dtstart, recId));
     });
   });
 
-  suite('recur data types', function () {
-    test('invalid freq', function () {
-      assert.throws(function () {
+  suite('recur data types', () => {
+    test('invalid freq', () => {
+      assert.throws(() => {
         ICAL.Recur.fromString('FREQ=123');
       }, /invalid frequency/);
     });
 
-    test('invalid wkst', function () {
-      assert.throws(function () {
+    test('invalid wkst', () => {
+      assert.throws(() => {
         ICAL.Recur.fromString('FREQ=WEEKLY;WKST=DUNNO');
       }, /invalid WKST value/);
     });
 
-    test('invalid count', function () {
-      assert.throws(function () {
+    test('invalid count', () => {
+      assert.throws(() => {
         ICAL.Recur.fromString('FREQ=WEEKLY;COUNT=MAYBE10');
       }, /Could not extract integer from/);
     });
 
-    test('invalid interval', function () {
-      assert.throws(function () {
+    test('invalid interval', () => {
+      assert.throws(() => {
         ICAL.Recur.fromString('FREQ=WEEKLY;INTERVAL=ADAGIO');
       }, /Could not extract integer from/);
     });
 
-    test('invalid numeric byday', function () {
-      assert.throws(function () {
+    test('invalid numeric byday', () => {
+      assert.throws(() => {
         ICAL.Recur.fromString('FREQ=WEEKLY;BYDAY=1,2,3');
       }, /invalid BYDAY value/);
     });
 
-    test('extra structured recur values', function () {
-      let rec = ICAL.Recur.fromString(
+    test('extra structured recur values', () => {
+      const rec = ICAL.Recur.fromString(
         'RSCALE=ISLAMIC-CIVIL;FREQ=YEARLY;BYMONTH=9'
       );
       assert.equal(rec.rscale, 'ISLAMIC-CIVIL');
     });
 
-    test('single BYxxx value from string', function () {
-      let rec = ICAL.Recur.fromString('FREQ=MINUTELY;BYSECOND=5');
-      let comp = rec.getComponent('bysecond');
+    test('single BYxxx value from string', () => {
+      const rec = ICAL.Recur.fromString('FREQ=MINUTELY;BYSECOND=5');
+      const comp = rec.getComponent('bysecond');
       assert.equal(comp.length, 1);
       assert.equal(comp[0], 5);
     });
 
-    test('single BYxxx value from jCal', function () {
-      let prop = new ICAL.Property('rrule');
+    test('single BYxxx value from jCal', () => {
+      const prop = new ICAL.Property('rrule');
       prop.setValue({ freq: 'minutely', bysecond: 5 });
-      let val = prop.getFirstValue();
+      const val = prop.getFirstValue();
 
-      let comp = val.getComponent('bysecond');
+      const comp = val.getComponent('bysecond');
       assert.equal(comp.length, 1);
       assert.equal(comp[0], 5);
     });
 
-    test('multiple BYxxx values from string', function () {
-      let rec = ICAL.Recur.fromString('FREQ=YEARLY;BYYEARDAY=20,30,40');
-      let comp = rec.getComponent('byyearday');
+    test('multiple BYxxx values from string', () => {
+      const rec = ICAL.Recur.fromString('FREQ=YEARLY;BYYEARDAY=20,30,40');
+      const comp = rec.getComponent('byyearday');
       assert.deepEqual(comp, [20, 30, 40]);
     });
 
-    test('multiple BYxxx values from jCal', function () {
-      let prop = new ICAL.Property('rrule');
+    test('multiple BYxxx values from jCal', () => {
+      const prop = new ICAL.Property('rrule');
       prop.setValue({ freq: 'yearly', byyearday: [20, 30, 40] });
-      let val = prop.getFirstValue();
+      const val = prop.getFirstValue();
 
-      let comp = val.getComponent('byyearday');
+      const comp = val.getComponent('byyearday');
       assert.deepEqual(comp, [20, 30, 40]);
     });
 
-    test('can be saved to a property that will be serialized correctly', function () {
-      let icalString = 'FREQ=WEEKLY;UNTIL=19700103T000000Z;WKST=SU;BYDAY=TU,TH';
-      let recur = ICAL.Recur.fromString(icalString);
-      let prop = new ICAL.Property('rrule');
+    test('can be saved to a property that will be serialized correctly', () => {
+      const icalString =
+        'FREQ=WEEKLY;UNTIL=19700103T000000Z;WKST=SU;BYDAY=TU,TH';
+      const recur = ICAL.Recur.fromString(icalString);
+      const prop = new ICAL.Property('rrule');
       prop.setValue(recur);
       assert.equal(
         prop.toICALString(),
@@ -547,13 +548,13 @@ suite('recur', function () {
     });
   });
 
-  suite('#toString', function () {
-    test('round trip', function () {
-      let until = ICAL.Time.epochTime.clone();
-      let data = {
+  suite('#toString', () => {
+    test('round trip', () => {
+      const until = ICAL.Time.epochTime.clone();
+      const data = {
         interval: 2,
         wkst: 3,
-        until: until,
+        until,
         count: 5,
         freq: 'YEARLY',
         parts: {
@@ -562,9 +563,9 @@ suite('recur', function () {
         }
       };
 
-      let a = new ICAL.Recur(data);
-      let output = a.toString();
-      let b = ICAL.Recur.fromString(output);
+      const a = new ICAL.Recur(data);
+      const output = a.toString();
+      const b = ICAL.Recur.fromString(output);
 
       assert.ok(a.toString(), 'outputs');
 
@@ -579,18 +580,18 @@ suite('recur', function () {
 
       assert.equal(a.toString(), b.toString(), 'roundtrip equality');
     });
-    test('not all props', function () {
-      let data = {
+    test('not all props', () => {
+      const data = {
         freq: 'YEARLY'
       };
 
-      let a = new ICAL.Recur(data);
+      const a = new ICAL.Recur(data);
       assert.equal(a.toString(), 'FREQ=YEARLY');
     });
   });
 
-  suite('ICAL.Recur#icalDayToNumericDay', function () {
-    let expectedDayMap = {
+  suite('ICAL.Recur#icalDayToNumericDay', () => {
+    const expectedDayMap = {
       SU: ICAL.Time.SUNDAY,
       MO: ICAL.Time.MONDAY,
       TU: ICAL.Time.TUESDAY,
@@ -601,13 +602,13 @@ suite('recur', function () {
     };
 
     Object.entries(expectedDayMap).forEach(([icalDay, numericDay]) => {
-      test(icalDay + ' to constant', function () {
+      test(icalDay + ' to constant', () => {
         assert.equal(ICAL.Recur.icalDayToNumericDay(icalDay), numericDay);
       });
     });
 
-    let expectedWithWkst = [
-      //day, wkst, expected
+    const expectedWithWkst = [
+      // day, wkst, expected
       ['SU', ICAL.Time.SUNDAY, 1],
       ['MO', ICAL.Time.SUNDAY, 2],
       ['TU', ICAL.Time.SUNDAY, 3],
@@ -660,14 +661,14 @@ suite('recur', function () {
     ];
 
     expectedWithWkst.forEach(([day, wkst, expected]) => {
-      test(day + ' to constant, wkst = ' + wkst, function () {
+      test(day + ' to constant, wkst = ' + wkst, () => {
         assert.equal(ICAL.Recur.icalDayToNumericDay(day, wkst), expected);
       });
     });
   });
 
-  suite('ICAL.Recur#numericDayToIcalDay', function () {
-    let expected = {
+  suite('ICAL.Recur#numericDayToIcalDay', () => {
+    const expected = {
       [ICAL.Time.SUNDAY]: 'SU',
       [ICAL.Time.MONDAY]: 'MO',
       [ICAL.Time.TUESDAY]: 'TU',
@@ -678,14 +679,14 @@ suite('recur', function () {
     };
 
     Object.entries(expected).forEach(([numericDay, icalDay]) => {
-      test(numericDay + ' to ' + icalDay, function () {
+      test(numericDay + ' to ' + icalDay, () => {
         assert.equal(ICAL.Recur.numericDayToIcalDay(+numericDay), icalDay);
       });
     });
   });
 
-  let expectedWithWkst = [
-    //expectedDay, wkst, numericDay
+  const expectedWithWkst = [
+    // expectedDay, wkst, numericDay
     ['SU', ICAL.Time.SUNDAY, 1],
     ['MO', ICAL.Time.SUNDAY, 2],
     ['TU', ICAL.Time.SUNDAY, 3],
@@ -739,7 +740,7 @@ suite('recur', function () {
 
   for (let i = 0; i < expectedWithWkst.length; i++) {
     (function (list) {
-      test(list[2] + ' to string, wkst = ' + list[1], function () {
+      test(list[2] + ' to string, wkst = ' + list[1], () => {
         assert.equal(ICAL.Recur.numericDayToIcalDay(list[2], list[1]), list[0]);
       });
     })(expectedWithWkst[i]);

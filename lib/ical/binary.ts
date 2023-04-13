@@ -11,9 +11,6 @@ export class Binary {
 
   /**
    * Creates a binary value from the given string.
-   *
-   * @param aString The binary value string
-   * @return The binary value instance
    */
   static fromString(aString: string): Binary {
     return new Binary(aString);
@@ -35,8 +32,6 @@ export class Binary {
 
   /**
    * Base64 decode the current value
-   *
-   * @return The base64-decoded value
    */
   decodeValue(): string {
     return this._b64_decode(this.value);
@@ -46,13 +41,13 @@ export class Binary {
    * Encodes the passed parameter with base64 and sets the internal
    * value to the result.
    *
-   * @param {String} aValue      The raw binary value to encode
+   * @param aValue The raw binary value to encode
    */
   setEncodedValue(aValue: string) {
     this.value = this._b64_encode(aValue);
   }
 
-  _b64_encode(data) {
+  private _b64_encode(data: string) {
     // http://kevin.vanzonneveld.net
     // +   original by: Tyler Akins (http://rumkin.com)
     // +   improved by: Bayron Guevara
@@ -65,23 +60,23 @@ export class Binary {
     // *     returns 1: 'S2V2aW4gdmFuIFpvbm5ldmVsZA=='
     // mozilla has this native
     // - but breaks in 2.0.0.12!
-    //if (typeof this.window['atob'] == 'function') {
+    // if (typeof this.window['atob'] == 'function') {
     //    return atob(data);
-    //}
-    let b64 =
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZ' + 'abcdefghijklmnopqrstuvwxyz0123456789+/=';
-    let o1,
-      o2,
-      o3,
-      h1,
-      h2,
-      h3,
-      h4,
-      bits,
-      i = 0,
-      ac = 0,
-      enc = '',
-      tmp_arr = [];
+    // }
+    const b64 =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+    let o1;
+    let o2;
+    let o3;
+    let h1;
+    let h2;
+    let h3;
+    let h4;
+    let bits;
+    let i = 0;
+    let ac = 0;
+    let enc = '';
+    const tmp_arr = [];
 
     if (!data) {
       return data;
@@ -107,12 +102,12 @@ export class Binary {
 
     enc = tmp_arr.join('');
 
-    let r = data.length % 3;
+    const r = data.length % 3;
 
     return (r ? enc.slice(0, r - 3) : enc) + '==='.slice(r || 3);
   }
 
-  _b64_decode(data) {
+  private _b64_decode(data: string) {
     // http://kevin.vanzonneveld.net
     // +   original by: Tyler Akins (http://rumkin.com)
     // +   improved by: Thunder.m
@@ -127,23 +122,23 @@ export class Binary {
     // *     returns 1: 'Kevin van Zonneveld'
     // mozilla has this native
     // - but breaks in 2.0.0.12!
-    //if (typeof this.window['btoa'] == 'function') {
+    // if (typeof this.window['btoa'] == 'function') {
     //    return btoa(data);
-    //}
-    let b64 =
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZ' + 'abcdefghijklmnopqrstuvwxyz0123456789+/=';
-    let o1,
-      o2,
-      o3,
-      h1,
-      h2,
-      h3,
-      h4,
-      bits,
-      i = 0,
-      ac = 0,
-      dec = '',
-      tmp_arr = [];
+    // }
+    const b64 =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+    let o1;
+    let o2;
+    let o3;
+    let h1;
+    let h2;
+    let h3;
+    let h4;
+    let bits;
+    let i = 0;
+    let ac = 0;
+    let dec = '';
+    const tmp_arr = [];
 
     if (!data) {
       return data;
@@ -164,9 +159,9 @@ export class Binary {
       o2 = (bits >> 8) & 0xff;
       o3 = bits & 0xff;
 
-      if (h3 == 64) {
+      if (h3 === 64) {
         tmp_arr[ac++] = String.fromCharCode(o1);
-      } else if (h4 == 64) {
+      } else if (h4 === 64) {
         tmp_arr[ac++] = String.fromCharCode(o1, o2);
       } else {
         tmp_arr[ac++] = String.fromCharCode(o1, o2, o3);
@@ -180,7 +175,6 @@ export class Binary {
 
   /**
    * The string representation of this value
-   * @return {String}
    */
   toString(): string {
     return this.value;

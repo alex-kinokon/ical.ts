@@ -1,21 +1,21 @@
-import { suite, test, suiteSetup } from 'mocha';
+import { suite, suiteSetup, test } from 'mocha';
 import { assert } from 'chai';
-import { loadSample, ICAL } from '../support/helper';
+import { ICAL, loadSample } from '../support/helper';
 
-suite('ics test', function () {
+suite('ics test', () => {
   let icsData;
 
-  suiteSetup(async function () {
+  suiteSetup(async () => {
     icsData = await loadSample('forced_types.ics');
   });
 
-  test('force type', function () {
+  test('force type', () => {
     // just verify it can parse forced types
-    let result = ICAL.parse(icsData);
-    let component = new ICAL.Component(result);
-    let vevent = component.getFirstSubcomponent('vevent');
+    const result = ICAL.parse(icsData);
+    const component = new ICAL.Component(result);
+    const vevent = component.getFirstSubcomponent('vevent');
 
-    let start = vevent.getFirstPropertyValue('dtstart');
+    const start = vevent.getFirstPropertyValue('dtstart');
 
     assert.isTrue(start.isDate, 'is date type');
   });

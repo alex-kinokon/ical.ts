@@ -1,33 +1,33 @@
-import { suite, setup, test, suiteSetup, teardown } from 'mocha';
+import { setup, suite, suiteSetup, teardown, test } from 'mocha';
 import { assert } from 'chai';
 import { ICAL, loadSample } from './support/helper';
 
-suite('timezone_service', function () {
+suite('timezone_service', () => {
   let icsData;
-  suiteSetup(async function () {
+  suiteSetup(async () => {
     icsData = await loadSample('timezones/America/Los_Angeles.ics');
   });
 
   let subject;
-  setup(function () {
+  setup(() => {
     subject = ICAL.TimezoneService;
     subject.reset();
   });
 
-  teardown(function () {
+  teardown(() => {
     subject.reset();
   });
 
-  test('utc zones', function () {
-    let zones = ['Z', 'UTC', 'GMT'];
-    zones.forEach(function (tzid) {
+  test('utc zones', () => {
+    const zones = ['Z', 'UTC', 'GMT'];
+    zones.forEach(tzid => {
       assert.ok(subject.has(tzid), tzid + ' should exist');
       assert.equal(subject.get(tzid), ICAL.Timezone.utcTimezone);
     });
   });
 
-  test('#reset', function () {
-    let name = 'ZFOO';
+  test('#reset', () => {
+    const name = 'ZFOO';
     subject.register(name, ICAL.Timezone.utcTimezone);
     assert.isTrue(subject.has(name), 'should have set ' + name);
 
@@ -37,9 +37,9 @@ suite('timezone_service', function () {
     assert.equal(subject.count, 3);
   });
 
-  suite('register zones', function () {
-    test('when it does not exist', function () {
-      let name = 'test';
+  suite('register zones', () => {
+    test('when it does not exist', () => {
+      const name = 'test';
       assert.isFalse(subject.has(name));
 
       assert.equal(subject.count, 3);
@@ -52,19 +52,19 @@ suite('timezone_service', function () {
       assert.isFalse(subject.has(name), 'can remove zones');
     });
 
-    test('with invalid type', function () {
-      assert.throws(function () {
+    test('with invalid type', () => {
+      assert.throws(() => {
         subject.register('zzz', 'fff');
       }, 'timezone must be ICAL.Timezone');
     });
-    test('with only invalid component', function () {
-      assert.throws(function () {
-        let comp = new ICAL.Component('vtoaster');
+    test('with only invalid component', () => {
+      assert.throws(() => {
+        const comp = new ICAL.Component('vtoaster');
         subject.register(comp);
       }, 'timezone must be ICAL.Timezone');
     });
 
-    test('override', function () {
+    test('override', () => {
       // don't do this but you can if you want to shoot
       // yourself in the foot.
       assert.equal(subject.count, 3);
@@ -74,11 +74,11 @@ suite('timezone_service', function () {
       assert.equal(subject.count, 3);
     });
 
-    test('using a component', function () {
-      let parsed = ICAL.parse(icsData);
-      let comp = new ICAL.Component(parsed);
-      let vtimezone = comp.getFirstSubcomponent('vtimezone');
-      let tzid = vtimezone.getFirstPropertyValue('tzid');
+    test('using a component', () => {
+      const parsed = ICAL.parse(icsData);
+      const comp = new ICAL.Component(parsed);
+      const vtimezone = comp.getFirstSubcomponent('vtimezone');
+      const tzid = vtimezone.getFirstPropertyValue('tzid');
 
       assert.equal(subject.count, 3);
       subject.register(vtimezone);
@@ -86,7 +86,7 @@ suite('timezone_service', function () {
 
       assert.isTrue(subject.has(tzid), 'successfully registed with component');
 
-      let zone = subject.get(tzid);
+      const zone = subject.get(tzid);
 
       assert.instanceOf(zone, ICAL.Timezone);
       assert.equal(zone.tzid, tzid);

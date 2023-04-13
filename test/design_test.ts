@@ -1,42 +1,42 @@
-import { suite, setup, test, suiteSetup, suiteTeardown } from 'mocha';
+import { setup, suite, suiteSetup, suiteTeardown, test } from 'mocha';
 import { assert } from 'chai';
-import { loadSample, ICAL, hasProperties } from './support/helper';
+import { ICAL, hasProperties, loadSample } from './support/helper';
 import type Timezone from '../lib/ical/timezone';
 
-suite('design', function () {
+suite('design', () => {
   let timezone: Timezone;
-  suiteSetup(async function () {
-    let data = await loadSample('timezones/America/New_York.ics');
-    let parsed = ICAL.parse(data);
-    let vcalendar = new ICAL.Component(parsed);
-    let vtimezone = vcalendar.getFirstSubcomponent('vtimezone');
+  suiteSetup(async () => {
+    const data = await loadSample('timezones/America/New_York.ics');
+    const parsed = ICAL.parse(data);
+    const vcalendar = new ICAL.Component(parsed);
+    const vtimezone = vcalendar.getFirstSubcomponent('vtimezone');
 
     timezone = new ICAL.Timezone(vtimezone);
     ICAL.TimezoneService.register('test', timezone);
   });
 
-  suiteTeardown(function () {
+  suiteTeardown(() => {
     ICAL.TimezoneService.reset();
   });
 
   let subject: typeof ICAL.design.defaultSet;
-  setup(function () {
+  setup(() => {
     subject = ICAL.design.defaultSet;
   });
 
-  suite('types', function () {
-    suite('binary', function () {
-      setup(function () {
+  suite('types', () => {
+    suite('binary', () => {
+      setup(() => {
         subject = subject.value.binary;
       });
 
-      test('#(un)decorate', function () {
-        let expectedDecode = 'The quick brown fox jumps over the lazy dog.';
-        let undecorated =
+      test('#(un)decorate', () => {
+        const expectedDecode = 'The quick brown fox jumps over the lazy dog.';
+        const undecorated =
           'VGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcy' + 'BvdmVyIHRoZSBsYXp5IGRvZy4=';
 
-        let decorated = subject.decorate(undecorated);
-        let decoded = decorated.decodeValue();
+        const decorated = subject.decorate(undecorated);
+        const decoded = decorated.decodeValue();
 
         assert.equal(decoded, expectedDecode);
 
@@ -44,26 +44,26 @@ suite('design', function () {
       });
     });
 
-    suite('date', function () {
-      setup(function () {
+    suite('date', () => {
+      setup(() => {
         subject = subject.value.date;
       });
 
-      test('#fromICAL', function () {
-        let value = subject.fromICAL('20121010');
+      test('#fromICAL', () => {
+        const value = subject.fromICAL('20121010');
 
         assert.equal(value, '2012-10-10');
       });
 
-      test('#toICAL', function () {
-        let value = subject.toICAL('2012-10-10');
+      test('#toICAL', () => {
+        const value = subject.toICAL('2012-10-10');
 
         assert.equal(value, '20121010');
       });
 
-      test('#to/fromICAL (lenient)', function () {
-        let value = '20120901T130000';
-        let expected = '2012-09-01T13:00:00';
+      test('#to/fromICAL (lenient)', () => {
+        const value = '20120901T130000';
+        const expected = '2012-09-01T13:00:00';
 
         ICAL.design.strict = false;
         assert.equal(subject.fromICAL(value), expected);
@@ -72,28 +72,28 @@ suite('design', function () {
         ICAL.design.strict = true;
       });
 
-      test('#toICAL invalid', function () {
-        let value = subject.toICAL('wheeeeeeeeeeeeee');
+      test('#toICAL invalid', () => {
+        const value = subject.toICAL('wheeeeeeeeeeeeee');
 
         assert.equal(value, 'wheeeeeeeeeeeeee');
       });
 
-      test('#fromICAL somewhat invalid', function () {
+      test('#fromICAL somewhat invalid', () => {
         // Strict mode is not completely strict, it takes a lot of shortcuts in the name of
         // performance. The functions in ICAL.design don't actually throw errors, given there is no
         // error collector. With a working error collector we should make lenient mode the default
         // and have strict mode be more pedantic.
-        let value = subject.fromICAL('20131210Z');
+        const value = subject.fromICAL('20131210Z');
         assert.equal(value, '2013-12-10');
       });
 
-      test('#(un)decorate (lenient)', function () {
-        let value = '2012-10-10T11:12:13';
-        let prop = new ICAL.Property(['date', { tzid: 'test' }]);
+      test('#(un)decorate (lenient)', () => {
+        const value = '2012-10-10T11:12:13';
+        const prop = new ICAL.Property(['date', { tzid: 'test' }]);
 
         ICAL.design.strict = false;
 
-        let time = subject.decorate(value, prop);
+        const time = subject.decorate(value, prop);
 
         hasProperties(time, {
           year: 2012,
@@ -109,11 +109,11 @@ suite('design', function () {
         ICAL.design.strict = true;
       });
 
-      test('#(un)decorate (custom timezone)', function () {
-        let value = '2012-10-10';
-        let prop = new ICAL.Property(['date', { tzid: 'test' }]);
+      test('#(un)decorate (custom timezone)', () => {
+        const value = '2012-10-10';
+        const prop = new ICAL.Property(['date', { tzid: 'test' }]);
 
-        let time = subject.decorate(value, prop);
+        const time = subject.decorate(value, prop);
 
         hasProperties(time, {
           year: 2012,
@@ -126,28 +126,28 @@ suite('design', function () {
       });
     });
 
-    suite('date-time', function () {
-      setup(function () {
+    suite('date-time', () => {
+      setup(() => {
         subject = subject.value['date-time'];
       });
 
-      test('#(from|to)ICAL', function () {
-        let value = '20120901T130000';
-        let expected = '2012-09-01T13:00:00';
+      test('#(from|to)ICAL', () => {
+        const value = '20120901T130000';
+        const expected = '2012-09-01T13:00:00';
 
         assert.equal(subject.fromICAL(value), expected);
 
         assert.equal(subject.toICAL(expected), value);
       });
-      test('#toICAL invalid', function () {
-        let value = subject.toICAL('wheeeeeeeeeeeeee');
+      test('#toICAL invalid', () => {
+        const value = subject.toICAL('wheeeeeeeeeeeeee');
 
         assert.equal(value, 'wheeeeeeeeeeeeee');
       });
 
-      test('#from/toICAL (lenient)', function () {
-        let value = '20190102';
-        let expected = '2019-01-02';
+      test('#from/toICAL (lenient)', () => {
+        const value = '20190102';
+        const expected = '2019-01-02';
 
         ICAL.design.strict = false;
         assert.equal(subject.fromICAL(value), expected);
@@ -155,12 +155,12 @@ suite('design', function () {
         assert.equal(subject.toICAL(expected), value);
         ICAL.design.strict = true;
       });
-      test('#(un)decorate (lenient)', function () {
+      test('#(un)decorate (lenient)', () => {
         ICAL.design.strict = false;
-        let undecorated = '2012-09-01';
-        let prop = new ICAL.Property(['date-time', {}]);
+        const undecorated = '2012-09-01';
+        const prop = new ICAL.Property(['date-time', {}]);
 
-        let decorated = subject.decorate(undecorated, prop);
+        const decorated = subject.decorate(undecorated, prop);
 
         hasProperties(decorated, {
           year: 2012,
@@ -173,11 +173,11 @@ suite('design', function () {
         ICAL.design.strict = true;
       });
 
-      test('#(un)decorate (utc)', function () {
-        let undecorated = '2012-09-01T13:05:11Z';
-        let prop = new ICAL.Property(['date-time', {}]);
+      test('#(un)decorate (utc)', () => {
+        const undecorated = '2012-09-01T13:05:11Z';
+        const prop = new ICAL.Property(['date-time', {}]);
 
-        let decorated = subject.decorate(undecorated, prop);
+        const decorated = subject.decorate(undecorated, prop);
 
         hasProperties(decorated, {
           year: 2012,
@@ -193,8 +193,8 @@ suite('design', function () {
         assert.equal(subject.undecorate(decorated), undecorated);
       });
 
-      test('#(un)decorate (custom timezone)', function () {
-        let prop = new ICAL.Property(['date-time', { tzid: 'test' }]);
+      test('#(un)decorate (custom timezone)', () => {
+        const prop = new ICAL.Property(['date-time', { tzid: 'test' }]);
         assert.equal(prop.getParameter('tzid'), 'test');
 
         ICAL.TimezoneService.register(
@@ -202,8 +202,8 @@ suite('design', function () {
           ICAL.Timezone.utcTimezone
         );
 
-        let undecorated = '2012-09-01T13:05:11';
-        let decorated = subject.decorate(undecorated, prop);
+        const undecorated = '2012-09-01T13:05:11';
+        const decorated = subject.decorate(undecorated, prop);
         assert.equal(decorated.zone, timezone);
 
         hasProperties(decorated, {
@@ -220,53 +220,53 @@ suite('design', function () {
       });
     });
 
-    suite('time', function () {
-      setup(function () {
+    suite('time', () => {
+      setup(() => {
         subject = subject.value.time;
       });
 
-      test('#fromICAL', function () {
-        let value = subject.fromICAL('232050');
+      test('#fromICAL', () => {
+        const value = subject.fromICAL('232050');
 
         assert.equal(value, '23:20:50');
       });
-      test('#fromICAL invalid', function () {
-        let value = subject.fromICAL('whoop');
+      test('#fromICAL invalid', () => {
+        const value = subject.fromICAL('whoop');
 
         assert.equal(value, 'whoop');
       });
 
-      test('#toICAL', function () {
-        let value = subject.toICAL('23:20:50');
+      test('#toICAL', () => {
+        const value = subject.toICAL('23:20:50');
 
         assert.equal(value, '232050');
       });
-      test('#toICAL invalid', function () {
-        let value = subject.toICAL('whoop');
+      test('#toICAL invalid', () => {
+        const value = subject.toICAL('whoop');
 
         assert.equal(value, 'whoop');
       });
     });
 
-    suite('vcard date/time types', function () {
+    suite('vcard date/time types', () => {
       function testRoundtrip(jcal, ical, props, only) {
         function testForType(type, valuePrefix, valueSuffix, zone) {
-          let valueType = ICAL.design.vcard.value[type];
-          let prefix = valuePrefix || '';
-          let suffix = valueSuffix || '';
-          let jcalvalue = prefix + jcal + suffix;
-          let icalvalue = prefix + ical + suffix.replace(':', '');
-          let zoneName = zone || valueSuffix || 'floating';
+          const valueType = ICAL.design.vcard.value[type];
+          const prefix = valuePrefix || '';
+          const suffix = valueSuffix || '';
+          const jcalvalue = prefix + jcal + suffix;
+          const icalvalue = prefix + ical + suffix.replace(':', '');
+          const zoneName = zone || valueSuffix || 'floating';
 
-          test(type + ' ' + zoneName + ' fromICAL/toICAL', function () {
+          test(type + ' ' + zoneName + ' fromICAL/toICAL', () => {
             assert.equal(valueType.fromICAL(icalvalue), jcalvalue);
             assert.equal(valueType.toICAL(jcalvalue), icalvalue);
           });
 
-          test(type + ' ' + zoneName + ' decorated/undecorated', function () {
-            let prop = new ICAL.Property(['anniversary', {}, type]);
-            let decorated = valueType.decorate(jcalvalue, prop);
-            let undecorated = valueType.undecorate(decorated);
+          test(type + ' ' + zoneName + ' decorated/undecorated', () => {
+            const prop = new ICAL.Property(['anniversary', {}, type]);
+            const decorated = valueType.decorate(jcalvalue, prop);
+            const undecorated = valueType.undecorate(decorated);
 
             hasProperties(decorated._time, props);
             assert.equal(zoneName, decorated.zone.toString());
@@ -274,7 +274,7 @@ suite('design', function () {
             assert.equal(decorated.toICALString(), icalvalue);
           });
         }
-        (only ? suite.only : suite)(jcal, function () {
+        (only ? suite.only : suite)(jcal, () => {
           if (props.year || props.month || props.day) {
             testForType('date-and-or-time');
             if (!props.hour && !props.minute && !props.second) {
@@ -464,55 +464,55 @@ suite('design', function () {
       });
     });
 
-    suite('duration', function () {
-      setup(function () {
+    suite('duration', () => {
+      setup(() => {
         subject = subject.value.duration;
       });
 
-      test('#(un)decorate', function () {
-        let undecorated = 'P15DT5H5M20S';
-        let decorated = subject.decorate(undecorated);
+      test('#(un)decorate', () => {
+        const undecorated = 'P15DT5H5M20S';
+        const decorated = subject.decorate(undecorated);
         assert.equal(subject.undecorate(decorated), undecorated);
       });
     });
 
-    suite('float', function () {
-      setup(function () {
+    suite('float', () => {
+      setup(() => {
         subject = subject.value.float;
       });
 
-      test('#(from|to)ICAL', function () {
-        let original = '1.5';
-        let fromICAL = subject.fromICAL(original);
+      test('#(from|to)ICAL', () => {
+        const original = '1.5';
+        const fromICAL = subject.fromICAL(original);
 
         assert.equal(fromICAL, 1.5);
         assert.equal(subject.toICAL(fromICAL), original);
       });
     });
 
-    suite('integer', function () {
-      setup(function () {
+    suite('integer', () => {
+      setup(() => {
         subject = subject.value.integer;
       });
 
-      test('#(from|to)ICAL', function () {
-        let original = '105';
-        let fromICAL = subject.fromICAL(original);
+      test('#(from|to)ICAL', () => {
+        const original = '105';
+        const fromICAL = subject.fromICAL(original);
 
         assert.equal(fromICAL, 105);
         assert.equal(subject.toICAL(fromICAL), original);
       });
     });
 
-    suite('period', function () {
-      setup(function () {
+    suite('period', () => {
+      setup(() => {
         subject = subject.value.period;
       });
-      test('#(to|from)ICAL date/date (lenient)', function () {
-        let original = '19970101/19970102';
+      test('#(to|from)ICAL date/date (lenient)', () => {
+        const original = '19970101/19970102';
         ICAL.design.strict = false;
 
-        let fromICAL = subject.fromICAL(original);
+        const fromICAL = subject.fromICAL(original);
 
         assert.deepEqual(fromICAL, ['1997-01-01', '1997-01-02']);
 
@@ -521,9 +521,9 @@ suite('design', function () {
         ICAL.design.strict = true;
       });
 
-      test('#(to|from)ICAL date/date', function () {
-        let original = '19970101T180000Z/19970102T070000Z';
-        let fromICAL = subject.fromICAL(original);
+      test('#(to|from)ICAL date/date', () => {
+        const original = '19970101T180000Z/19970102T070000Z';
+        const fromICAL = subject.fromICAL(original);
 
         assert.deepEqual(fromICAL, [
           '1997-01-01T18:00:00Z',
@@ -533,11 +533,11 @@ suite('design', function () {
         assert.equal(subject.toICAL(fromICAL), original);
       });
 
-      test('#(un)decorate (date-time/duration)', function () {
-        let prop = new ICAL.Property(['date', { tzid: 'test' }]);
+      test('#(un)decorate (date-time/duration)', () => {
+        const prop = new ICAL.Property(['date', { tzid: 'test' }]);
 
-        let undecorated = ['1997-01-01T18:00:00', 'PT5H30M'];
-        let decorated = subject.decorate(undecorated, prop);
+        const undecorated = ['1997-01-01T18:00:00', 'PT5H30M'];
+        const decorated = subject.decorate(undecorated, prop);
 
         hasProperties(decorated.start, {
           year: 1997,
@@ -556,11 +556,11 @@ suite('design', function () {
         assert.deepEqual(subject.undecorate(decorated), undecorated);
       });
 
-      test('#(un)decorate (date-time/date-time)', function () {
-        let prop = new ICAL.Property(['date', { tzid: 'test' }]);
+      test('#(un)decorate (date-time/date-time)', () => {
+        const prop = new ICAL.Property(['date', { tzid: 'test' }]);
 
-        let undecorated = ['1997-01-01T18:00:00', '1998-01-01T17:00:00'];
-        let decorated = subject.decorate(undecorated, prop);
+        const undecorated = ['1997-01-01T18:00:00', '1998-01-01T17:00:00'];
+        const decorated = subject.decorate(undecorated, prop);
 
         hasProperties(decorated.start, {
           year: 1997,
@@ -582,13 +582,13 @@ suite('design', function () {
         assert.deepEqual(subject.undecorate(decorated), undecorated);
       });
 
-      test('#(un)decorate (lenient, date/date)', function () {
+      test('#(un)decorate (lenient, date/date)', () => {
         ICAL.design.strict = false;
 
-        let prop = new ICAL.Property(['date', { tzid: 'test' }]);
+        const prop = new ICAL.Property(['date', { tzid: 'test' }]);
 
-        let undecorated = ['1997-01-01', '1998-01-01'];
-        let decorated = subject.decorate(undecorated, prop);
+        const undecorated = ['1997-01-01', '1998-01-01'];
+        const decorated = subject.decorate(undecorated, prop);
 
         hasProperties(decorated.start, {
           year: 1997,
@@ -609,11 +609,11 @@ suite('design', function () {
         ICAL.design.strict = true;
       });
 
-      test('#(un)decorate (date-time/duration)', function () {
-        let prop = new ICAL.Property(['date', { tzid: 'test' }]);
+      test('#(un)decorate (date-time/duration)', () => {
+        const prop = new ICAL.Property(['date', { tzid: 'test' }]);
 
-        let undecorated = ['1997-01-01T18:00:00', 'PT5H30M'];
-        let decorated = subject.decorate(undecorated, prop);
+        const undecorated = ['1997-01-01T18:00:00', 'PT5H30M'];
+        const decorated = subject.decorate(undecorated, prop);
 
         hasProperties(decorated.start, {
           year: 1997,
@@ -633,14 +633,14 @@ suite('design', function () {
       });
     });
 
-    suite('recur', function () {
-      setup(function () {
+    suite('recur', () => {
+      setup(() => {
         subject = subject.value.recur;
       });
 
-      test('#(to|from)ICAL', function () {
-        let original = 'FREQ=MONTHLY;UNTIL=20121112T131415;COUNT=1';
-        let fromICAL = subject.fromICAL(original);
+      test('#(to|from)ICAL', () => {
+        const original = 'FREQ=MONTHLY;UNTIL=20121112T131415;COUNT=1';
+        const fromICAL = subject.fromICAL(original);
 
         assert.deepEqual(fromICAL, {
           freq: 'MONTHLY',
@@ -651,13 +651,13 @@ suite('design', function () {
         assert.equal(subject.toICAL(fromICAL), original);
       });
 
-      test('#(un)decorate', function () {
-        let undecorated = {
+      test('#(un)decorate', () => {
+        const undecorated = {
           freq: 'MONTHLY',
           byday: ['MO', 'TU', 'WE', 'TH', 'FR'],
           until: '2012-10-12'
         };
-        let decorated = subject.decorate(undecorated);
+        const decorated = subject.decorate(undecorated);
 
         assert.instanceOf(decorated, ICAL.Recur);
 
@@ -678,30 +678,30 @@ suite('design', function () {
       });
     });
 
-    suite('utc-offset', function () {
-      setup(function () {
+    suite('utc-offset', () => {
+      setup(() => {
         subject = subject.value['utc-offset'];
       });
 
-      test('#(to|from)ICAL without seconds', function () {
-        let original = '-0500';
-        let fromICAL = subject.fromICAL(original);
+      test('#(to|from)ICAL without seconds', () => {
+        const original = '-0500';
+        const fromICAL = subject.fromICAL(original);
 
         assert.equal(fromICAL, '-05:00');
         assert.equal(subject.toICAL(fromICAL), original);
       });
 
-      test('#(to|from)ICAL with seconds', function () {
-        let original = '+054515';
-        let fromICAL = subject.fromICAL(original);
+      test('#(to|from)ICAL with seconds', () => {
+        const original = '+054515';
+        const fromICAL = subject.fromICAL(original);
 
         assert.equal(fromICAL, '+05:45:15');
         assert.equal(subject.toICAL(fromICAL), original);
       });
 
-      test('#(un)decorate', function () {
-        let undecorated = '-05:00';
-        let decorated = subject.decorate(undecorated);
+      test('#(un)decorate', () => {
+        const undecorated = '-05:00';
+        const decorated = subject.decorate(undecorated);
 
         assert.equal(decorated.hours, 5, 'hours');
         assert.equal(decorated.factor, -1, 'factor');
@@ -710,22 +710,22 @@ suite('design', function () {
       });
     });
 
-    suite('utc-offset (vcard3)', function () {
-      setup(function () {
+    suite('utc-offset (vcard3)', () => {
+      setup(() => {
         subject = ICAL.design.vcard3.value['utc-offset'];
       });
 
-      test('#(to|from)ICAL', function () {
-        let original = '-05:00';
-        let fromICAL = subject.fromICAL(original);
+      test('#(to|from)ICAL', () => {
+        const original = '-05:00';
+        const fromICAL = subject.fromICAL(original);
 
         assert.equal(fromICAL, '-05:00');
         assert.equal(subject.toICAL(fromICAL), original);
       });
 
-      test('#(un)decorate', function () {
-        let undecorated = '-05:00';
-        let decorated = subject.decorate(undecorated);
+      test('#(un)decorate', () => {
+        const undecorated = '-05:00';
+        const decorated = subject.decorate(undecorated);
 
         assert.equal(decorated.hours, 5, 'hours');
         assert.equal(decorated.factor, -1, 'factor');
@@ -734,8 +734,8 @@ suite('design', function () {
       });
     });
 
-    suite('unknown and default values', function () {
-      test('unknown x-prop', function () {
+    suite('unknown and default values', () => {
+      test('unknown x-prop', () => {
         let prop = new ICAL.Property('x-wr-calname');
         assert.equal(prop.type, 'unknown');
 
@@ -743,7 +743,7 @@ suite('design', function () {
         assert.equal(prop.type, 'unknown');
       });
 
-      test('unknown iana prop', function () {
+      test('unknown iana prop', () => {
         let prop = new ICAL.Property('standardized');
         assert.equal(prop.type, 'unknown');
 
@@ -751,7 +751,7 @@ suite('design', function () {
         assert.equal(prop.type, 'unknown');
       });
 
-      test('known text type', function () {
+      test('known text type', () => {
         let prop = new ICAL.Property('description');
         assert.equal(prop.type, 'text');
 
@@ -759,33 +759,33 @@ suite('design', function () {
         assert.equal(prop.type, 'text');
       });
 
-      test('encoded text value roundtrip', function () {
+      test('encoded text value roundtrip', () => {
         let prop = new ICAL.Property('description');
         prop.setValue('hello, world');
-        let propVal = prop.toICALString();
+        const propVal = prop.toICALString();
         assert.equal(propVal, 'DESCRIPTION:hello\\, world');
 
         prop = ICAL.Property.fromString(propVal);
         assert.equal(prop.getFirstValue(), 'hello, world');
       });
 
-      test('encoded unknown value roundtrip', function () {
+      test('encoded unknown value roundtrip', () => {
         let prop = new ICAL.Property('x-wr-calname');
         prop.setValue('hello, world');
-        let propVal = prop.toICALString();
+        const propVal = prop.toICALString();
         assert.equal(propVal, 'X-WR-CALNAME:hello, world');
 
         prop = ICAL.Property.fromString(propVal);
         assert.equal(prop.getFirstValue(), 'hello, world');
       });
 
-      test('encoded unknown value from string', function () {
-        let prop = ICAL.Property.fromString('X-WR-CALNAME:hello\\, world');
+      test('encoded unknown value from string', () => {
+        const prop = ICAL.Property.fromString('X-WR-CALNAME:hello\\, world');
         assert.equal(prop.getFirstValue(), 'hello\\, world');
       });
 
-      suite('registration', function () {
-        test('newly registered property', function () {
+      suite('registration', () => {
+        test('newly registered property', () => {
           let prop = new ICAL.Property('nonstandard');
           assert.equal(prop.type, 'unknown');
 
@@ -797,8 +797,8 @@ suite('design', function () {
           assert.equal(prop.type, 'date-time');
         });
 
-        test('unknown value type', function () {
-          let prop = ICAL.Property.fromString('X-PROP;VALUE=FUZZY:WARM');
+        test('unknown value type', () => {
+          const prop = ICAL.Property.fromString('X-PROP;VALUE=FUZZY:WARM');
           assert.equal(prop.name, 'x-prop');
           assert.equal(prop.type, 'fuzzy');
           assert.equal(prop.getFirstValue(), 'WARM');
@@ -806,23 +806,23 @@ suite('design', function () {
           assert.equal(prop.getFirstValue(), 'FREEZING');
         });
 
-        test('newly registered value type', function () {
+        test('newly registered value type', () => {
           ICAL.design.defaultSet.value.fuzzy = {
-            fromICAL: function (aValue) {
+            fromICAL(aValue) {
               return aValue.toLowerCase();
             },
-            toICAL: function (aValue) {
+            toICAL(aValue) {
               return aValue.toUpperCase();
             }
           };
 
-          let prop = ICAL.Property.fromString('X-PROP;VALUE=FUZZY:WARM');
+          const prop = ICAL.Property.fromString('X-PROP;VALUE=FUZZY:WARM');
           assert.equal(prop.name, 'x-prop');
           assert.equal(prop.getFirstValue(), 'warm');
           assert.match(prop.toICALString(), /WARM/);
         });
 
-        test('newly registered parameter', function () {
+        test('newly registered parameter', () => {
           let prop = ICAL.Property.fromString('X-PROP;VALS=a,b,c:def');
           let param = prop.getParameter('vals');
           assert.equal(param, 'a,b,c');

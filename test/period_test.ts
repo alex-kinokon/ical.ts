@@ -1,22 +1,24 @@
-import { suite, setup, test, suiteSetup } from 'mocha';
+import { setup, suite, suiteSetup, test } from 'mocha';
 import { assert } from 'chai';
 import { ICAL, hasProperties } from './support/helper';
 import type Time from '../lib/ical/time';
 import type Duration from '../lib/ical/duration';
 
-suite('ical/period', function () {
-  let start: Time, end: Time, duration: Duration;
+suite('ical/period', () => {
+  let start: Time;
+  let end: Time;
+  let duration: Duration;
 
-  setup(function () {
+  setup(() => {
     start = ICAL.Time.fromString('1970-01-02T03:04:05Z');
     end = ICAL.Time.fromString('1970-01-02T03:04:05Z');
     duration = ICAL.Duration.fromString('PT3H2M1S');
   });
 
-  suite('#fromString', function () {
+  suite('#fromString', () => {
     function verify(string, icalstring, data) {
-      test('parse: "' + string + '"', function () {
-        let subject = ICAL.Period.fromString(string);
+      test('parse: "' + string + '"', () => {
+        const subject = ICAL.Period.fromString(string);
 
         assert.equal(subject.toICALString(), icalstring);
         assert.equal(subject.toString(), string);
@@ -31,7 +33,7 @@ suite('ical/period', function () {
             assert.instanceOf(subject.end, ICAL.Time);
             hasProperties(subject.end, data.end, 'end property');
           } else {
-            assert.isNull(subject.end);
+            assert.isUndefined(subject.end);
           }
         }
 
@@ -40,12 +42,12 @@ suite('ical/period', function () {
             assert.instanceOf(subject.duration, ICAL.Duration);
             hasProperties(subject.duration, data.duration, 'duration property');
           } else {
-            assert.isNull(subject.duration);
+            assert.isUndefined(subject.duration);
           }
         }
 
         if ('calculatedDuration' in data) {
-          let dur = subject.getDuration();
+          const dur = subject.getDuration();
 
           if ('duration' in data && data.duration) {
             hasProperties(dur, data.duration, 'duration matches calculated');
@@ -53,7 +55,7 @@ suite('ical/period', function () {
           hasProperties(dur, data.calculatedDuration);
         }
         if ('calculatedEnd' in data) {
-          let subjectEnd = subject.getEnd();
+          const subjectEnd = subject.getEnd();
 
           if ('end' in data && data.end) {
             hasProperties(subjectEnd, data.end, 'duration matches calculated');
@@ -64,8 +66,8 @@ suite('ical/period', function () {
     }
 
     function verifyFail(testname, string, errorParam) {
-      test('invalid input "' + string + '"', function () {
-        assert.throws(function () {
+      test('invalid input "' + string + '"', () => {
+        assert.throws(() => {
           ICAL.Period.fromString(string);
         }, errorParam);
       });
@@ -156,147 +158,147 @@ suite('ical/period', function () {
     });
   });
 
-  suite('#fromData', function () {
-    test('valid start,end', function () {
-      let subject = ICAL.Period.fromData({
-        start: start,
-        end: end
+  suite('#fromData', () => {
+    test('valid start,end', () => {
+      const subject = ICAL.Period.fromData({
+        start,
+        end
       });
 
       hasProperties(subject.start, start, 'start date');
       hasProperties(subject.end, end, 'end date');
-      assert.isNull(subject.duration);
+      assert.isUndefined(subject.duration);
     });
-    test('valid start,duration', function () {
-      let subject = ICAL.Period.fromData({
-        start: start,
-        duration: duration
+    test('valid start,duration', () => {
+      const subject = ICAL.Period.fromData({
+        start,
+        duration
       });
 
       hasProperties(subject.start, start, 'start date');
-      assert.isNull(subject.end);
+      assert.isUndefined(subject.end);
       hasProperties(subject.duration, duration, 'duration');
     });
 
-    test('end value exists but is null', function () {
-      let subject = ICAL.Period.fromData({
-        start: start,
+    test('end value exists but is null', () => {
+      const subject = ICAL.Period.fromData({
+        start,
         end: null
       });
       hasProperties(subject.start, start, 'start date');
-      assert.isNull(subject.end);
-      assert.isNull(subject.duration);
+      assert.isUndefined(subject.end);
+      assert.isUndefined(subject.duration);
     });
 
-    test('start value exists but is null', function () {
-      let subject = ICAL.Period.fromData({
+    test('start value exists but is null', () => {
+      const subject = ICAL.Period.fromData({
         start: null,
-        duration: duration
+        duration
       });
-      assert.isNull(subject.start);
-      assert.isNull(subject.end);
+      assert.isUndefined(subject.start);
+      assert.isUndefined(subject.end);
       hasProperties(subject.duration, duration, 'duration');
     });
 
-    test('duration value exists but is null', function () {
-      let subject = ICAL.Period.fromData({
-        start: start,
+    test('duration value exists but is null', () => {
+      const subject = ICAL.Period.fromData({
+        start,
         duration: null
       });
       hasProperties(subject.start, start, 'start date');
-      assert.isNull(subject.end);
+      assert.isUndefined(subject.end);
       assert.isNull(subject.duration);
     });
 
-    test('start,end and duration', function () {
-      assert.throws(function () {
+    test('start,end and duration', () => {
+      assert.throws(() => {
         ICAL.Period.fromData({
-          start: start,
-          end: end,
-          duration: duration
+          start,
+          end,
+          duration
         });
       }, /cannot accept both end and duration/);
     });
 
-    test('start,end and duration but one is null', function () {
-      let subject = ICAL.Period.fromData({
-        start: start,
+    test('start,end and duration but one is null', () => {
+      const subject = ICAL.Period.fromData({
+        start,
         end: null,
-        duration: duration
+        duration
       });
       hasProperties(subject.start, start, 'start date');
-      assert.isNull(subject.end);
+      assert.isUndefined(subject.end);
       hasProperties(subject.duration, duration, 'duration');
     });
 
-    test('invalid start value', function () {
-      assert.throws(function () {
+    test('invalid start value', () => {
+      assert.throws(() => {
         ICAL.Period.fromData({
           start: '1970-01-02T03:04:05Z',
-          end: end
+          end
         });
       }, /start must be an instance/);
     });
-    test('invalid end value', function () {
-      assert.throws(function () {
+    test('invalid end value', () => {
+      assert.throws(() => {
         ICAL.Period.fromData({
-          start: start,
+          start,
           end: '1970-01-02T03:04:05Z'
         });
       }, /end must be an instance/);
     });
-    test('invalid duration value', function () {
-      assert.throws(function () {
+    test('invalid duration value', () => {
+      assert.throws(() => {
         ICAL.Period.fromData({
-          start: start,
+          start,
           duration: 'PT1S'
         });
       }, /duration must be an instance/);
     });
   });
 
-  suite('#toString', function () {
-    test('start,end', function () {
-      let subject = ICAL.Period.fromData({
-        start: start,
-        end: end
+  suite('#toString', () => {
+    test('start,end', () => {
+      const subject = ICAL.Period.fromData({
+        start,
+        end
       });
       assert.equal(
         subject.toString(),
         '1970-01-02T03:04:05Z/1970-01-02T03:04:05Z'
       );
     });
-    test('start,duration', function () {
-      let subject = ICAL.Period.fromData({
-        start: start,
-        duration: duration
+    test('start,duration', () => {
+      const subject = ICAL.Period.fromData({
+        start,
+        duration
       });
       assert.equal(subject.toString(), '1970-01-02T03:04:05Z/PT3H2M1S');
     });
   });
 
-  suite('generating jCal', function () {
-    test('jCal from parser', function () {
-      let prop = ICAL.parse.property('FREEBUSY:20140401T010101/PT1H');
-      let val = prop[3];
+  suite('generating jCal', () => {
+    test('jCal from parser', () => {
+      const prop = ICAL.parse.property('FREEBUSY:20140401T010101/PT1H');
+      const val = prop[3];
       assert.deepEqual(val, ['2014-04-01T01:01:01', 'PT1H']);
     });
-    test('jCal from property', function () {
-      let prop = ICAL.Property.fromString('FREEBUSY:20140401T010101/PT1H');
-      let val = prop.getFirstValue().toJSON();
+    test('jCal from property', () => {
+      const prop = ICAL.Property.fromString('FREEBUSY:20140401T010101/PT1H');
+      const val = prop.getFirstValue().toJSON();
       assert.deepEqual(val, ['2014-04-01T01:01:01', 'PT1H']);
     });
   });
 
-  suite('#clone', function () {
-    test('cloned start/duration', function () {
-      let subjectstart = start.clone();
-      let subjectduration = duration.clone();
-      let subject1 = ICAL.Period.fromData({
+  suite('#clone', () => {
+    test('cloned start/duration', () => {
+      const subjectstart = start.clone();
+      const subjectduration = duration.clone();
+      const subject1 = ICAL.Period.fromData({
         start: subjectstart,
         duration: subjectduration
       });
-      let subject2 = subject1.clone();
+      const subject2 = subject1.clone();
       subjectstart.hour++;
       subjectduration.hours++;
 
@@ -306,14 +308,14 @@ suite('ical/period', function () {
       assert.equal(subject1.duration.hours, 4);
       assert.equal(subject2.duration.hours, 3);
     });
-    test('cloned start/end', function () {
-      let subjectstart = start.clone();
-      let subjectend = end.clone();
-      let subject1 = ICAL.Period.fromData({
+    test('cloned start/end', () => {
+      const subjectstart = start.clone();
+      const subjectend = end.clone();
+      const subject1 = ICAL.Period.fromData({
         start: subjectstart,
         end: subjectend
       });
-      let subject2 = subject1.clone();
+      const subject2 = subject1.clone();
       subjectstart.hour++;
       subjectend.hour++;
 
@@ -323,10 +325,10 @@ suite('ical/period', function () {
       assert.equal(subject1.end.hour, 4);
       assert.equal(subject2.end.hour, 3);
     });
-    test('cloned empty object', function () {
+    test('cloned empty object', () => {
       // most importantly, this shouldn't throw.
-      let subject1 = ICAL.Period.fromData();
-      let subject2 = subject1.clone();
+      const subject1 = ICAL.Period.fromData();
+      const subject2 = subject1.clone();
 
       assert.equal(subject1.start, subject2.start);
       assert.equal(subject1.end, subject2.end);

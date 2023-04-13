@@ -1,19 +1,19 @@
-import { suite, setup, test, suiteSetup } from 'mocha';
+import { setup, suite, suiteSetup, test } from 'mocha';
 import { assert } from 'chai';
-import { loadSample, ICAL } from './support/helper';
+import { ICAL, loadSample } from './support/helper';
 
-suite('component_parser', function () {
+suite('component_parser', () => {
   let subject;
   let icsData;
 
-  suiteSetup(async function () {
+  suiteSetup(async () => {
     icsData = await loadSample('recur_instances.ics');
   });
 
-  suite('#process', function () {
-    let events = [];
-    let exceptions = [];
-    let timezones = [];
+  suite('#process', () => {
+    const events = [];
+    const exceptions = [];
+    const timezones = [];
 
     function eventEquals(a, b, msg) {
       if (!a) throw new Error('actual is falsy');
@@ -32,7 +32,7 @@ suite('component_parser', function () {
     }
 
     function setupProcess(options?) {
-      setup(function (done) {
+      setup(done => {
         events.length = 0;
         timezones.length = 0;
 
@@ -58,29 +58,29 @@ suite('component_parser', function () {
       });
     }
 
-    suite('without events', function () {
+    suite('without events', () => {
       setupProcess({ parseEvent: false });
 
-      test('parse result', function () {
+      test('parse result', () => {
         assert.lengthOf(events, 0);
         assert.lengthOf(timezones, 1);
 
-        let tz = timezones[0];
+        const tz = timezones[0];
         assert.instanceOf(tz, ICAL.Timezone);
         assert.equal(tz.tzid, 'America/Los_Angeles');
       });
     });
 
-    suite('with events', function () {
+    suite('with events', () => {
       setupProcess();
 
-      test('parse result', function () {
-        let component = new ICAL.Component(ICAL.parse(icsData));
-        let list = component.getAllSubcomponents('vevent');
+      test('parse result', () => {
+        const component = new ICAL.Component(ICAL.parse(icsData));
+        const list = component.getAllSubcomponents('vevent');
 
-        let expectedEvents = [];
+        const expectedEvents = [];
 
-        list.forEach(function (item) {
+        list.forEach(item => {
           expectedEvents.push(new ICAL.Event(item));
         });
 
@@ -92,17 +92,17 @@ suite('component_parser', function () {
       });
     });
 
-    suite('without parsing timezones', function () {
+    suite('without parsing timezones', () => {
       setupProcess({ parseTimezone: false });
 
-      test('parse result', function () {
+      test('parse result', () => {
         assert.lengthOf(timezones, 0);
         assert.lengthOf(events, 3);
       });
     });
 
-    suite('alternate input', function () {
-      test('parsing component from string', function (done) {
+    suite('alternate input', () => {
+      test('parsing component from string', done => {
         subject = new ICAL.ComponentParser();
         subject.oncomplete = function () {
           assert.lengthOf(events, 3);
@@ -110,13 +110,13 @@ suite('component_parser', function () {
         };
         subject.process(icsData);
       });
-      test('parsing component from component', function (done) {
+      test('parsing component from component', done => {
         subject = new ICAL.ComponentParser();
         subject.oncomplete = function () {
           assert.lengthOf(events, 3);
           done();
         };
-        let comp = new ICAL.Component(ICAL.parse(icsData));
+        const comp = new ICAL.Component(ICAL.parse(icsData));
         subject.process(comp);
       });
     });

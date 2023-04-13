@@ -6,9 +6,41 @@
 import { Time } from './time';
 import { Component } from './component';
 import { parse } from './parse';
-import { clone, binsearchInsert } from './helpers';
+import { binsearchInsert, clone } from './helpers';
 
 const OPTIONS = ['tzid', 'location', 'tznames', 'latitude', 'longitude'];
+
+interface TimezoneData {
+  /**
+   * If aData is a simple object, then this member can be set to either a
+   * string containing the component data, or an already parsed
+   * ICAL.Component
+   */
+  component?: string | Component;
+  /** The timezone identifier */
+  tzid: string;
+  /** The timezone location */
+  location?: string;
+  /** An alternative string representation of the timezone */
+  tznames?: string;
+  /** The latitude of the timezone */
+  latitude?: number;
+  /** The longitude of the timezone */
+  longitude?: number;
+}
+
+interface Change {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  second: number;
+  is_daylight?: boolean;
+  utcOffset?: number;
+  prevUtcOffset?: number;
+  isDate?: boolean;
+}
 
 /**
  * Timezone representation.
@@ -27,7 +59,10 @@ const OPTIONS = ['tzid', 'location', 'tznames', 'latitude', 'longitude'];
  * @alias ICAL.Timezone
  */
 export class Timezone {
-  static _compare_change_fn(a, b) {
+  private changes: Change[];
+  private wrappedJSObject: Timezone;
+
+  static _compare_change_fn(a: Change, b: Change) {
     if (a.year < b.year) return -1;
     else if (a.year > b.year) return 1;
 
@@ -52,17 +87,21 @@ export class Timezone {
   /**
    * Convert the date/time from one zone to the next.
    *
-   * @param {ICAL.Time} tt                  The time to convert
-   * @param {ICAL.Timezone} from_zone       The source zone to convert from
-   * @param {ICAL.Timezone} to_zone         The target zone to convert to
-   * @return {ICAL.Time}                    The converted date/time object
+   * @param tt        The time to convert
+   * @param from_zone The source zone to convert from
+   * @param to_zone   The target zone to convert to
+   * @return          The converted date/time object
    */
-  static convert_time(tt, from_zone, to_zone) {
+  static convert_time(
+    tt: Time,
+    from_zone: Timezone,
+    to_zone: Timezone
+  ): Time | null {
     if (
       tt.isDate ||
-      from_zone.tzid == to_zone.tzid ||
-      from_zone == Timezone.localTimezone ||
-      to_zone == Timezone.localTimezone
+      from_zone.tzid === to_zone.tzid ||
+      from_zone === Timezone.localTimezone ||
+      to_zone === Timezone.localTimezone
     ) {
       tt.zone = to_zone;
       return tt;
@@ -80,51 +119,33 @@ export class Timezone {
   /**
    * Creates a new ICAL.Timezone instance from the passed data object.
    *
-   * @param {ICAL.Component|Object} aData options for class
-   * @param {String|ICAL.Component} aData.component
-   *        If aData is a simple object, then this member can be set to either a
-   *        string containing the component data, or an already parsed
-   *        ICAL.Component
-   * @param {String} aData.tzid      The timezone identifier
-   * @param {String} aData.location  The timezone locationw
-   * @param {String} aData.tznames   An alternative string representation of the
-   *                                  timezone
-   * @param {Number} aData.latitude  The latitude of the timezone
-   * @param {Number} aData.longitude The longitude of the timezone
+   * @param aData options for class
    */
-  static fromData(aData) {
-    let tt = new Timezone();
+  static fromData(aData: TimezoneData | Component) {
+    const tt = new Timezone();
     return tt.fromData(aData);
   }
 
   /**
    * The instance describing the UTC timezone
-   * @type {ICAL.Timezone}
-   * @constant
-   * @instance
    */
-  static #utcTimezone = null;
+  static #utcTimezone: Timezone;
+
   static get utcTimezone() {
     if (!this.#utcTimezone) {
-      this.#utcTimezone = Timezone.fromData({
-        tzid: 'UTC'
-      });
+      this.#utcTimezone = Timezone.fromData({ tzid: 'UTC' });
     }
     return this.#utcTimezone;
   }
 
   /**
    * The instance describing the local timezone
-   * @type {ICAL.Timezone}
-   * @constant
-   * @instance
    */
-  static #localTimezone = null;
+  static #localTimezone: Timezone;
+
   static get localTimezone() {
     if (!this.#localTimezone) {
-      this.#localTimezone = Timezone.fromData({
-        tzid: 'floating'
-      });
+      this.#localTimezone = Timezone.fromData({ tzid: 'floating' });
     }
     return this.#localTimezone;
   }
@@ -132,13 +153,19 @@ export class Timezone {
   /**
    * Adjust a timezone change object.
    * @private
-   * @param {Object} change     The timezone change object
-   * @param {Number} days       The extra amount of days
-   * @param {Number} hours      The extra amount of hours
-   * @param {Number} minutes    The extra amount of minutes
-   * @param {Number} seconds    The extra amount of seconds
+   * @param change     The timezone change object
+   * @param days       The extra amount of days
+   * @param hours      The extra amount of hours
+   * @param minutes    The extra amount of minutes
+   * @param seconds    The extra amount of seconds
    */
-  static adjust_change(change, days, hours, minutes, seconds) {
+  private static adjust_change(
+    change: object,
+    days: number,
+    hours: number,
+    minutes: number,
+    seconds: number
+  ) {
     return Time.prototype.adjust.call(
       change,
       days,
@@ -155,92 +182,60 @@ export class Timezone {
   /**
    * Creates a new ICAL.Timezone instance, by passing in a tzid and component.
    *
-   * @param {ICAL.Component|Object} data options for class
-   * @param {String|ICAL.Component} data.component
-   *        If data is a simple object, then this member can be set to either a
-   *        string containing the component data, or an already parsed
-   *        ICAL.Component
-   * @param {String} data.tzid      The timezone identifier
-   * @param {String} data.location  The timezone locationw
-   * @param {String} data.tznames   An alternative string representation of the
-   *                                  timezone
-   * @param {Number} data.latitude  The latitude of the timezone
-   * @param {Number} data.longitude The longitude of the timezone
+   * @param data options for class
    */
-  constructor(data) {
+  constructor(data?: TimezoneData | Component) {
     this.wrappedJSObject = this;
     this.fromData(data);
   }
 
   /**
    * Timezone identifier
-   * @type {String}
    */
   tzid = '';
 
   /**
    * Timezone location
-   * @type {String}
    */
   location = '';
 
   /**
    * Alternative timezone name, for the string representation
-   * @type {String}
    */
   tznames = '';
 
   /**
    * The primary latitude for the timezone.
-   * @type {Number}
    */
   latitude = 0.0;
 
   /**
    * The primary longitude for the timezone.
-   * @type {Number}
    */
   longitude = 0.0;
 
   /**
    * The vtimezone component for this timezone.
-   * @type {ICAL.Component}
    */
-  component = null;
+  component: Component | null = null;
 
   /**
    * The year this timezone has been expanded to. All timezone transition
    * dates until this year are known and can be used for calculation
-   *
-   * @private
-   * @type {Number}
    */
-  expandedUntilYear = 0;
+  private expandedUntilYear = 0;
 
   /**
    * The class identifier.
-   * @constant
-   * @type {String}
-   * @default "icaltimezone"
    */
-  icalclass = 'icaltimezone';
+  readonly icalclass = 'icaltimezone';
 
   /**
    * Sets up the current instance using members from the passed data object.
    *
-   * @param {ICAL.Component|Object} aData options for class
-   * @param {String|ICAL.Component} aData.component
-   *        If aData is a simple object, then this member can be set to either a
-   *        string containing the component data, or an already parsed
-   *        ICAL.Component
-   * @param {String} aData.tzid      The timezone identifier
-   * @param {String} aData.location  The timezone locationw
-   * @param {String} aData.tznames   An alternative string representation of the
-   *                                  timezone
-   * @param {Number} aData.latitude  The latitude of the timezone
-   * @param {Number} aData.longitude The longitude of the timezone
+   * @param aData options for class
    */
-  fromData(aData) {
+  fromData(aData?: TimezoneData | Component) {
     this.expandedUntilYear = 0;
     this.changes = [];
 
@@ -252,7 +247,7 @@ export class Timezone {
       if (aData && 'component' in aData) {
         if (typeof aData.component == 'string') {
           // If a string was passed, parse it as a component
-          let jCal = parse(aData.component);
+          const jCal = parse(aData.component);
           this.component = new Component(jCal);
         } else if (aData.component instanceof Component) {
           // If it was a component already, then just set it
@@ -264,7 +259,7 @@ export class Timezone {
       }
 
       // Copy remaining passed properties
-      for (let prop of OPTIONS) {
+      for (const prop of OPTIONS) {
         if (aData && prop in aData) {
           this[prop] = aData[prop];
         }
@@ -274,7 +269,7 @@ export class Timezone {
     // If we have a component but no TZID, attempt to get it from the
     // component's properties.
     if (this.component instanceof Component && !this.tzid) {
-      this.tzid = this.component.getFirstPropertyValue('tzid');
+      this.tzid = this.component.getFirstPropertyValue('tzid')!;
     }
 
     return this;
@@ -283,11 +278,11 @@ export class Timezone {
   /**
    * Finds the utcOffset the given time would occur in this timezone.
    *
-   * @param {ICAL.Time} tt        The time to check for
+   * @param {Time} tt        The time to check for
    * @return {Number} utc offset in seconds
    */
-  utcOffset(tt) {
-    if (this == Timezone.utcTimezone || this == Timezone.localTimezone) {
+  utcOffset(tt: Time): number {
+    if (this === Timezone.utcTimezone || this === Timezone.localTimezone) {
       return 0;
     }
 
@@ -297,7 +292,7 @@ export class Timezone {
       return 0;
     }
 
-    let tt_change = {
+    const tt_change: Change = {
       year: tt.year,
       month: tt.month,
       day: tt.day,
@@ -312,14 +307,14 @@ export class Timezone {
 
     // TODO: replace with bin search?
     for (;;) {
-      let change = clone(this.changes[change_num], true);
+      const change = clone(this.changes[change_num], true);
       if (change.utcOffset < change.prevUtcOffset) {
         Timezone.adjust_change(change, 0, 0, 0, change.utcOffset);
       } else {
         Timezone.adjust_change(change, 0, 0, 0, change.prevUtcOffset);
       }
 
-      let cmp = Timezone._compare_change_fn(tt_change, change);
+      const cmp = Timezone._compare_change_fn(tt_change, change);
 
       if (cmp >= 0) {
         change_num_to_use = change_num;
@@ -327,7 +322,7 @@ export class Timezone {
         step = -1;
       }
 
-      if (step == -1 && change_num_to_use != -1) {
+      if (step === -1 && change_num_to_use !== -1) {
         break;
       }
 
@@ -343,20 +338,21 @@ export class Timezone {
     }
 
     let zone_change = this.changes[change_num_to_use];
-    let utcOffset_change = zone_change.utcOffset - zone_change.prevUtcOffset;
+    const utcOffset_change =
+      zone_change.utcOffset! - zone_change.prevUtcOffset!;
 
     if (utcOffset_change < 0 && change_num_to_use > 0) {
-      let tmp_change = clone(zone_change, true);
+      const tmp_change = clone(zone_change, true);
       Timezone.adjust_change(tmp_change, 0, 0, 0, tmp_change.prevUtcOffset);
 
       if (Timezone._compare_change_fn(tt_change, tmp_change) < 0) {
-        let prev_zone_change = this.changes[change_num_to_use - 1];
+        const prev_zone_change = this.changes[change_num_to_use - 1];
 
-        let want_daylight = false; // TODO
+        const want_daylight = false; // TODO
 
         if (
-          zone_change.is_daylight != want_daylight &&
-          prev_zone_change.is_daylight == want_daylight
+          zone_change.is_daylight !== want_daylight &&
+          prev_zone_change.is_daylight === want_daylight
         ) {
           zone_change = prev_zone_change;
         }
@@ -364,12 +360,12 @@ export class Timezone {
     }
 
     // TODO return is_daylight?
-    return zone_change.utcOffset;
+    return zone_change.utcOffset!;
   }
 
-  _findNearbyChange(change) {
+  private _findNearbyChange(change: Change) {
     // find the closest match
-    let idx = binsearchInsert(
+    const idx = binsearchInsert(
       this.changes,
       change,
       Timezone._compare_change_fn
@@ -382,9 +378,9 @@ export class Timezone {
     return idx;
   }
 
-  _ensureCoverage(aYear) {
-    if (Timezone._minimumExpansionYear == -1) {
-      let today = Time.now();
+  private _ensureCoverage(aYear: number) {
+    if (Timezone._minimumExpansionYear === -1) {
+      const today = Time.now();
       Timezone._minimumExpansionYear = today.year;
     }
 
@@ -396,8 +392,8 @@ export class Timezone {
     changesEndYear += Timezone.EXTRA_COVERAGE;
 
     if (!this.changes.length || this.expandedUntilYear < aYear) {
-      let subcomps = this.component.getAllSubcomponents();
-      let compLen = subcomps.length;
+      const subcomps = this.component!.getAllSubcomponents();
+      const compLen = subcomps.length;
       let compIdx = 0;
 
       for (; compIdx < compLen; compIdx++) {
@@ -409,7 +405,7 @@ export class Timezone {
     }
   }
 
-  _expandComponent(aComponent, aYear, changes) {
+  private _expandComponent(aComponent, aYear, changes: Change[]) {
     if (
       !aComponent.hasProperty('dtstart') ||
       !aComponent.hasProperty('tzoffsetto') ||
@@ -418,25 +414,29 @@ export class Timezone {
       return null;
     }
 
-    let dtstart = aComponent.getFirstProperty('dtstart').getFirstValue();
+    const dtstart = aComponent.getFirstProperty('dtstart').getFirstValue();
     let change;
 
-    function convert_tzoffset(offset) {
+    function convert_tzoffset(offset: {
+      factor: number;
+      hours: number;
+      minutes: number;
+    }) {
       return offset.factor * (offset.hours * 3600 + offset.minutes * 60);
     }
 
     function init_changes() {
-      let changebase = {};
-      changebase.is_daylight = aComponent.name == 'daylight';
-      changebase.utcOffset = convert_tzoffset(
+      const changeBase: Change = {} as any;
+      changeBase.is_daylight = aComponent.name === 'daylight';
+      changeBase.utcOffset = convert_tzoffset(
         aComponent.getFirstProperty('tzoffsetto').getFirstValue()
       );
 
-      changebase.prevUtcOffset = convert_tzoffset(
+      changeBase.prevUtcOffset = convert_tzoffset(
         aComponent.getFirstProperty('tzoffsetfrom').getFirstValue()
       );
 
-      return changebase;
+      return changeBase;
     }
 
     if (!aComponent.hasProperty('rrule') && !aComponent.hasProperty('rdate')) {
@@ -448,12 +448,12 @@ export class Timezone {
       change.minute = dtstart.minute;
       change.second = dtstart.second;
 
-      Timezone.adjust_change(change, 0, 0, 0, -change.prevUtcOffset);
+      Timezone.adjust_change(change, 0, 0, 0, -change.prevUtcOffset!);
       changes.push(change);
     } else {
-      let props = aComponent.getAllProperties('rdate');
-      for (let rdate of props) {
-        let time = rdate.getFirstValue();
+      const props = aComponent.getAllProperties('rdate');
+      for (const rdate of props) {
+        const time = rdate.getFirstValue();
         change = init_changes();
 
         change.year = time.year;
@@ -465,16 +465,16 @@ export class Timezone {
           change.minute = dtstart.minute;
           change.second = dtstart.second;
 
-          if (dtstart.zone != Timezone.utcTimezone) {
-            Timezone.adjust_change(change, 0, 0, 0, -change.prevUtcOffset);
+          if (dtstart.zone !== Timezone.utcTimezone) {
+            Timezone.adjust_change(change, 0, 0, 0, -change.prevUtcOffset!);
           }
         } else {
           change.hour = time.hour;
           change.minute = time.minute;
           change.second = time.second;
 
-          if (time.zone != Timezone.utcTimezone) {
-            Timezone.adjust_change(change, 0, 0, 0, -change.prevUtcOffset);
+          if (time.zone !== Timezone.utcTimezone) {
+            Timezone.adjust_change(change, 0, 0, 0, -change.prevUtcOffset!);
           }
         }
 
@@ -487,12 +487,12 @@ export class Timezone {
         rrule = rrule.getFirstValue();
         change = init_changes();
 
-        if (rrule.until && rrule.until.zone == Timezone.utcTimezone) {
+        if (rrule.until && rrule.until.zone === Timezone.utcTimezone) {
           rrule.until.adjust(0, 0, 0, change.prevUtcOffset);
           rrule.until.zone = Timezone.localTimezone;
         }
 
-        let iterator = rrule.iterator(dtstart);
+        const iterator = rrule.iterator(dtstart);
 
         let occ;
         while ((occ = iterator.next())) {
@@ -509,7 +509,7 @@ export class Timezone {
           change.second = occ.second;
           change.isDate = occ.isDate;
 
-          Timezone.adjust_change(change, 0, 0, 0, -change.prevUtcOffset);
+          Timezone.adjust_change(change, 0, 0, 0, -change.prevUtcOffset!);
           changes.push(change);
         }
       }
@@ -520,9 +520,8 @@ export class Timezone {
 
   /**
    * The string representation of this timezone.
-   * @return {String}
    */
-  toString() {
+  toString(): string {
     return this.tznames ? this.tznames : this.tzid;
   }
 }

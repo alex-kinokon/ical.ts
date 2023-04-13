@@ -1,17 +1,23 @@
-import { suite, setup, test, suiteSetup } from 'mocha';
+import { setup, suite, suiteSetup, test } from 'mocha';
 import { assert } from 'chai';
-import { loadSample, ICAL } from './support/helper';
+import { ICAL, loadSample, useTimezones } from './support/helper';
 
-suite('recur_expansion', function () {
-  let subject, primary;
+suite('recur_expansion', () => {
+  // While other tests in this file don't require specifying a timezone, we
+  // need to do so here because we're building the `RecurExpansion` from a
+  // limited subset of the ICS which does not include the timezone definition.
+  useTimezones('America/Los_Angeles');
+
+  let subject;
+  let primary;
 
   function createSubject(file) {
-    setup(async function () {
-      let icsData = await loadSample(file);
-      let exceptions = [];
+    setup(async () => {
+      const icsData = await loadSample(file);
+      const exceptions = [];
 
       await new Promise(resolve => {
-        let parse = new ICAL.ComponentParser();
+        const parse = new ICAL.ComponentParser();
 
         parse.onevent = function (event) {
           if (event.isRecurrenceException()) {
@@ -37,34 +43,39 @@ suite('recur_expansion', function () {
 
   createSubject('recur_instances.ics');
 
-  suite('initialization', function () {
-    test('successful', function () {
-      assert.deepEqual(new Date(2012, 9, 2, 10), subject.last.toJSDate());
+  suite('initialization', () => {
+    test('successful', () => {
+      assert.deepEqual(
+        subject.last.toJSDate(),
+        new Date('2012-10-02T17:00:00Z')
+      );
 
       assert.instanceOf(subject.ruleIterators, Array);
       assert.ok(subject.exDates);
     });
 
-    test('invalid', function () {
+    test('invalid', () => {
       assert.throws(
         () => new ICAL.RecurExpansion({}),
         '.dtstart (ICAL.Time) must be given'
       );
-      assert.throws(() => {
-        return new ICAL.RecurExpansion({
-          dtstart: ICAL.Time.now()
-        });
-      }, '.ruleIterators or .component must be given');
+      assert.throws(
+        () =>
+          new ICAL.RecurExpansion({
+            dtstart: ICAL.Time.now()
+          }),
+        '.ruleIterators or .component must be given'
+      );
     });
 
-    test('default', function () {
-      let dtstart = ICAL.Time.fromData({
+    test('default', () => {
+      const dtstart = ICAL.Time.fromData({
         year: 2012,
         month: 2,
         day: 2
       });
-      let expansion = new ICAL.RecurExpansion({
-        dtstart: dtstart,
+      const expansion = new ICAL.RecurExpansion({
+        dtstart,
         ruleIterators: []
       });
 
@@ -85,40 +96,36 @@ suite('recur_expansion', function () {
     });
   });
 
-  suite('#_ensureRules', function () {
-    test('.ruleDates', function () {
-      let expected = [
-        new Date(2012, 10, 5, 10),
-        new Date(2012, 10, 10, 10),
-        new Date(2012, 10, 30, 10)
+  suite('#_ensureRules', () => {
+    test('.ruleDates', () => {
+      const expected = [
+        new Date('2012-11-05T18:00:00.000Z'),
+        new Date('2012-11-10T18:00:00.000Z'),
+        new Date('2012-11-30T18:00:00.000Z')
       ];
 
-      let dates = subject.ruleDates.map(function (time) {
-        return time.toJSDate();
-      });
+      const dates = subject.ruleDates.map(time => time.toJSDate());
 
-      assert.deepEqual(expected, dates);
+      assert.deepEqual(dates, expected);
     });
 
-    test('.exDates', function () {
-      let expected = [
-        new Date(2012, 11, 4, 10),
-        new Date(2013, 1, 5, 10),
-        new Date(2013, 3, 2, 10)
+    test('.exDates', () => {
+      const expected = [
+        new Date('2012-12-04T18:00:00.000Z'),
+        new Date('2013-02-05T18:00:00.000Z'),
+        new Date('2013-04-02T17:00:00.000Z')
       ];
 
-      let dates = subject.exDates.map(function (time) {
-        return time.toJSDate();
-      });
+      const dates = subject.exDates.map(time => time.toJSDate());
 
-      assert.deepEqual(expected, dates);
+      assert.deepEqual(dates, expected);
     });
   });
 
-  suite('#_nextRecurrenceIter', function () {
+  suite('#_nextRecurrenceIter', () => {
     let component;
 
-    setup(function () {
+    setup(() => {
       // setup a clean component with no rules
       component = primary.component.toJSON();
       component = new ICAL.Component(component);
@@ -128,8 +135,8 @@ suite('recur_expansion', function () {
       component.removeProperty('rrule');
     });
 
-    test('when rule ends', function () {
-      let start = {
+    test('when rule ends', () => {
+      const start = {
         year: 2012,
         month: 1,
         day: 1
@@ -143,21 +150,21 @@ suite('recur_expansion', function () {
         byday: ['SU']
       });
 
-      let expansion = new ICAL.RecurExpansion({
-        component: component,
+      const expansion = new ICAL.RecurExpansion({
+        component,
         dtstart: start
       });
 
-      let expected = [
+      const expected = [
         new Date(2012, 0, 1),
         new Date(2012, 0, 8),
         new Date(2012, 0, 15)
       ];
 
-      let max = 10;
+      const max = 10;
       let i = 0;
       let next;
-      let dates = [];
+      const dates = [];
 
       while (i++ <= max && (next = expansion.next())) {
         dates.push(next.toJSDate());
@@ -166,7 +173,7 @@ suite('recur_expansion', function () {
       assert.deepEqual(dates, expected);
     });
 
-    test('multiple rules', function () {
+    test('multiple rules', () => {
       component.addPropertyWithValue('rrule', {
         freq: 'MONTHLY',
         bymonthday: [13]
@@ -176,18 +183,18 @@ suite('recur_expansion', function () {
         byday: ['TH']
       });
 
-      let start = ICAL.Time.fromData({
+      const start = ICAL.Time.fromData({
         year: 2012,
         month: 2,
         day: 2
       });
 
-      let expansion = new ICAL.RecurExpansion({
-        component: component,
+      const expansion = new ICAL.RecurExpansion({
+        component,
         dtstart: start
       });
 
-      let expected = [
+      const expected = [
         new Date(2012, 1, 2),
         new Date(2012, 1, 9),
         new Date(2012, 1, 13),
@@ -196,9 +203,9 @@ suite('recur_expansion', function () {
       ];
 
       let inc = 0;
-      let max = expected.length;
+      const max = expected.length;
       let next;
-      let dates = [];
+      const dates = [];
 
       while (inc++ < max) {
         next = expansion._nextRecurrenceIter();
@@ -210,21 +217,21 @@ suite('recur_expansion', function () {
     });
   });
 
-  suite('#next', function () {
+  suite('#next', () => {
     // I use JS dates widely because it is much easier
     // to compare them via chai's deepEquals function
-    let expected = [
-      new Date(2012, 9, 2, 10),
-      new Date(2012, 10, 5, 10),
-      new Date(2012, 10, 6, 10),
-      new Date(2012, 10, 10, 10),
-      new Date(2012, 10, 30, 10),
-      new Date(2013, 0, 1, 10)
+    const expected = [
+      new Date('2012-10-02T17:00:00.000Z'),
+      new Date('2012-11-05T18:00:00.000Z'),
+      new Date('2012-11-06T18:00:00.000Z'),
+      new Date('2012-11-10T18:00:00.000Z'),
+      new Date('2012-11-30T18:00:00.000Z'),
+      new Date('2013-01-01T18:00:00.000Z')
     ];
 
-    test('6 items', function () {
-      let dates = [];
-      let max = 6;
+    test('6 items', () => {
+      const dates = [];
+      const max = 6;
       let inc = 0;
       let next;
 
@@ -236,21 +243,21 @@ suite('recur_expansion', function () {
     });
   });
 
-  suite('#next - finite', function () {
+  suite('#next - finite', () => {
     createSubject('recur_instances_finite.ics');
 
-    test('until complete', function () {
-      let max = 100;
+    test('until complete', () => {
+      const max = 100;
       let inc = 0;
       let next;
 
-      let dates = [];
-      let expected = [
-        new Date(2012, 9, 2, 10),
-        new Date(2012, 10, 5, 10),
-        new Date(2012, 10, 6, 10),
-        new Date(2012, 10, 10, 10),
-        new Date(2012, 11, 4, 10)
+      const dates = [];
+      const expected = [
+        new Date('2012-10-02T17:00:00.000Z'),
+        new Date('2012-11-05T18:00:00.000Z'),
+        new Date('2012-11-06T18:00:00.000Z'),
+        new Date('2012-11-10T18:00:00.000Z'),
+        new Date('2012-12-04T18:00:00.000Z')
       ];
 
       while (inc++ < max && (next = subject.next())) {
@@ -269,10 +276,10 @@ suite('recur_expansion', function () {
     });
   });
 
-  suite('#toJSON', function () {
-    test('from start', function () {
-      let json = subject.toJSON();
-      let newIter = new ICAL.RecurExpansion(json);
+  suite('#toJSON', () => {
+    test('from start', () => {
+      const json = subject.toJSON();
+      const newIter = new ICAL.RecurExpansion(json);
       let cur = 0;
 
       while (cur++ < 10) {
@@ -284,12 +291,12 @@ suite('recur_expansion', function () {
       }
     });
 
-    test('from two iterations', function () {
+    test('from two iterations', () => {
       subject.next();
       subject.next();
 
-      let json = subject.toJSON();
-      let newIter = new ICAL.RecurExpansion(json);
+      const json = subject.toJSON();
+      const newIter = new ICAL.RecurExpansion(json);
       let cur = 0;
 
       while (cur++ < 10) {
@@ -302,14 +309,14 @@ suite('recur_expansion', function () {
     });
   });
 
-  suite('event without recurrences', function () {
+  suite('event without recurrences', () => {
     createSubject('minimal.ics');
 
-    test('iterate', function () {
-      let dates = [];
+    test('iterate', () => {
+      const dates = [];
       let next;
 
-      let expected = primary.startDate.toJSDate();
+      const expected = primary.startDate.toJSDate();
 
       while ((next = subject.next())) {
         dates.push(next.toJSDate());

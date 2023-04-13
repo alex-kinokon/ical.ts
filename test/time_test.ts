@@ -1,18 +1,18 @@
-import { suite, setup, test, suiteSetup } from 'mocha';
+import { setup, suite, suiteSetup, test } from 'mocha';
 import { assert } from 'chai';
 import {
-  useTimezones,
-  loadSample,
   ICAL,
-  hasProperties
+  hasProperties,
+  loadSample,
+  useTimezones
 } from './support/helper';
 
-suite('icaltime', function () {
-  let Time = ICAL.Time;
-  let Timezone = ICAL.Timezone;
+suite('icaltime', () => {
+  const { Time } = ICAL;
+  const { Timezone } = ICAL;
 
-  test('round trip', function () {
-    let f = new Time({
+  test('round trip', () => {
+    const f = new Time({
       second: 1,
       minute: 2,
       hour: 3,
@@ -21,7 +21,7 @@ suite('icaltime', function () {
       year: 6007
     });
 
-    let g = f.clone();
+    const g = f.clone();
     g.fromJSDate(f.toJSDate());
     assert.equal(f.toString(), g.toString());
     // TODO also check UTC dates
@@ -30,22 +30,22 @@ suite('icaltime', function () {
     assert.equal(g, Time.epochTime.toString());
   });
 
-  suite('initialize', function () {
+  suite('initialize', () => {
     let icsData;
-    suiteSetup(async function () {
+    suiteSetup(async () => {
       icsData = await loadSample('timezones/America/New_York.ics');
     });
 
-    test('with timezone', function () {
-      let parsed = ICAL.parse(icsData);
-      let vcalendar = new ICAL.Component(parsed);
-      let vtimezone = vcalendar.getFirstSubcomponent('vtimezone');
-      let tzid = vtimezone.getFirstPropertyValue('tzid');
+    test('with timezone', () => {
+      const parsed = ICAL.parse(icsData);
+      const vcalendar = new ICAL.Component(parsed);
+      const vtimezone = vcalendar.getFirstSubcomponent('vtimezone');
+      const tzid = vtimezone.getFirstPropertyValue('tzid');
 
       ICAL.TimezoneService.register(vtimezone);
 
       // utc -5
-      let time = new ICAL.Time({
+      const time = new ICAL.Time({
         year: 2012,
         month: 1,
         day: 1,
@@ -62,9 +62,9 @@ suite('icaltime', function () {
     });
   });
 
-  suite('.icaltime', function () {
+  suite('.icaltime', () => {
     function verify(time, type) {
-      test('convert time ' + JSON.stringify(time), function () {
+      test('convert time ' + JSON.stringify(time), () => {
         assert.equal(new ICAL.Time(time).icaltype, type);
       });
     }
@@ -76,8 +76,8 @@ suite('icaltime', function () {
 
     verify({ year: 2013, isDate: false }, 'date-time');
 
-    test('converting types during runtime', function () {
-      let time = new ICAL.Time({
+    test('converting types during runtime', () => {
+      const time = new ICAL.Time({
         year: 2013,
         isDate: false
       });
@@ -87,10 +87,10 @@ suite('icaltime', function () {
     });
   });
 
-  suite('setters', function () {
+  suite('setters', () => {
     let subject;
 
-    setup(function () {
+    setup(() => {
       subject = new ICAL.Time({
         year: 2012,
         month: 12,
@@ -111,7 +111,7 @@ suite('icaltime', function () {
       assert.equal(subject.year, 2013);
     }
 
-    test('.month / .day beyond the year', function () {
+    test('.month / .day beyond the year', () => {
       subject.day++;
       subject.month++;
 
@@ -120,7 +120,7 @@ suite('icaltime', function () {
       assert.equal(subject.year, 2013);
     });
 
-    test('.hour', function () {
+    test('.hour', () => {
       subject.hour = 23;
       subject.hour++;
 
@@ -128,7 +128,7 @@ suite('icaltime', function () {
       assert.equal(subject.hour, 0);
     });
 
-    test('.minute', function () {
+    test('.minute', () => {
       subject.minute = 59;
       subject.hour = 23;
       subject.minute++;
@@ -138,7 +138,7 @@ suite('icaltime', function () {
       assert.equal(subject.minute, 0);
     });
 
-    test('.second', function () {
+    test('.second', () => {
       subject.hour = 23;
       subject.minute = 59;
       subject.second = 59;
@@ -151,12 +151,12 @@ suite('icaltime', function () {
     });
   });
 
-  suite('#subtractDate and #subtractDateTz', function () {
+  suite('#subtractDate and #subtractDateTz', () => {
     useTimezones('America/Los_Angeles', 'America/New_York');
 
-    test('diff between two times in different timezones', function () {
+    test('diff between two times in different timezones', () => {
       // 3 hours ahead of west
-      let east = new ICAL.Time({
+      const east = new ICAL.Time({
         year: 2012,
         month: 1,
         day: 1,
@@ -165,7 +165,7 @@ suite('icaltime', function () {
         timezone: 'America/New_York'
       });
 
-      let west = new ICAL.Time({
+      const west = new ICAL.Time({
         year: 2012,
         month: 1,
         day: 1,
@@ -174,13 +174,13 @@ suite('icaltime', function () {
         timezone: 'America/Los_Angeles'
       });
 
-      let diff1 = west.subtractDate(east);
+      const diff1 = west.subtractDate(east);
       hasProperties(diff1, {
         hours: 2,
         minutes: 30,
         isNegative: false
       });
-      let diff2 = west.subtractDateTz(east);
+      const diff2 = west.subtractDateTz(east);
       hasProperties(diff2, {
         hours: 5,
         minutes: 30,
@@ -188,8 +188,8 @@ suite('icaltime', function () {
       });
     });
 
-    test('diff between two times in same timezone', function () {
-      let t1 = new ICAL.Time({
+    test('diff between two times in same timezone', () => {
+      const t1 = new ICAL.Time({
         year: 2012,
         month: 1,
         day: 1,
@@ -197,7 +197,7 @@ suite('icaltime', function () {
         minute: 50,
         timezone: 'America/Los_Angeles'
       });
-      let t2 = new ICAL.Time({
+      const t2 = new ICAL.Time({
         year: 2012,
         month: 1,
         day: 1,
@@ -206,22 +206,22 @@ suite('icaltime', function () {
         timezone: 'America/Los_Angeles'
       });
 
-      let diff1 = t1.subtractDate(t2);
+      const diff1 = t1.subtractDate(t2);
       hasProperties(diff1, {
         hours: 13,
         minutes: 20,
         isNegative: false
       });
 
-      let diff2 = t1.subtractDateTz(t2);
+      const diff2 = t1.subtractDateTz(t2);
       hasProperties(diff2, {
         hours: 13,
         minutes: 20,
         isNegative: false
       });
     });
-    test('negative absolute difference', function () {
-      let t1 = new ICAL.Time({
+    test('negative absolute difference', () => {
+      const t1 = new ICAL.Time({
         year: 2012,
         month: 1,
         day: 1,
@@ -229,7 +229,7 @@ suite('icaltime', function () {
         minute: 30,
         timezone: 'America/Los_Angeles'
       });
-      let t2 = new ICAL.Time({
+      const t2 = new ICAL.Time({
         year: 2012,
         month: 1,
         day: 1,
@@ -238,7 +238,7 @@ suite('icaltime', function () {
         timezone: 'America/Los_Angeles'
       });
 
-      let diff = t1.subtractDate(t2);
+      const diff = t1.subtractDate(t2);
 
       hasProperties(diff, {
         hours: 13,
@@ -248,10 +248,10 @@ suite('icaltime', function () {
     });
   });
 
-  suite('#fromJSDate', function () {
-    test('utc', function () {
-      let date = new Date(2012, 0, 1);
-      let expected = {
+  suite('#fromJSDate', () => {
+    test('utc', () => {
+      const date = new Date(2012, 0, 1);
+      const expected = {
         year: date.getUTCFullYear(),
         // + 1 ICAL.js is not zero based...
         month: date.getUTCMonth() + 1,
@@ -261,21 +261,21 @@ suite('icaltime', function () {
         second: date.getUTCSeconds()
       };
 
-      let subject = Time.fromJSDate(date, true);
+      const subject = Time.fromJSDate(date, true);
 
       hasProperties(subject, expected);
     });
 
-    test('floating', function () {
-      let date = new Date(2012, 0, 1);
-      let subject = Time.fromJSDate(date);
+    test('floating', () => {
+      const date = new Date(2012, 0, 1);
+      const subject = Time.fromJSDate(date);
 
       assert.deepEqual(subject.toJSDate(), date);
     });
 
-    test('reset', function () {
-      let subject = Time.fromJSDate(null);
-      let expected = {
+    test('reset', () => {
+      const subject = Time.fromJSDate(null);
+      const expected = {
         year: 1970,
         month: 1,
         day: 1,
@@ -290,10 +290,10 @@ suite('icaltime', function () {
     });
   });
 
-  suite('#fromData', function () {
-    test('empty object', function () {
-      let subject = Time.fromData();
-      let expected = {
+  suite('#fromData', () => {
+    test('empty object', () => {
+      const subject = Time.fromData();
+      const expected = {
         year: 0,
         month: 1,
         day: 1,
@@ -305,8 +305,8 @@ suite('icaltime', function () {
       hasProperties(subject, expected, 'starts at begining of time');
     });
 
-    test('with year, month', function () {
-      let subject = Time.fromData({
+    test('with year, month', () => {
+      const subject = Time.fromData({
         year: 2012,
         month: 1
       });
@@ -317,8 +317,8 @@ suite('icaltime', function () {
       });
     });
 
-    test('utc timezone', function () {
-      let subject = Time.fromData({
+    test('utc timezone', () => {
+      const subject = Time.fromData({
         year: 2012,
         timezone: 'Z'
       });
@@ -329,8 +329,8 @@ suite('icaltime', function () {
       });
     });
 
-    test('floating timezone', function () {
-      let subject = Time.fromData({
+    test('floating timezone', () => {
+      const subject = Time.fromData({
         year: 2012,
         timezone: 'floating'
       });
@@ -341,8 +341,8 @@ suite('icaltime', function () {
       });
     });
 
-    test('setting icaltype', function () {
-      let subject = Time.fromData({
+    test('setting icaltype', () => {
+      const subject = Time.fromData({
         icaltype: 'date-time',
         year: 2012,
         month: 1
@@ -356,10 +356,10 @@ suite('icaltime', function () {
     });
   });
 
-  suite('#dayOfWeek', function () {
+  suite('#dayOfWeek', () => {
     // format for dayOfWeek assertion
     // is [dayNumber, dateObject]
-    let assertions = [
+    const assertions = [
       [Time.SUNDAY, new Date(2012, 0, 1)],
       [Time.MONDAY, new Date(2012, 0, 2)],
       [Time.TUESDAY, new Date(2012, 0, 3)],
@@ -367,28 +367,28 @@ suite('icaltime', function () {
       [Time.THURSDAY, new Date(2012, 0, 5)],
       [Time.FRIDAY, new Date(2012, 0, 6)],
       [Time.SATURDAY, new Date(2012, 0, 7)]
-      //TODO: Add more I was lazy here this is
+      // TODO: Add more I was lazy here this is
       //      mostly to check that the function is
       //      sane but if there is a bug somewhere
       //      we can add tests above...
     ];
 
-    assertions.forEach(function (item) {
-      let dayOfWeek = item[0];
-      let date = item[1];
-      let human =
+    assertions.forEach(item => {
+      const dayOfWeek = item[0];
+      const date = item[1];
+      const human =
         date.getFullYear() + '-' + date.getMonth() + '-' + date.getDate();
-      let msg = human + ' should be #' + dayOfWeek + ' day';
+      const msg = human + ' should be #' + dayOfWeek + ' day';
 
-      test(msg, function () {
-        let subject = ICAL.Time.fromJSDate(date);
+      test(msg, () => {
+        const subject = ICAL.Time.fromJSDate(date);
 
         assert.equal(subject.dayOfWeek(), dayOfWeek);
       });
     });
 
-    let assertionsWithWkst = [
-      //wkst, expectedDayofWeek, date
+    const assertionsWithWkst = [
+      // wkst, expectedDayofWeek, date
       [Time.SUNDAY, 1, new Date(2012, 0, 1)],
       [Time.SUNDAY, 2, new Date(2012, 0, 2)],
       [Time.SUNDAY, 3, new Date(2012, 0, 3)],
@@ -440,23 +440,23 @@ suite('icaltime', function () {
       [Time.SATURDAY, 1, new Date(2012, 0, 7)]
     ];
 
-    assertionsWithWkst.forEach(function (item) {
-      let wkst = item[0];
-      let dayOfWeek = item[1];
-      let date = item[2];
-      let human =
+    assertionsWithWkst.forEach(item => {
+      const wkst = item[0];
+      const dayOfWeek = item[1];
+      const date = item[2];
+      const human =
         date.getFullYear() + '-' + date.getMonth() + '-' + date.getDate();
-      let msg = human + ' should be #' + dayOfWeek + ' day';
+      const msg = human + ' should be #' + dayOfWeek + ' day';
 
-      test(msg, function () {
-        let subject = ICAL.Time.fromJSDate(date);
+      test(msg, () => {
+        const subject = ICAL.Time.fromJSDate(date);
 
         assert.equal(subject.dayOfWeek(wkst), dayOfWeek);
       });
     });
   });
 
-  suite('#dayOfYear', function () {
+  suite('#dayOfYear', () => {
     let inc;
 
     function testYear(start) {
@@ -466,7 +466,7 @@ suite('icaltime', function () {
         start.getDate()
       );
 
-      let max = 400;
+      const max = 400;
       let cur = start;
       inc = 1;
       let time = Time.fromJSDate(cur);
@@ -486,24 +486,24 @@ suite('icaltime', function () {
       }
     }
 
-    test('full year (2011/no leap)', function () {
+    test('full year (2011/no leap)', () => {
       testYear(new Date(2011, 0, 1));
       assert.equal(inc - 1, 365, 'is not leap');
     });
 
-    test('full year (2012 + leap)', function () {
+    test('full year (2012 + leap)', () => {
       testYear(new Date(2012, 0, 1));
       assert.equal(inc - 1, 366, 'is leap');
     });
   });
 
-  suite('#startOfWeek', function () {
-    let start = new Date(2012, 1, 1);
+  suite('#startOfWeek', () => {
+    const start = new Date(2012, 1, 1);
     let subject;
     let expected;
 
-    suiteSetup(function () {
-      let time = Time.fromJSDate(new Date(2012, 0, 29));
+    suiteSetup(() => {
+      const time = Time.fromJSDate(new Date(2012, 0, 29));
 
       expected = {
         year: time.year,
@@ -515,24 +515,24 @@ suite('icaltime', function () {
     });
 
     [0, 1, 2, 3].forEach(day => {
-      let date = new Date(
+      const date = new Date(
         start.getFullYear(),
         start.getMonth(),
         start.getDate() + day
       );
 
-      let msg = 'convert: "' + date.toString() + '" to first day of week';
+      const msg = 'convert: "' + date.toString() + '" to first day of week';
 
-      test(msg, function () {
+      test(msg, () => {
         subject = Time.fromJSDate(date);
         hasProperties(subject.startOfWeek(), expected);
       });
     });
   });
 
-  suite('#getDominicalLetter', function () {
-    test('instance', function () {
-      let subject = function (yr) {
+  suite('#getDominicalLetter', () => {
+    test('instance', () => {
+      const subject = function (yr) {
         return new ICAL.Time({ year: yr }).getDominicalLetter();
       };
       assert.equal(subject(1989), 'A');
@@ -551,8 +551,8 @@ suite('icaltime', function () {
       assert.equal(subject(2020), 'ED');
       assert.equal(subject(2024), 'GF');
     });
-    test('static', function () {
-      let subject = ICAL.Time.getDominicalLetter;
+    test('static', () => {
+      const subject = ICAL.Time.getDominicalLetter;
       assert.equal(subject(1989), 'A');
       assert.equal(subject(1990), 'G');
       assert.equal(subject(1991), 'F');
@@ -571,87 +571,87 @@ suite('icaltime', function () {
     });
   });
 
-  suite('#nthWeekDay', function () {
-    suite('negative', function () {
-      test('last saturday in Sept 2012 (before current day)', function () {
-        let time = Time.fromData({ year: 2012, month: 9, day: 1 });
+  suite('#nthWeekDay', () => {
+    suite('negative', () => {
+      test('last saturday in Sept 2012 (before current day)', () => {
+        const time = Time.fromData({ year: 2012, month: 9, day: 1 });
 
-        let day = time.nthWeekDay(Time.SATURDAY, -1);
-        let date = new Date(2012, 8, day);
+        const day = time.nthWeekDay(Time.SATURDAY, -1);
+        const date = new Date(2012, 8, day);
 
         assert.deepEqual(date, new Date(2012, 8, 29));
       });
 
-      test('last Monday in Jan 2012 (target after current day)', function () {
-        let time = Time.fromData({ year: 2012, month: 1, day: 1 });
+      test('last Monday in Jan 2012 (target after current day)', () => {
+        const time = Time.fromData({ year: 2012, month: 1, day: 1 });
 
-        let day = time.nthWeekDay(Time.MONDAY, -1);
-        let date = new Date(2012, 0, day);
+        const day = time.nthWeekDay(Time.MONDAY, -1);
+        const date = new Date(2012, 0, day);
 
         assert.deepEqual(new Date(2012, 0, 30), date);
       });
 
-      test('2nd to last friday after May 15th 2012 (multiple weeks)', function () {
-        let time = Time.fromData({ year: 2012, month: 5, day: 15 });
+      test('2nd to last friday after May 15th 2012 (multiple weeks)', () => {
+        const time = Time.fromData({ year: 2012, month: 5, day: 15 });
 
-        let day = time.nthWeekDay(Time.FRIDAY, -2);
-        let date = new Date(2012, 4, day);
+        const day = time.nthWeekDay(Time.FRIDAY, -2);
+        const date = new Date(2012, 4, day);
 
         assert.deepEqual(date, new Date(2012, 4, 18));
       });
 
-      test('third to last Tuesday in April 2012 (tuesday)', function () {
-        let time = Time.fromData({ year: 2012, month: 4, day: 5 });
+      test('third to last Tuesday in April 2012 (tuesday)', () => {
+        const time = Time.fromData({ year: 2012, month: 4, day: 5 });
 
-        let day = time.nthWeekDay(Time.TUESDAY, -3);
-        let date = new Date(2012, 3, day);
+        const day = time.nthWeekDay(Time.TUESDAY, -3);
+        const date = new Date(2012, 3, day);
 
         assert.deepEqual(date, new Date(2012, 3, 10));
       });
     });
 
-    suite('positive', function () {
-      test('1st wed in Feb 2012 (start is day)', function () {
-        let time = Time.fromData({ year: 2012, month: 2, day: 1 });
-        let day = time.nthWeekDay(Time.WEDNESDAY, 0);
+    suite('positive', () => {
+      test('1st wed in Feb 2012 (start is day)', () => {
+        const time = Time.fromData({ year: 2012, month: 2, day: 1 });
+        const day = time.nthWeekDay(Time.WEDNESDAY, 0);
 
-        let date = new Date(2012, 1, day);
+        const date = new Date(2012, 1, day);
         assert.deepEqual(date, new Date(2012, 1, 1));
       });
 
-      test('1st monday in Feb 2012 (start is after day)', function () {
-        let time = Time.fromData({ year: 2012, month: 2, day: 1 });
-        let day = time.nthWeekDay(Time.MONDAY, 0);
+      test('1st monday in Feb 2012 (start is after day)', () => {
+        const time = Time.fromData({ year: 2012, month: 2, day: 1 });
+        const day = time.nthWeekDay(Time.MONDAY, 0);
 
-        let date = new Date(2012, 1, day);
+        const date = new Date(2012, 1, day);
 
         assert.deepEqual(date, new Date(2012, 1, 6));
       });
 
-      test('20th monday of year (multiple months)', function () {
-        let time = Time.fromData({ year: 2012, month: 1, day: 1 });
+      test('20th monday of year (multiple months)', () => {
+        const time = Time.fromData({ year: 2012, month: 1, day: 1 });
 
-        let day = time.nthWeekDay(Time.MONDAY, 20);
-        let date = new Date(2012, 0, day);
+        const day = time.nthWeekDay(Time.MONDAY, 20);
+        const date = new Date(2012, 0, day);
 
         assert.deepEqual(date, new Date(2012, 4, 14));
       });
 
-      test('3rd monday (multiple)', function () {
-        let time = Time.fromData({ year: 2012, month: 1, day: 1 });
+      test('3rd monday (multiple)', () => {
+        const time = Time.fromData({ year: 2012, month: 1, day: 1 });
 
-        let day = time.nthWeekDay(Time.MONDAY, 3);
-        let date = new Date(2012, 0, day);
+        const day = time.nthWeekDay(Time.MONDAY, 3);
+        const date = new Date(2012, 0, day);
 
         assert.deepEqual(date, new Date(2012, 0, 16));
       });
     });
   });
 
-  suite('#isNthWeekDay', function () {
-    test('each day of the week', function () {
+  suite('#isNthWeekDay', () => {
+    test('each day of the week', () => {
       // Remember 1 === SUNDAY not MONDAY
-      let start = new Date(2012, 3, 8);
+      const start = new Date(2012, 3, 8);
       let time;
 
       for (let dow = 1; dow <= 7; dow++) {
@@ -659,7 +659,7 @@ suite('icaltime', function () {
           new Date(
             start.getFullYear(),
             start.getMonth(),
-            7 + dow //8, 9, etc..
+            7 + dow // 8, 9, etc..
           )
         );
 
@@ -673,24 +673,24 @@ suite('icaltime', function () {
       }
     });
 
-    test('on any weekday', function () {
-      let dt = Time.fromString('2013-01-08');
+    test('on any weekday', () => {
+      const dt = Time.fromString('2013-01-08');
       assert.isTrue(dt.isNthWeekDay(Time.TUESDAY, 0));
     });
-    test('not weekday at all', function () {
-      let dt = Time.fromString('2013-01-08');
+    test('not weekday at all', () => {
+      const dt = Time.fromString('2013-01-08');
       assert.isFalse(dt.isNthWeekDay(Time.WEDNESDAY, 0));
     });
-    test('not nth weekday', function () {
-      let dt = Time.fromString('2013-01-08');
+    test('not nth weekday', () => {
+      const dt = Time.fromString('2013-01-08');
       assert.isFalse(dt.isNthWeekDay(Time.TUESDAY, 3));
     });
   });
 
-  suite('#toUnixTime', function () {
-    test('without timezone', function () {
-      let date = new Date(2012, 0, 22, 1, 7, 39);
-      let time = new ICAL.Time({
+  suite('#toUnixTime', () => {
+    test('without timezone', () => {
+      const date = new Date(2012, 0, 22, 1, 7, 39);
+      const time = new ICAL.Time({
         year: date.getUTCFullYear(),
         month: date.getUTCMonth() + 1,
         day: date.getUTCDate(),
@@ -702,19 +702,19 @@ suite('icaltime', function () {
       assert.equal(time.toUnixTime(), date.valueOf() / 1000);
     });
 
-    suite('with timezone', function () {
+    suite('with timezone', () => {
       let icsData;
-      suiteSetup(async function () {
+      suiteSetup(async () => {
         icsData = await loadSample('timezones/America/Los_Angeles.ics');
       });
 
       let subject;
       let zone;
 
-      setup(function () {
-        let parsed = ICAL.parse(icsData);
-        let vcalendar = new ICAL.Component(parsed);
-        let comp = vcalendar.getFirstSubcomponent('vtimezone');
+      setup(() => {
+        const parsed = ICAL.parse(icsData);
+        const vcalendar = new ICAL.Component(parsed);
+        const comp = vcalendar.getFirstSubcomponent('vtimezone');
 
         zone = new ICAL.Timezone({
           tzid: comp.getFirstPropertyValue('tzid'),
@@ -732,17 +732,17 @@ suite('icaltime', function () {
         );
       });
 
-      test('result', function () {
+      test('result', () => {
         // we know that subject is -8
-        let expectedTime = Date.UTC(2012, 0, 1, 18) / 1000;
+        const expectedTime = Date.UTC(2012, 0, 1, 18) / 1000;
 
         assert.equal(subject.toUnixTime(), expectedTime);
       });
     });
   });
 
-  test('#fromUnixTime', function () {
-    let time = new ICAL.Time({
+  test('#fromUnixTime', () => {
+    const time = new ICAL.Time({
       year: 2012,
       month: 1,
       day: 5,
@@ -752,7 +752,7 @@ suite('icaltime', function () {
       timezone: 'Z'
     });
 
-    let otherTime = new ICAL.Time();
+    const otherTime = new ICAL.Time();
     otherTime.fromUnixTime(time.toUnixTime());
 
     assert.deepEqual(time.toJSDate(), otherTime.toJSDate());
@@ -764,26 +764,26 @@ suite('icaltime', function () {
     assert.deepEqual(time.second, otherTime.second);
   });
 
-  suite('#adjust', function () {
-    let date = new Date(2012, 0, 25);
+  suite('#adjust', () => {
+    const date = new Date(2012, 0, 25);
 
-    test('overflow days - negative', function () {
-      let time = Time.fromJSDate(date);
+    test('overflow days - negative', () => {
+      const time = Time.fromJSDate(date);
       time.adjust(-35, 0, 0, 0);
 
       assert.deepEqual(time.toJSDate(), new Date(2011, 11, 21));
     });
 
-    test('overflow days - positive', function () {
-      let time = Time.fromJSDate(date);
+    test('overflow days - positive', () => {
+      const time = Time.fromJSDate(date);
 
       time.adjust(20, 0, 0, 0);
 
       assert.deepEqual(time.toJSDate(), new Date(2012, 1, 14));
     });
 
-    test('overflow years normalization  - negative', function () {
-      let time = Time.fromJSDate(date);
+    test('overflow years normalization  - negative', () => {
+      const time = Time.fromJSDate(date);
 
       time.month = 0;
       time.adjust(0, 0, 0, 0);
@@ -791,8 +791,8 @@ suite('icaltime', function () {
       assert.deepEqual(time.toJSDate(), new Date(2011, 11, 25));
     });
 
-    test('overflow years normalization  - positive', function () {
-      let time = Time.fromJSDate(date);
+    test('overflow years normalization  - positive', () => {
+      const time = Time.fromJSDate(date);
 
       time.month = 13;
       time.adjust(0, 0, 0, 0);
@@ -801,27 +801,27 @@ suite('icaltime', function () {
     });
   });
 
-  suite('#startDoyWeek', function () {
-    test('forward (using defaults)', function () {
-      let subject = Time.fromData({ year: 2012, month: 1, day: 20 });
-      let result = subject.startDoyWeek();
+  suite('#startDoyWeek', () => {
+    test('forward (using defaults)', () => {
+      const subject = Time.fromData({ year: 2012, month: 1, day: 20 });
+      const result = subject.startDoyWeek();
       assert.equal(result, 15, 'should start on sunday of that week');
     });
-    test('with different wkst', function () {
-      let subject = Time.fromData({ year: 2012, month: 1, day: 1 });
-      let result = subject.startDoyWeek(ICAL.Time.MONDAY);
+    test('with different wkst', () => {
+      const subject = Time.fromData({ year: 2012, month: 1, day: 1 });
+      const result = subject.startDoyWeek(ICAL.Time.MONDAY);
       assert.equal(result, -5);
     });
-    test('falls on zero', function () {
-      let subject = Time.fromData({ year: 2013, month: 1, day: 1 });
-      let result = subject.startDoyWeek(ICAL.Time.MONDAY);
+    test('falls on zero', () => {
+      const subject = Time.fromData({ year: 2013, month: 1, day: 1 });
+      const result = subject.startDoyWeek(ICAL.Time.MONDAY);
       assert.equal(result, 0);
     });
   });
 
-  suite('#toString', function () {
-    test('from fractional seconds', function () {
-      let subject = new ICAL.Time({
+  suite('#toString', () => {
+    test('from fractional seconds', () => {
+      const subject = new ICAL.Time({
         year: 2012,
         month: 10,
         day: 10,
@@ -835,21 +835,21 @@ suite('icaltime', function () {
     });
   });
 
-  suite('#toICALString', function () {
-    test('date', function () {
-      let subject = ICAL.Time.fromString('2012-10-12');
+  suite('#toICALString', () => {
+    test('date', () => {
+      const subject = ICAL.Time.fromString('2012-10-12');
       assert.equal(subject.toICALString(), '20121012');
     });
 
-    test('date-time', function () {
-      let subject = ICAL.Time.fromString('2012-10-12T07:08:09');
+    test('date-time', () => {
+      const subject = ICAL.Time.fromString('2012-10-12T07:08:09');
       assert.equal(subject.toICALString(), '20121012T070809');
     });
   });
 
-  suite('#toJSON', function () {
-    test('with utc time', function () {
-      let time = new Time({
+  suite('#toJSON', () => {
+    test('with utc time', () => {
+      const time = new Time({
         year: 2012,
         day: 1,
         month: 1,
@@ -857,14 +857,14 @@ suite('icaltime', function () {
         zone: Timezone.utcTimezone
       });
 
-      let after = new Time(time.toJSON());
+      const after = new Time(time.toJSON());
       assert.equal(after.zone, Timezone.utcTimezone);
 
       assert.deepEqual(after.toJSDate(), time.toJSDate());
     });
 
-    test('with floating time', function () {
-      let time = new Time({
+    test('with floating time', () => {
+      const time = new Time({
         year: 2012,
         month: 1,
         day: 1,
@@ -875,7 +875,7 @@ suite('icaltime', function () {
         zone: Timezone.localTimezone
       });
 
-      let expected = {
+      const expected = {
         year: 2012,
         month: 1,
         day: 1,
@@ -888,14 +888,14 @@ suite('icaltime', function () {
 
       assert.deepEqual(time.toJSON(), expected);
 
-      let after = new Time(time.toJSON());
+      const after = new Time(time.toJSON());
       assert.equal(after.zone, Timezone.localTimezone);
 
       assert.deepEqual(time.toJSDate(), after.toJSDate());
     });
 
-    test('with null timezone', function () {
-      let time = new Time({
+    test('with null timezone', () => {
+      const time = new Time({
         year: 2012,
         month: 1,
         day: 1,
@@ -906,7 +906,7 @@ suite('icaltime', function () {
       });
       time.zone = null;
 
-      let expected = {
+      const expected = {
         year: 2012,
         month: 1,
         day: 1,
@@ -920,8 +920,8 @@ suite('icaltime', function () {
     });
   });
 
-  test('calculations', function () {
-    let test_data = [
+  test('calculations', () => {
+    const test_data = [
       {
         str: '2012-01-01T00:00:00',
         expect_unixtime: 1325376000,
@@ -933,13 +933,13 @@ suite('icaltime', function () {
       }
     ];
 
-    for (let datakey in test_data) {
-      let data = test_data[datakey];
-      let dt = Time.fromString(data.str);
+    for (const datakey in test_data) {
+      const data = test_data[datakey];
+      const dt = Time.fromString(data.str);
       let cp = dt.clone();
 
       assert.equal(dt.toUnixTime(), data.expect_unixtime);
-      let dur = dt.subtractDate(Time.epochTime);
+      const dur = dt.subtractDate(Time.epochTime);
       assert.equal(dur.toSeconds(), data.expect_unixtime);
 
       cp = dt.clone();
@@ -1007,8 +1007,8 @@ suite('icaltime', function () {
     }
   });
 
-  test('#normalize', function () {
-    let test_data = [
+  test('#normalize', () => {
+    const test_data = [
       {
         str: '2012-12-31T23:59:59',
         add_seconds: 1,
@@ -1021,19 +1021,19 @@ suite('icaltime', function () {
       }
     ];
 
-    for (let datakey in test_data) {
-      let data = test_data[datakey];
-      let dt = Time.fromString(data.str);
-      let add_seconds = data.add_seconds || 0;
+    for (const datakey in test_data) {
+      const data = test_data[datakey];
+      const dt = Time.fromString(data.str);
+      const add_seconds = data.add_seconds || 0;
 
       dt.second += add_seconds;
       assert.equal(dt, data.expect);
     }
   });
 
-  suite('date properites', function () {
+  suite('date properites', () => {
     function testDateProperties(str, data, only) {
-      (only ? test.only : test)(str, function () {
+      (only ? test.only : test)(str, () => {
         let dt = Time.fromString(str);
         assert.equal(data.isDate, dt.isDate);
         assert.equal(data.year, dt.year);
@@ -1146,8 +1146,8 @@ suite('icaltime', function () {
     });
   });
 
-  test('startOfWeek with different first day of week', function () {
-    let test_data = [
+  test('startOfWeek with different first day of week', () => {
+    const test_data = [
       {
         /* A Sunday */ str: '2012-01-01T12:01:00',
         firstDayOfWeek: {
@@ -1234,10 +1234,10 @@ suite('icaltime', function () {
       }
     ];
 
-    for (let datakey in test_data) {
-      let data = test_data[datakey];
-      let dt = Time.fromString(data.str);
-      for (let day in data.firstDayOfWeek) {
+    for (const datakey in test_data) {
+      const data = test_data[datakey];
+      const dt = Time.fromString(data.str);
+      for (const day in data.firstDayOfWeek) {
         assert.equal(
           data.firstDayOfWeek[day],
           dt.startOfWeek(ICAL.Time[day]).toString()
@@ -1246,8 +1246,8 @@ suite('icaltime', function () {
     }
   });
 
-  test('endOfWeek with different first day of week', function () {
-    let test_data = [
+  test('endOfWeek with different first day of week', () => {
+    const test_data = [
       {
         /* A Sunday */ str: '2012-01-01T12:01:00',
         firstDayOfWeek: {
@@ -1334,10 +1334,10 @@ suite('icaltime', function () {
       }
     ];
 
-    for (let datakey in test_data) {
-      let data = test_data[datakey];
-      let dt = Time.fromString(data.str);
-      for (let day in data.firstDayOfWeek) {
+    for (const datakey in test_data) {
+      const data = test_data[datakey];
+      const dt = Time.fromString(data.str);
+      for (const day in data.firstDayOfWeek) {
         assert.equal(
           data.firstDayOfWeek[day],
           dt.endOfWeek(ICAL.Time[day]).toString()
@@ -1346,11 +1346,11 @@ suite('icaltime', function () {
     }
   });
 
-  suite('#compare', function () {
+  suite('#compare', () => {
     useTimezones('America/New_York', 'America/Los_Angeles');
 
-    test('simple comparison', function () {
-      let a = Time.fromString('2001-01-01T00:00:00');
+    test('simple comparison', () => {
+      const a = Time.fromString('2001-01-01T00:00:00');
       let b = Time.fromString('2001-01-01T00:00:00');
       assert.equal(a.compare(b), 0);
 
@@ -1379,9 +1379,9 @@ suite('icaltime', function () {
       assert.equal(b.compare(a), 1);
     });
 
-    test('simple comparison one with a timezone, one without', function () {
+    test('simple comparison one with a timezone, one without', () => {
       // Floating timezone is effectively UTC. New York is 5 hours behind.
-      let a = Time.fromString('2001-01-01T00:00:00');
+      const a = Time.fromString('2001-01-01T00:00:00');
       a.zone = ICAL.TimezoneService.get('America/New_York');
       let b = Time.fromString('2001-01-01T05:00:00');
       b.zone = Timezone.localTimezone;
@@ -1412,8 +1412,8 @@ suite('icaltime', function () {
       assert.equal(b.compare(a), 1);
     });
 
-    test('date-only comparison', function () {
-      let a = Time.fromString('2001-01-01');
+    test('date-only comparison', () => {
+      const a = Time.fromString('2001-01-01');
       let b = Time.fromString('2001-01-01');
       assert.equal(a.compareDateOnlyTz(b, Timezone.localTimezone), 0);
 
@@ -1430,10 +1430,10 @@ suite('icaltime', function () {
       assert.equal(b.compareDateOnlyTz(a, Timezone.localTimezone), 1);
     });
 
-    test('both are dates', function () {
-      let a = Time.fromString('2014-07-20');
+    test('both are dates', () => {
+      const a = Time.fromString('2014-07-20');
       a.zone = ICAL.TimezoneService.get('America/New_York');
-      let b = Time.fromString('2014-07-20');
+      const b = Time.fromString('2014-07-20');
       b.zone = Timezone.localTimezone;
 
       assert.ok(a.isDate);
@@ -1449,10 +1449,10 @@ suite('icaltime', function () {
       assert.equal(b.compare(a), -1);
     });
 
-    test('one is date, one isnt', function () {
-      let a = Time.fromString('2014-07-20T12:00:00.000');
+    test('one is date, one isnt', () => {
+      const a = Time.fromString('2014-07-20T12:00:00.000');
       a.zone = ICAL.TimezoneService.get('America/New_York');
-      let b = Time.fromString('2014-07-20');
+      const b = Time.fromString('2014-07-20');
       b.zone = Timezone.localTimezone;
 
       assert.ok(!a.isDate);
@@ -1468,10 +1468,10 @@ suite('icaltime', function () {
       assert.equal(b.compare(a), -1);
     });
 
-    test('one is date, one isnt', function () {
-      let a = Time.fromString('2014-07-20T12:00:00.000');
+    test('one is date, one isnt', () => {
+      const a = Time.fromString('2014-07-20T12:00:00.000');
       a.zone = Timezone.localTimezone;
-      let b = Time.fromString('2014-07-20');
+      const b = Time.fromString('2014-07-20');
       b.zone = ICAL.TimezoneService.get('America/New_York');
 
       assert.ok(!a.isDate);
@@ -1487,10 +1487,10 @@ suite('icaltime', function () {
       assert.equal(b.compare(a), -1);
     });
 
-    test('both are not dates', function () {
-      let a = Time.fromString('2014-07-20T12:00:00.000');
+    test('both are not dates', () => {
+      const a = Time.fromString('2014-07-20T12:00:00.000');
       a.zone = ICAL.TimezoneService.get('America/New_York');
-      let b = Time.fromString('2014-07-20T12:00:00.000');
+      const b = Time.fromString('2014-07-20T12:00:00.000');
       b.zone = Timezone.localTimezone;
 
       assert.ok(!a.isDate);
@@ -1506,10 +1506,10 @@ suite('icaltime', function () {
       assert.equal(b.compare(a), -1);
     });
 
-    test('two timezones', function () {
-      let a = Time.fromString('2014-07-20T02:00:00.000');
+    test('two timezones', () => {
+      const a = Time.fromString('2014-07-20T02:00:00.000');
       a.zone = ICAL.TimezoneService.get('America/New_York');
-      let b = Time.fromString('2014-07-19T23:00:00.000');
+      const b = Time.fromString('2014-07-19T23:00:00.000');
       b.zone = ICAL.TimezoneService.get('America/Los_Angeles');
 
       assert.ok(!a.isDate);
@@ -1534,9 +1534,9 @@ suite('icaltime', function () {
     });
   });
 
-  test('cache cleared', function () {
+  test('cache cleared', () => {
     // This test ensures the cached Unix time is cleared whenever the time is changed.
-    let time = new Time({
+    const time = new Time({
       year: 2015,
       month: 4,
       day: 3,
@@ -1590,22 +1590,22 @@ suite('icaltime', function () {
     assert.equal(time.toUnixTime(), 1234567890);
   });
 
-  suite('static functions', function () {
-    test('daysInMonth', function () {
+  suite('static functions', () => {
+    test('daysInMonth', () => {
       assert.equal(Time.daysInMonth(0, 2011), 30);
       assert.equal(Time.daysInMonth(2, 2012), 29);
       assert.equal(Time.daysInMonth(2, 2013), 28);
       assert.equal(Time.daysInMonth(13, 2014), 30);
     });
 
-    test('isLeapYear', function () {
+    test('isLeapYear', () => {
       assert.isTrue(Time.isLeapYear(1752));
       assert.isTrue(Time.isLeapYear(2000));
       assert.isTrue(Time.isLeapYear(2004));
       assert.isFalse(Time.isLeapYear(2100));
     });
 
-    test('fromDayOfYear', function () {
+    test('fromDayOfYear', () => {
       assert.equal(Time.fromDayOfYear(-730, 2001).toICALString(), '19990101');
       assert.equal(Time.fromDayOfYear(-366, 2001).toICALString(), '19991231');
       assert.equal(Time.fromDayOfYear(-365, 2001).toICALString(), '20000101');
@@ -1620,9 +1620,9 @@ suite('icaltime', function () {
       assert.equal(Time.fromDayOfYear(1826, 2001).toICALString(), '20051231');
     });
 
-    test('fromStringv2', function () {
-      let subject = Time.fromStringv2('2015-01-01');
-      let expected = {
+    test('fromStringv2', () => {
+      const subject = Time.fromStringv2('2015-01-01');
+      const expected = {
         year: 2015,
         month: 1,
         day: 1,
@@ -1636,16 +1636,16 @@ suite('icaltime', function () {
       assert.deepEqual(subject.toJSON(), expected);
     });
 
-    suite('weekOneStarts', function () {
+    suite('weekOneStarts', () => {
       function testWeekOne(year, dates, only) {
-        let dom = ICAL.Time.getDominicalLetter(year);
-        (only ? test.only : test)(year + ' (' + dom + ')', function () {
-          for (let wkday in dates) {
-            let icalwkday = ICAL.Time[wkday];
-            let w1st = Time.weekOneStarts(year, icalwkday);
+        const dom = ICAL.Time.getDominicalLetter(year);
+        (only ? test.only : test)(year + ' (' + dom + ')', () => {
+          for (const wkday in dates) {
+            const icalwkday = ICAL.Time[wkday];
+            const w1st = Time.weekOneStarts(year, icalwkday);
             assert.equal(dates[wkday], w1st.toString(), wkday);
 
-            let startOfWeek = ICAL.Time.fromString(dates[wkday]);
+            const startOfWeek = ICAL.Time.fromString(dates[wkday]);
             assert.equal(startOfWeek.weekNumber(icalwkday), 1, wkday);
             startOfWeek.day--;
             assert.isAbove(startOfWeek.weekNumber(icalwkday), 51, wkday);
@@ -1656,8 +1656,8 @@ suite('icaltime', function () {
         testWeekOne(year, dates, true);
       };
 
-      test('default week start', function () {
-        let w1st = Time.weekOneStarts(1989);
+      test('default week start', () => {
+        const w1st = Time.weekOneStarts(1989);
         assert.equal('1989-01-02', w1st.toString());
       });
 

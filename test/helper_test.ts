@@ -1,102 +1,102 @@
-import { suite, test, suiteSetup, suiteTeardown } from 'mocha';
+import { suite, suiteSetup, suiteTeardown, test } from 'mocha';
 import { assert } from 'chai';
-import { loadSample, ICAL } from './support/helper';
+import { ICAL, loadSample } from './support/helper';
 
-suite('ICAL.helpers', function () {
-  suite('#clone', function () {
-    let subject = ICAL.helpers.clone;
-    test('some primatives', function () {
+suite('ICAL.helpers', () => {
+  suite('#clone', () => {
+    const subject = ICAL.helpers.clone;
+    test('some primatives', () => {
       assert.equal(subject(null, false), null);
       assert.equal(subject(123, false), 123);
       assert.equal(subject(null, true), null);
       assert.equal(subject(123, true), 123);
     });
 
-    test('a date', function () {
-      let date = new Date(2015, 1, 1);
-      let time = date.getTime();
-      let copy = subject(date, false);
+    test('a date', () => {
+      const date = new Date(2015, 1, 1);
+      const time = date.getTime();
+      const copy = subject(date, false);
 
       copy.setYear(2016);
       assert.notEqual(time, copy.getTime());
     });
 
-    test('clonable', function () {
-      let obj = {
-        clone: function () {
+    test('clonable', () => {
+      const obj = {
+        clone() {
           return 'test';
         }
       };
       assert.equal(subject(obj, false), 'test');
     });
 
-    test('shallow array', function () {
-      let obj = { v: 2 };
-      let arr = [obj, 2, 3];
+    test('shallow array', () => {
+      const obj = { v: 2 };
+      const arr = [obj, 2, 3];
 
-      let result = subject(arr, false);
+      const result = subject(arr, false);
       assert.deepEqual(result, [{ v: 2 }, 2, 3]);
       obj.v = 3;
       assert.deepEqual(result, [{ v: 3 }, 2, 3]);
     });
 
-    test('deep array', function () {
-      let obj = { v: 2 };
-      let arr = [obj, 2, 3];
+    test('deep array', () => {
+      const obj = { v: 2 };
+      const arr = [obj, 2, 3];
 
-      let result = subject(arr, true);
+      const result = subject(arr, true);
       assert.deepEqual(result, [{ v: 2 }, 2, 3]);
       obj.v = 3;
       assert.deepEqual(result, [{ v: 2 }, 2, 3]);
     });
 
-    test('shallow object', function () {
-      let deepobj = { v: 2 };
-      let obj = { a: deepobj, b: 2 };
+    test('shallow object', () => {
+      const deepobj = { v: 2 };
+      const obj = { a: deepobj, b: 2 };
 
-      let result = subject(obj, false);
+      const result = subject(obj, false);
       assert.deepEqual(result, { a: { v: 2 }, b: 2 });
       deepobj.v = 3;
       assert.deepEqual(result, { a: { v: 3 }, b: 2 });
     });
 
-    test('deep object', function () {
-      let deepobj = { v: 2 };
-      let obj = { a: deepobj, b: 2 };
+    test('deep object', () => {
+      const deepobj = { v: 2 };
+      const obj = { a: deepobj, b: 2 };
 
-      let result = subject(obj, true);
+      const result = subject(obj, true);
       assert.deepEqual(result, { a: { v: 2 }, b: 2 });
       deepobj.v = 3;
       assert.deepEqual(result, { a: { v: 2 }, b: 2 });
     });
   });
 
-  suite('#pad2', function () {
-    let subject = ICAL.helpers.pad2;
+  suite('#pad2', () => {
+    const subject = ICAL.helpers.pad2;
 
-    test('with string', function () {
+    test('with string', () => {
       assert.equal(subject(''), '00');
       assert.equal(subject('1'), '01');
       assert.equal(subject('12'), '12');
       assert.equal(subject('123'), '123');
     });
 
-    test('with number', function () {
+    test('with number', () => {
       assert.equal(subject(0), '00');
       assert.equal(subject(1), '01');
       assert.equal(subject(12), '12');
       assert.equal(subject(123), '123');
     });
 
-    test('with boolean', function () {
+    test('with boolean', () => {
       assert.equal(subject(true), 'true');
     });
   });
 
-  suite('#foldline', function () {
-    let subject = ICAL.helpers.foldline;
+  suite('#foldline', () => {
+    const subject = ICAL.helpers.foldline;
 
-    test('empty values', function () {
+    test('empty values', () => {
       assert.strictEqual(subject(null), '');
       assert.strictEqual(subject(''), '');
     });
@@ -104,11 +104,11 @@ suite('ICAL.helpers', function () {
     // Most other cases are covered by other tests
   });
 
-  suite('#updateTimezones', function () {
-    let subject = ICAL.helpers.updateTimezones;
+  suite('#updateTimezones', () => {
+    const subject = ICAL.helpers.updateTimezones;
     let cal;
 
-    suiteSetup(async function () {
+    suiteSetup(async () => {
       let data = await loadSample('minimal.ics');
       cal = new ICAL.Component(ICAL.parse(data));
 
@@ -118,11 +118,11 @@ suite('ICAL.helpers', function () {
       );
     });
 
-    suiteTeardown(function () {
+    suiteTeardown(() => {
       ICAL.TimezoneService.reset();
     });
 
-    test('timezones already correct', function () {
+    test('timezones already correct', () => {
       let vtimezones;
       vtimezones = cal.getAllSubcomponents('vtimezone');
       assert.strictEqual(vtimezones.length, 1);
@@ -132,7 +132,7 @@ suite('ICAL.helpers', function () {
       );
     });
 
-    test('remove extra timezones', function () {
+    test('remove extra timezones', () => {
       let vtimezones;
       cal.addSubcomponent(
         ICAL.TimezoneService.get('America/Atikokan').component
@@ -148,7 +148,7 @@ suite('ICAL.helpers', function () {
       );
     });
 
-    test('add missing timezones', function () {
+    test('add missing timezones', () => {
       let vtimezones;
       cal
         .getFirstSubcomponent('vevent')
@@ -161,8 +161,8 @@ suite('ICAL.helpers', function () {
       assert.strictEqual(vtimezones.length, 2);
     });
 
-    test('return non-vcalendar components unchanged', function () {
-      let vevent = cal.getFirstSubcomponent('vevent');
+    test('return non-vcalendar components unchanged', () => {
+      const vevent = cal.getFirstSubcomponent('vevent');
       assert.deepEqual(subject(vevent), vevent);
     });
   });

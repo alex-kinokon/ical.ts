@@ -3,6 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
+import type { Component } from './component';
+import type { DesignSet } from './design';
 import { design } from './design';
 import { unescapedIndexOf } from './helpers';
 
@@ -13,6 +15,11 @@ const PARAM_NAME_DELIMITER = '=';
 const DEFAULT_VALUE_TYPE = 'unknown';
 const DEFAULT_PARAM_TYPE = 'text';
 const RFC6868_REPLACE_MAP = { "^'": '"', '^n': '\n', '^^': '^' };
+
+interface ParseState {
+  component: [];
+  stack: [][];
+}
 
 /**
  * Parses iCalendar or vCard data into a raw jCal object. Consult
@@ -26,13 +33,13 @@ const RFC6868_REPLACE_MAP = { "^'": '"', '^n': '\n', '^^': '^' };
  * @param {String} input      The string data to parse
  * @return {Object|Object[]}  A single jCal object, or an array thereof
  */
-export function parse(input) {
-  let state = {};
-  let root = (state.component = []);
+export function parse(input: string) {
+  let state: ParseState = {} as any;
+  const root = (state.component = []);
 
   state.stack = [root];
 
-  parse._eachLine(input, function (err, line) {
+  parse._eachLine(input, (err, line) => {
     parse._handleContentLine(line, state);
   });
 
@@ -45,7 +52,7 @@ export function parse(input) {
 
   state = null;
 
-  return root.length == 1 ? root[0] : root;
+  return root.length === 1 ? root[0] : root;
 }
 
 /**
@@ -59,8 +66,8 @@ export function parse(input) {
  * @return {Object}
  *   The jCal Object containing the property
  */
-parse.property = function (str, designSet) {
-  let state = {
+parse.property = (str: string, designSet?: DesignSet) => {
+  const state = {
     component: [[], []],
     designSet: designSet || design.defaultSet
   };
@@ -77,7 +84,7 @@ parse.property = function (str, designSet) {
  * @param {String} str    The iCalendar component string to parse
  * @return {Object}       The jCal Object containing the component
  */
-parse.component = function (str) {
+parse.component = function (str: string) {
   return parse(str);
 };
 
@@ -91,15 +98,15 @@ parse.component = function (str) {
  */
 
 class ParserError extends Error {
-  constructor(message) {
+  constructor(message: string) {
     super(message);
     this.name = this.constructor.name;
 
     try {
       throw new Error();
     } catch (e) {
-      if (e.stack) {
-        let split = e.stack.split('\n');
+      if ((e as Error).stack) {
+        const split = (e as Error).stack!.split('\n');
         split.shift();
         this.stack = split.join('\n');
       }
@@ -112,26 +119,26 @@ parse.ParserError = ParserError;
 
 /**
  * The state for parsing content lines from an iCalendar/vCard string.
- *
- * @private
- * @memberof ICAL.parse
- * @typedef {Object} parserState
- * @property {ICAL.design.designSet} designSet    The design set to use for parsing
- * @property {ICAL.Component[]} stack             The stack of components being processed
- * @property {ICAL.Component} component           The currently active component
  */
+interface ParserState {
+  /** The design set to use for parsing */
+  designSet: DesignSet;
+  /** The stack of components being processed */
+  stack: Component[];
+  /** The currently active component */
+  component: Component;
+}
 
 /**
  * Handles a single line of iCalendar/vCard, updating the state.
  *
  * @private
- * @function ICAL.parse._handleContentLine
- * @param {String} line               The content line to process
- * @param {ICAL.parse.parserState}    The current state of the line parsing
+ * @param line  The content line to process
+ * @param state The current state of the line parsing
  */
-parse._handleContentLine = function (line, state) {
+parse._handleContentLine = function (line: string, state: ParserState) {
   // break up the parts of the line
-  let valuePos = line.indexOf(VALUE_DELIMITER);
+  const valuePos = line.indexOf(VALUE_DELIMITER);
   let paramPos = line.indexOf(PARAM_DELIMITER);
 
   let lastParamIndex;
@@ -174,7 +181,7 @@ parse._handleContentLine = function (line, state) {
       0,
       state.designSet
     );
-    if (parsedParams[2] == -1) {
+    if (parsedParams[2] === -1) {
       throw new ParserError("Invalid parameters in '" + line + "'");
     }
     params = parsedParams[0];
@@ -194,7 +201,7 @@ parse._handleContentLine = function (line, state) {
     value = line.slice(Math.max(0, valuePos + 1));
 
     if (name === 'begin') {
-      let newComponent = [value.toLowerCase(), [], []];
+      const newComponent = [value.toLowerCase(), [], []];
       if (state.stack.length === 1) {
         state.component.push(newComponent);
       } else {
@@ -207,7 +214,7 @@ parse._handleContentLine = function (line, state) {
       }
       return;
     } else if (name === 'end') {
-      state.component = state.stack.pop();
+      state.component = state.stack.pop()!;
       return;
     }
     // If it is not begin/end, then this is a property with an empty value,
@@ -339,7 +346,12 @@ parse._handleContentLine = function (line, state) {
  * @param {Object} designSet      The design data to use for this value
  * @return {Object} varies on type
  */
-parse._parseValue = function (value, type, designSet, structuredValue) {
+parse._parseValue = function (
+  value: string,
+  type: string,
+  designSet: DesignSet,
+  structuredValue?: object
+) {
   if (type in designSet.value && 'fromICAL' in designSet.value[type]) {
     return designSet.value[type].fromICAL(value, structuredValue);
   }
@@ -351,20 +363,27 @@ parse._parseValue = function (value, type, designSet, structuredValue) {
  *
  * @function ICAL.parse._parseParameters
  * @private
- * @param {String} line           A single unfolded line
- * @param {Numeric} start         Position to start looking for properties
- * @param {Object} designSet      The design data to use for this property
+ * @param line           A single unfolded line
+ * @param start         Position to start looking for properties
+ * @param designSet      The design data to use for this property
  * @return {Object} key/value pairs
  */
-parse._parseParameters = function (line, start, designSet) {
+parse._parseParameters = function (
+  line: string,
+  start: number,
+  designSet: DesignSet
+) {
   let lastParam = start;
-  let pos = 0;
-  let delim = PARAM_NAME_DELIMITER;
-  let result = {};
-  let name, lcname;
-  let value,
-    valuePos = -1;
-  let type, multiValue, mvdelim;
+  let pos: number | false = 0;
+  const delim = PARAM_NAME_DELIMITER;
+  const result: Record<string, string[]> = {};
+  let name;
+  let lcname;
+  let value;
+  let valuePos = -1;
+  let type;
+  let multiValue;
+  let mvdelim;
 
   // find the next '=' sign
   // use lastParam and pos to find name
@@ -376,7 +395,7 @@ parse._parseParameters = function (line, start, designSet) {
     (pos = unescapedIndexOf(line, delim, pos + 1)) !== -1
   ) {
     name = line.slice(lastParam + 1, pos);
-    if (name.length == 0) {
+    if (name.length === 0) {
       throw new ParserError("Empty parameter name in '" + line + "'");
     }
     lcname = name.toLowerCase();
@@ -396,14 +415,14 @@ parse._parseParameters = function (line, start, designSet) {
       }
     }
 
-    let nextChar = line[pos + 1];
+    const nextChar = line[pos + 1];
     if (nextChar === '"') {
       valuePos = pos + 2;
       pos = unescapedIndexOf(line, '"', valuePos);
-      if (multiValue && pos != -1) {
+      if (multiValue && pos !== -1) {
         let extendedValue = true;
         while (extendedValue) {
-          if (line[pos + 1] == multiValue && line[pos + 2] == '"') {
+          if (line[pos + 1] === multiValue && line[pos + 2] === '"') {
             pos = unescapedIndexOf(line, '"', pos + 3);
           } else {
             extendedValue = false;
@@ -425,7 +444,7 @@ parse._parseParameters = function (line, start, designSet) {
 
       // move to next ";"
       let nextPos = unescapedIndexOf(line, PARAM_DELIMITER, valuePos);
-      let propValuePos = unescapedIndexOf(line, VALUE_DELIMITER, valuePos);
+      const propValuePos = unescapedIndexOf(line, VALUE_DELIMITER, valuePos);
       if (propValuePos !== -1 && nextPos > propValuePos) {
         // this is a delimiter in the property value, let's stop here
         nextPos = propValuePos;
@@ -448,7 +467,7 @@ parse._parseParameters = function (line, start, designSet) {
 
     value = parse._rfc6868Escape(value);
     if (multiValue) {
-      let delimiter = mvdelim || multiValue;
+      const delimiter = mvdelim || multiValue;
       value = parse._parseMultiValue(
         value,
         delimiter,
@@ -482,10 +501,8 @@ parse._parseParameters = function (line, start, designSet) {
  * @param {String} val        The value to escape
  * @return {String}           The escaped value
  */
-parse._rfc6868Escape = function (val) {
-  return val.replace(/\^['n^]/g, function (x) {
-    return RFC6868_REPLACE_MAP[x];
-  });
+parse._rfc6868Escape = function (val: string): string {
+  return val.replace(/\^['n^]/g, x => RFC6868_REPLACE_MAP[x]);
 };
 
 /**
@@ -504,13 +521,13 @@ parse._rfc6868Escape = function (val) {
  * @return {?|Array.<?>}            Either an array of results, or the first result
  */
 parse._parseMultiValue = function (
-  buffer,
-  delim,
-  type,
-  result,
-  innerMulti,
-  designSet,
-  structuredValue
+  buffer: string,
+  delim: string,
+  type: string,
+  result: unknown[],
+  innerMulti: string | null,
+  designSet: DesignSet,
+  structuredValue?: unknown[]
 ) {
   let pos = 0;
   let lastPos = 0;
@@ -556,7 +573,7 @@ parse._parseMultiValue = function (
   }
   result.push(value);
 
-  return result.length == 1 ? result[0] : result;
+  return result.length === 1 ? result[0] : result;
 };
 
 /**
@@ -568,8 +585,11 @@ parse._parseMultiValue = function (
  * @param {String} buffer                         The buffer to process
  * @param {function(?String, String)} callback    The callback for each line
  */
-parse._eachLine = function (buffer, callback) {
-  let len = buffer.length;
+parse._eachLine = function (
+  buffer: string,
+  callback: (a: string | null, b: string) => void
+) {
+  const len = buffer.length;
   let lastPos = buffer.search(CHAR);
   let pos = lastPos;
   let line;

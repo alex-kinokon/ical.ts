@@ -8,6 +8,23 @@ import { Component } from './component';
 import { Property } from './property';
 import { Timezone } from './timezone';
 import { RecurExpansion } from './recur_expansion';
+import type { Time } from './time';
+import type { FrequencyValue, Recur } from './recur';
+import type { Duration } from './duration';
+
+/**
+ * This object is returned by {@link Event#getOccurrenceDetails getOccurrenceDetails}
+ */
+interface OccurrenceDetails {
+  /** The passed in recurrence id */
+  recurrenceId: Time;
+  /** The occurrence */
+  item: Event;
+  /** The start of the occurrence */
+  startDate: Time;
+  /** The end of the occurrence */
+  endDate: Time;
+}
 
 /**
  * ICAL.js is organized into multiple layers. The bottom layer is a raw jCal
@@ -19,19 +36,31 @@ import { RecurExpansion } from './recur_expansion';
  * @alias ICAL.Event
  */
 export class Event {
+  private component: Component;
+  private _rangeExceptionCache: Record<string, Duration>;
+  private rangeExceptions: [number, string][];
+
   /**
    * Creates a new ICAL.Event instance.
    *
-   * @param {ICAL.Component=} component         The ICAL.Component to base this event on
-   * @param {Object} options                    Options for this event
-   * @param {Boolean} options.strictExceptions  When true, will verify exceptions are related by
-   *                                              their UUID
-   * @param {Array<ICAL.Component|ICAL.Event>} options.exceptions
-   *          Exceptions to this event, either as components or events. If not
-   *            specified exceptions will automatically be set in relation of
-   *            component's parent
+   * @param component The ICAL.Component to base this event on
+   * @param options Options for this event
    */
-  constructor(component, options?) {
+  constructor(
+    component?: Component,
+    options?: {
+      /**
+       * When true, will verify exceptions are related by their UUID
+       */
+      strictExceptions: boolean;
+      /**
+       * Exceptions to this event, either as components or events. If not
+       * specified exceptions will automatically be set in relation of
+       * component's parent
+       */
+      exceptions: (Component | Event)[];
+    }
+  ) {
     if (!(component instanceof Component)) {
       options = component;
       component = null;
@@ -54,13 +83,11 @@ export class Event {
     if (options && options.exceptions) {
       options.exceptions.forEach(this.relateException, this);
     } else if (this.component.parent && !this.isRecurrenceException()) {
-      this.component.parent
-        .getAllSubcomponents('vevent')
-        .forEach(function (event) {
-          if (event.hasProperty('recurrence-id')) {
-            this.relateException(event);
-          }
-        }, this);
+      this.component.parent.getAllSubcomponents('vevent').forEach(event => {
+        if (event.hasProperty('recurrence-id')) {
+          this.relateException(event);
+        }
+      });
     }
   }
 
@@ -68,15 +95,11 @@ export class Event {
 
   /**
    * List of related event exceptions.
-   *
-   * @type {ICAL.Event[]}
    */
-  exceptions = null;
+  exceptions: Event[];
 
   /**
    * When true, will verify exceptions are related by their UUID.
-   *
-   * @type {Boolean}
    */
   strictExceptions = false;
 
@@ -88,9 +111,9 @@ export class Event {
    * If this component is an exception it cannot have other exceptions
    * related to it.
    *
-   * @param {ICAL.Component|ICAL.Event} obj       Component or event
+   * @param obj       Component or event
    */
-  relateException(obj) {
+  relateException(obj: Component | Event) {
     if (this.isRecurrenceException()) {
       throw new Error('cannot relate exception to exceptions');
     }
@@ -103,7 +126,7 @@ export class Event {
       throw new Error('attempted to relate unrelated exception');
     }
 
-    let id = obj.recurrenceId.toString();
+    const id = obj.recurrenceId.toString();
 
     // we don't sort or manage exceptions directly
     // here the recurrence expander handles that.
@@ -112,11 +135,11 @@ export class Event {
     // index RANGE=THISANDFUTURE exceptions so we can
     // look them up later in getOccurrenceDetails.
     if (obj.modifiesFuture()) {
-      let item = [obj.recurrenceId.toUnixTime(), id];
+      const item = [obj.recurrenceId.toUnixTime(), id] as [number, string];
 
       // we keep them sorted so we can find the nearest
       // value later on...
-      let idx = binsearchInsert(
+      const idx = binsearchInsert(
         this.rangeExceptions,
         item,
         compareRangeException
@@ -130,15 +153,15 @@ export class Event {
    * Checks if this record is an exception and has the RANGE=THISANDFUTURE
    * value.
    *
-   * @return {Boolean}        True, when exception is within range
+   * @return True, when exception is within range
    */
-  modifiesFuture() {
+  modifiesFuture(): boolean {
     if (!this.component.hasProperty('recurrence-id')) {
       return false;
     }
 
-    let range = this.component
-      .getFirstProperty('recurrence-id')
+    const range = this.component
+      .getFirstProperty('recurrence-id')!
       .getParameter('range');
     return range === Event.THISANDFUTURE;
   }
@@ -146,15 +169,15 @@ export class Event {
   /**
    * Finds the range exception nearest to the given date.
    *
-   * @param {ICAL.Time} time usually an occurrence time of an event
-   * @return {?ICAL.Event} the related event/exception or null
+   * @param time usually an occurrence time of an event
+   * @return the related event/exception or null
    */
-  findRangeException(time) {
+  findRangeException(time: Time): string | null {
     if (!this.rangeExceptions.length) {
       return null;
     }
 
-    let utc = time.toUnixTime();
+    const utc = time.toUnixTime();
     let idx = binsearchInsert(
       this.rangeExceptions,
       [utc],
@@ -168,7 +191,7 @@ export class Event {
       return null;
     }
 
-    let rangeItem = this.rangeExceptions[idx];
+    const rangeItem = this.rangeExceptions[idx];
 
     /* c8 ignore next 4 */
     if (utc < rangeItem[0]) {
@@ -180,34 +203,23 @@ export class Event {
   }
 
   /**
-   * This object is returned by {@link ICAL.Event#getOccurrenceDetails getOccurrenceDetails}
-   *
-   * @typedef {Object} occurrenceDetails
-   * @memberof ICAL.Event
-   * @property {ICAL.Time} recurrenceId       The passed in recurrence id
-   * @property {ICAL.Event} item              The occurrence
-   * @property {ICAL.Time} startDate          The start of the occurrence
-   * @property {ICAL.Time} endDate            The end of the occurrence
-   */
-
-  /**
    * Returns the occurrence details based on its start time.  If the
    * occurrence has an exception will return the details for that exception.
    *
    * NOTE: this method is intend to be used in conjunction
-   *       with the {@link ICAL.Event#iterator iterator} method.
+   *       with the {@link Event#iterator iterator} method.
    *
-   * @param {ICAL.Time} occurrence time occurrence
-   * @return {ICAL.Event.occurrenceDetails} Information about the occurrence
+   * @param occurrence time occurrence
+   * @return Information about the occurrence
    */
-  getOccurrenceDetails(occurrence) {
-    let id = occurrence.toString();
-    let utcId = occurrence.convertToZone(Timezone.utcTimezone).toString();
+  getOccurrenceDetails(occurrence: Time): OccurrenceDetails {
+    const id = occurrence.toString();
+    const utcId = occurrence.convertToZone(Timezone.utcTimezone).toString();
     let item;
-    let result = {
-      //XXX: Clone?
+    const result = {
+      // XXX: Clone?
       recurrenceId: occurrence
-    };
+    } as OccurrenceDetails;
 
     if (id in this.exceptions) {
       item = result.item = this.exceptions[id];
@@ -224,11 +236,11 @@ export class Event {
       // lower priority then direct exceptions but
       // must be accounted for first. Their item is
       // always the first exception with the range prop.
-      let rangeExceptionId = this.findRangeException(occurrence);
+      const rangeExceptionId = this.findRangeException(occurrence);
       let end;
 
       if (rangeExceptionId) {
-        let exception = this.exceptions[rangeExceptionId];
+        const exception = this.exceptions[rangeExceptionId];
 
         // range exception must modify standard time
         // by the difference (if any) in start/end times.
@@ -237,8 +249,8 @@ export class Event {
         let startDiff = this._rangeExceptionCache[rangeExceptionId];
 
         if (!startDiff) {
-          let original = exception.recurrenceId.clone();
-          let newStart = exception.startDate.clone();
+          const original = exception.recurrenceId.clone();
+          const newStart = exception.startDate.clone();
 
           // zones must be same otherwise subtract may be incorrect.
           original.zone = newStart.zone;
@@ -247,7 +259,7 @@ export class Event {
           this._rangeExceptionCache[rangeExceptionId] = startDiff;
         }
 
-        let start = occurrence.clone();
+        const start = occurrence.clone();
         start.zone = exception.startDate.zone;
         start.addDuration(startDiff);
 
@@ -274,10 +286,10 @@ export class Event {
    * Builds a recur expansion instance for a specific point in time (defaults
    * to startDate).
    *
-   * @param {ICAL.Time} startTime     Starting point for expansion
-   * @return {ICAL.RecurExpansion}    Expansion object
+   * @param startTime     Starting point for expansion
+   * @return Expansion object
    */
-  iterator(startTime) {
+  iterator(startTime: Time): RecurExpansion {
     return new RecurExpansion({
       component: this.component,
       dtstart: startTime || this.startDate
@@ -287,10 +299,10 @@ export class Event {
   /**
    * Checks if the event is recurring
    *
-   * @return {Boolean}        True, if event is recurring
+   * @return True, if event is recurring
    */
-  isRecurring() {
-    let comp = this.component;
+  isRecurring(): boolean {
+    const comp = this.component;
     return comp.hasProperty('rrule') || comp.hasProperty('rdate');
   }
 
@@ -298,9 +310,9 @@ export class Event {
    * Checks if the event describes a recurrence exception. See
    * {@tutorial terminology} for details.
    *
-   * @return {Boolean}    True, if the event describes a recurrence exception
+   * @return True, if the event describes a recurrence exception
    */
-  isRecurrenceException() {
+  isRecurrenceException(): boolean {
     return this.component.hasProperty('recurrence-id');
   }
 
@@ -316,18 +328,17 @@ export class Event {
    *    - MINUTELY
    *    - SECONDLY
    *
-   * @return {Object.<ICAL.Recur.frequencyValues, Boolean>}
-   *          Object of recurrence flags
+   * @return Object of recurrence flags
    */
-  getRecurrenceTypes() {
-    let rules = this.component.getAllProperties('rrule');
+  getRecurrenceTypes(): Record<FrequencyValue, boolean> {
+    const rules = this.component.getAllProperties('rrule');
     let i = 0;
-    let len = rules.length;
-    let result = Object.create(null);
+    const len = rules.length;
+    const result: Record<FrequencyValue, boolean> = Object.create(null);
 
     for (; i < len; i++) {
-      let value = rules[i].getFirstValue();
-      result[value.freq] = true;
+      const value: Recur = rules[i].getFirstValue();
+      result[value.freq!] = true;
     }
 
     return result;
@@ -335,9 +346,8 @@ export class Event {
 
   /**
    * The uid of this event
-   * @type {String}
    */
-  get uid() {
+  get uid(): string | null {
     return this._firstProp('uid');
   }
 
@@ -347,9 +357,8 @@ export class Event {
 
   /**
    * The start date
-   * @type {ICAL.Time}
    */
-  get startDate() {
+  get startDate(): Time {
     return this._firstProp('dtstart');
   }
 
@@ -361,12 +370,11 @@ export class Event {
    * The end date. This can be the result directly from the property, or the
    * end date calculated from start date and duration. Setting the property
    * will remove any duration properties.
-   * @type {ICAL.Time}
    */
-  get endDate() {
+  get endDate(): Time {
     let endDate = this._firstProp('dtend');
     if (!endDate) {
-      let duration = this._firstProp('duration');
+      const duration = this._firstProp('duration');
       endDate = this.startDate.clone();
       if (duration) {
         endDate.addDuration(duration);
@@ -388,10 +396,10 @@ export class Event {
    * The duration. This can be the result directly from the property, or the
    * duration calculated from start date and end date. Setting the property
    * will remove any `dtend` properties.
-   * @type {ICAL.Duration}
+   * @type {Duration}
    */
   get duration() {
-    let duration = this._firstProp('duration');
+    const duration = this._firstProp('duration');
     if (!duration) {
       return this.endDate.subtractDateTz(this.startDate);
     }
@@ -408,9 +416,8 @@ export class Event {
 
   /**
    * The location of the event.
-   * @type {String}
    */
-  get location() {
+  get location(): string {
     return this._firstProp('location');
   }
 
@@ -420,20 +427,17 @@ export class Event {
 
   /**
    * The attendees in the event
-   * @type {ICAL.Property[]}
-   * @readonly
    */
-  get attendees() {
-    //XXX: This is way lame we should have a better
+  get attendees(): Property[] {
+    // XXX: This is way lame we should have a better
     //     data structure for this later.
     return this.component.getAllProperties('attendee');
   }
 
   /**
    * The event summary
-   * @type {String}
    */
-  get summary() {
+  get summary(): string {
     return this._firstProp('summary');
   }
 
@@ -443,9 +447,8 @@ export class Event {
 
   /**
    * The event description.
-   * @type {String}
    */
-  get description() {
+  get description(): string {
     return this._firstProp('description');
   }
 
@@ -455,9 +458,8 @@ export class Event {
 
   /**
    * The event color from [rfc7986](https://datatracker.ietf.org/doc/html/rfc7986)
-   * @type {String}
    */
-  get color() {
+  get color(): string {
     return this._firstProp('color');
   }
 
@@ -468,10 +470,9 @@ export class Event {
   /**
    * The organizer value as an uri. In most cases this is a mailto: uri, but
    * it can also be something else, like urn:uuid:...
-   * @type {String}
    */
-  get organizer() {
-    return this._firstProp('organizer');
+  get organizer(): string {
+    return this._firstProp('organizer')!;
   }
 
   set organizer(value) {
@@ -481,10 +482,9 @@ export class Event {
   /**
    * The sequence value for this event. Used for scheduling
    * see {@tutorial terminology}.
-   * @type {Number}
    */
-  get sequence() {
-    return this._firstProp('sequence');
+  get sequence(): number {
+    return this._firstProp('sequence')!;
   }
 
   set sequence(value) {
@@ -493,9 +493,8 @@ export class Event {
 
   /**
    * The recurrence id for this event. See {@tutorial terminology} for details.
-   * @type {ICAL.Time}
    */
-  get recurrenceId() {
+  get recurrenceId(): Time {
     return this._firstProp('recurrence-id');
   }
 
@@ -515,10 +514,10 @@ export class Event {
    * We will not add/remove/update the VTIMEZONE subcomponents
    *  leading to invalid ICAL data...
    * @private
-   * @param {String} propName     The property name
-   * @param {ICAL.Time} time      The time to set
+   * @param propName     The property name
+   * @param time      The time to set
    */
-  _setTime(propName, time) {
+  private _setTime(propName: string, time: Time) {
     let prop = this.component.getFirstProperty(propName);
 
     if (!prop) {
@@ -540,24 +539,23 @@ export class Event {
     prop.setValue(time);
   }
 
-  _setProp(name, value) {
+  _setProp(name: string, value) {
     this.component.updatePropertyWithValue(name, value);
   }
 
-  _firstProp(name) {
+  _firstProp(name: string) {
     return this.component.getFirstPropertyValue(name);
   }
 
   /**
    * The string representation of this event.
-   * @return {String}
    */
-  toString() {
+  toString(): string {
     return this.component.toString();
   }
 }
 
-function compareRangeException(a, b) {
+function compareRangeException(a: [number, string?], b: [number, string]) {
   if (a[0] > b[0]) return 1;
   if (b[0] > a[0]) return -1;
   return 0;

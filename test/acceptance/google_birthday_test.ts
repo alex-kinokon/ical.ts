@@ -1,21 +1,21 @@
-import { suite, test, suiteSetup } from 'mocha';
+import { suite, suiteSetup, test } from 'mocha';
 import { assert } from 'chai';
-import { loadSample, ICAL } from '../support/helper';
+import { ICAL, loadSample } from '../support/helper';
 
-suite('google birthday events', function () {
+suite('google birthday events', () => {
   let icsData;
 
-  suiteSetup(async function () {
+  suiteSetup(async () => {
     icsData = await loadSample('google_birthday.ics');
   });
 
-  test('expanding malformatted recurring event', function (done) {
+  test('expanding malformatted recurring event', done => {
     // just verify it can parse forced types
-    let parser = new ICAL.ComponentParser();
+    const parser = new ICAL.ComponentParser();
     let primary;
-    let exceptions = [];
+    const exceptions = [];
 
-    let expectedDates = [
+    const expectedDates = [
       new Date(2012, 11, 10),
       new Date(2013, 11, 10),
       new Date(2014, 11, 10)
@@ -30,13 +30,13 @@ suite('google birthday events', function () {
     };
 
     parser.oncomplete = function () {
-      exceptions.forEach(function (item) {
+      exceptions.forEach(item => {
         primary.relateException(item);
       });
 
-      let iter = primary.iterator();
+      const iter = primary.iterator();
       let next;
-      let dates = [];
+      const dates = [];
       while ((next = iter.next())) {
         dates.push(next.toJSDate());
       }

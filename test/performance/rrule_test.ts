@@ -1,11 +1,11 @@
 import { suite, suiteSetup } from 'mocha';
-import { perfTest, ICAL } from '../support/helper';
+import { ICAL, perfTest } from '../support/helper';
 
-suite('rrule', function () {
+suite('rrule', () => {
   let start;
   let occurrences;
 
-  suiteSetup(function () {
+  suiteSetup(() => {
     start = ICAL.Time.fromString('2015-01-01T12:00:00');
     occurrences = 50;
   });
@@ -45,10 +45,10 @@ suite('rrule', function () {
     // Apple iCal rules
     'FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=3',
     'FREQ=MONTHLY;BYDAY=SA,SU;BYMONTH=11;BYSETPOS=-1'
-  ].forEach(function (rulestring) {
-    perfTest(rulestring, function () {
-      let rrule = ICAL.Recur.fromString(rulestring);
-      let iter = rrule.iterator(start);
+  ].forEach(rulestring => {
+    perfTest(rulestring, () => {
+      const rrule = ICAL.Recur.fromString(rulestring);
+      const iter = rrule.iterator(start);
       for (let i = 0; i < occurrences; i++) {
         iter.next();
       }

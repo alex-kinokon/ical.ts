@@ -1,10 +1,10 @@
-import { suite, setup, test, suiteSetup } from 'mocha';
+import { setup, suite, suiteSetup, test } from 'mocha';
 import { assert } from 'chai';
 import { useTimezones } from './support/helper';
-import { loadSample, ICAL } from './support/helper';
+import { ICAL, loadSample } from './support/helper';
 
-suite('ICAL.Event', function () {
-  let testTzid = 'America/New_York';
+suite('ICAL.Event', () => {
+  const testTzid = 'America/New_York';
   useTimezones(testTzid, 'America/Denver', 'America/Los_Angeles');
 
   let icsDataRecurInstances;
@@ -14,14 +14,14 @@ suite('ICAL.Event', function () {
       nth = 1;
     }
 
-    let iter = subject.iterator();
+    const iter = subject.iterator();
     let last;
 
     while (nth--) {
       last = iter.next();
     }
 
-    let newEvent = new ICAL.Event();
+    const newEvent = new ICAL.Event();
 
     newEvent.uid = subject.uid;
 
@@ -32,23 +32,23 @@ suite('ICAL.Event', function () {
     return newEvent;
   }
 
-  suiteSetup(async function () {
+  suiteSetup(async () => {
     icsDataRecurInstances = await loadSample('recur_instances.ics');
   });
 
-  let exceptions = [];
+  const exceptions = [];
   let subject;
   let primaryItem;
 
-  setup(function () {
+  setup(() => {
     exceptions.length = 0;
 
-    let root = new ICAL.Component(ICAL.parse(icsDataRecurInstances));
+    const root = new ICAL.Component(ICAL.parse(icsDataRecurInstances));
 
-    let events = root.getAllSubcomponents('vevent');
+    const events = root.getAllSubcomponents('vevent');
     ICAL.TimezoneService.register(root.getFirstSubcomponent('vtimezone'));
 
-    events.forEach(function (event) {
+    events.forEach(event => {
       if (!event.hasProperty('recurrence-id')) {
         primaryItem = event;
       } else {
@@ -59,8 +59,8 @@ suite('ICAL.Event', function () {
     subject = new ICAL.Event(primaryItem);
   });
 
-  suite('changing timezones', function () {
-    let dateFields = [
+  suite('changing timezones', () => {
+    const dateFields = [
       ['startDate', 'dtstart'],
       ['endDate', 'dtend']
     ];
@@ -68,7 +68,7 @@ suite('ICAL.Event', function () {
     function verifyTzidHandling(eventProp, icalProp) {
       let time;
       let property;
-      setup(function () {
+      setup(() => {
         property = subject.component.getFirstProperty(icalProp);
 
         assert.ok(property.getParameter('tzid'), 'has tzid');
@@ -76,7 +76,7 @@ suite('ICAL.Event', function () {
         assert.isFalse(property.getParameter('tzid') === testTzid);
       });
 
-      test('to floating time', function () {
+      test('to floating time', () => {
         subject[eventProp] = time = new ICAL.Time({
           year: 2012,
           month: 1,
@@ -90,7 +90,7 @@ suite('ICAL.Event', function () {
         assert.include(property.toICALString(), time.toICALString());
       });
 
-      test('to utc time', function () {
+      test('to utc time', () => {
         subject[eventProp] = time = new ICAL.Time({
           year: 2013,
           month: 1,
@@ -105,7 +105,7 @@ suite('ICAL.Event', function () {
         assert.include(property.toICALString(), time.toICALString());
       });
 
-      test('to another timezone', function () {
+      test('to another timezone', () => {
         subject[eventProp] = time = new ICAL.Time({
           year: 2013,
           month: 1,
@@ -120,7 +120,7 @@ suite('ICAL.Event', function () {
         assert.include(property.toICALString(), time.toICALString());
       });
 
-      test('type date-time -> date', function () {
+      test('type date-time -> date', () => {
         // ensure we are in the right time type
         property.resetType('date-time');
 
@@ -136,7 +136,7 @@ suite('ICAL.Event', function () {
         assert.include(property.toICALString(), time.toICALString());
       });
 
-      test('type date -> date-time', function () {
+      test('type date -> date-time', () => {
         // ensure we are in the right time type
         property.resetType('date');
 
@@ -159,17 +159,17 @@ suite('ICAL.Event', function () {
     });
   });
 
-  suite('initializer', function () {
-    test('only with component', function () {
+  suite('initializer', () => {
+    test('only with component', () => {
       assert.equal(subject.component, primaryItem);
       assert.instanceOf(subject.rangeExceptions, Array);
     });
 
-    test("with exceptions from the component's parent if not specified in options", function () {
+    test("with exceptions from the component's parent if not specified in options", () => {
       subject = new ICAL.Event(primaryItem);
 
-      let expected = Object.create(null);
-      exceptions.forEach(function (exception) {
+      const expected = Object.create(null);
+      exceptions.forEach(exception => {
         expected[exception.getFirstPropertyValue('recurrence-id').toString()] =
           new ICAL.Event(exception);
       });
@@ -177,13 +177,13 @@ suite('ICAL.Event', function () {
       assert.deepEqual(subject.exceptions, expected);
     });
 
-    test('with exceptions specified in options if any', function () {
+    test('with exceptions specified in options if any', () => {
       subject = new ICAL.Event(primaryItem, {
         exceptions: exceptions.slice(1)
       });
 
-      let expected = Object.create(null);
-      exceptions.slice(1).forEach(function (exception) {
+      const expected = Object.create(null);
+      exceptions.slice(1).forEach(exception => {
         expected[exception.getFirstPropertyValue('recurrence-id').toString()] =
           new ICAL.Event(exception);
       });
@@ -191,7 +191,7 @@ suite('ICAL.Event', function () {
       assert.deepEqual(subject.exceptions, expected);
     });
 
-    test('with strict exceptions', function () {
+    test('with strict exceptions', () => {
       subject = new ICAL.Event(primaryItem, {
         strictExceptions: true
       });
@@ -199,20 +199,20 @@ suite('ICAL.Event', function () {
     });
   });
 
-  suite('creating a event', function () {
-    setup(function () {
+  suite('creating a event', () => {
+    setup(() => {
       subject = new ICAL.Event();
     });
 
-    test('initial state', function () {
+    test('initial state', () => {
       assert.instanceOf(subject.component, ICAL.Component);
       assert.equal(subject.component.name, 'vevent');
     });
 
-    suite('roundtrip', function () {
+    suite('roundtrip', () => {
       let props;
 
-      suiteSetup(function () {
+      suiteSetup(() => {
         props = {
           uid: 'zfoo',
           summary: 'sum',
@@ -239,34 +239,34 @@ suite('ICAL.Event', function () {
         };
       });
 
-      test('setters', function () {
-        for (let key in props) {
+      test('setters', () => {
+        for (const key in props) {
           subject[key] = props[key];
           assert.equal(subject[key], props[key], key);
         }
       });
 
-      test('to string roundtrip', function () {
-        let aComp = new ICAL.Component(ICAL.parse(icsDataRecurInstances));
-        let aEvent = new ICAL.Event(aComp);
+      test('to string roundtrip', () => {
+        const aComp = new ICAL.Component(ICAL.parse(icsDataRecurInstances));
+        const aEvent = new ICAL.Event(aComp);
 
-        let bComp = new ICAL.Component(ICAL.parse(aComp.toString()));
+        const bComp = new ICAL.Component(ICAL.parse(aComp.toString()));
 
-        let bEvent = new ICAL.Event(bComp);
+        const bEvent = new ICAL.Event(bComp);
         assert.equal(aEvent.toString(), bEvent.toString());
       });
     });
   });
 
-  suite('#getOccurrenceDetails', function () {
-    setup(function () {
+  suite('#getOccurrenceDetails', () => {
+    setup(() => {
       exceptions.forEach(subject.relateException, subject);
     });
 
-    suite('RANGE=THISANDFUTURE', function () {
-      test('starts earlier ends later', function () {
-        let exception = rangeException(1);
-        let rid = exception.recurrenceId;
+    suite('RANGE=THISANDFUTURE', () => {
+      test('starts earlier ends later', () => {
+        const exception = rangeException(1);
+        const rid = exception.recurrenceId;
 
         exception.startDate = rid.clone();
         exception.endDate = rid.clone();
@@ -283,7 +283,7 @@ suite('ICAL.Event', function () {
 
         // create a time that has no exception
         // but past the RID.
-        let occurs = rid.clone();
+        const occurs = rid.clone();
         occurs.day += 3;
         occurs.hour = 13;
         occurs.minutes = 15;
@@ -291,14 +291,14 @@ suite('ICAL.Event', function () {
         // Run the following tests twice, the second time around the results
         // will be cached.
         for (let i = 0; i < 2; i++) {
-          let suffix = i == 1 ? ' (cached)' : '';
-          let details = subject.getOccurrenceDetails(occurs);
+          const suffix = i == 1 ? ' (cached)' : '';
+          const details = subject.getOccurrenceDetails(occurs);
 
           assert.ok(details, 'has details' + suffix);
           assert.equal(details.item, exception, 'uses exception' + suffix);
 
-          let expectedStart = occurs.clone();
-          let expectedEnd = occurs.clone();
+          const expectedStart = occurs.clone();
+          const expectedEnd = occurs.clone();
 
           // same offset (in different day) as the difference
           // in the original exception.d
@@ -322,13 +322,13 @@ suite('ICAL.Event', function () {
       });
     });
 
-    test('exception', function () {
-      let time = exceptions[0].getFirstPropertyValue('recurrence-id');
+    test('exception', () => {
+      const time = exceptions[0].getFirstPropertyValue('recurrence-id');
 
-      let start = exceptions[0].getFirstPropertyValue('dtstart');
-      let end = exceptions[0].getFirstPropertyValue('dtend');
+      const start = exceptions[0].getFirstPropertyValue('dtstart');
+      const end = exceptions[0].getFirstPropertyValue('dtend');
 
-      let result = subject.getOccurrenceDetails(time);
+      const result = subject.getOccurrenceDetails(time);
 
       assert.equal(
         result.recurrenceId.toString(),
@@ -347,17 +347,17 @@ suite('ICAL.Event', function () {
       );
     });
 
-    test('non-exception', function () {
-      let time = new ICAL.Time({
+    test('non-exception', () => {
+      const time = new ICAL.Time({
         year: 2012,
         month: 7,
         day: 12
       });
 
-      let end = time.clone();
+      const end = time.clone();
       end.addDuration(subject.duration);
 
-      let result = subject.getOccurrenceDetails(time);
+      const result = subject.getOccurrenceDetails(time);
 
       assert.equal(result.startDate.toString(), time.toString(), 'start date');
 
@@ -368,14 +368,14 @@ suite('ICAL.Event', function () {
       assert.equal(result.item, subject);
     });
 
-    test('iterate over exceptions', function () {
+    test('iterate over exceptions', () => {
       for (
         let counter = 0, iterator = subject.iterator();
         counter < 2;
         counter++
       ) {
-        let result = subject.getOccurrenceDetails(iterator.next());
-        let exception = exceptions[counter];
+        const result = subject.getOccurrenceDetails(iterator.next());
+        const exception = exceptions[counter];
 
         assert.equal(
           result.endDate.toString(),
@@ -398,19 +398,19 @@ suite('ICAL.Event', function () {
     });
   });
 
-  suite('#recurrenceTypes', function () {
-    suite('multiple rrules', function () {
+  suite('#recurrenceTypes', () => {
+    suite('multiple rrules', () => {
       let icsData;
 
-      suiteSetup(async function () {
+      suiteSetup(async () => {
         icsData = await loadSample('multiple_rrules.ics');
       });
 
-      test('result', function () {
-        let comp = new ICAL.Component(ICAL.parse(icsData));
+      test('result', () => {
+        const comp = new ICAL.Component(ICAL.parse(icsData));
         subject = new ICAL.Event(comp.getFirstSubcomponent('vevent'));
 
-        let expected = {
+        const expected = {
           MONTHLY: true,
           WEEKLY: true
         };
@@ -419,47 +419,47 @@ suite('ICAL.Event', function () {
       });
     });
 
-    test('no rrule', function () {
+    test('no rrule', () => {
       subject.component.removeProperty('rrule');
 
       assert.deepEqual(subject.getRecurrenceTypes(), {});
     });
   });
 
-  suite('#relateException', function () {
-    test('trying to relate an exception to an exception', function () {
-      let exception = new ICAL.Event(exceptions[0]);
+  suite('#relateException', () => {
+    test('trying to relate an exception to an exception', () => {
+      const exception = new ICAL.Event(exceptions[0]);
 
-      assert.throws(function () {
+      assert.throws(() => {
         exception.relateException(exceptions[1]);
       });
     });
 
-    test('trying to relate unrelated component (without strict)', function () {
-      let exception = exceptions[0];
-      let prop = exception.getFirstProperty('uid');
+    test('trying to relate unrelated component (without strict)', () => {
+      const exception = exceptions[0];
+      const prop = exception.getFirstProperty('uid');
       prop.setValue('foo');
 
       subject.relateException(exception);
     });
 
-    test('trying to relate unrelated component (with strict)', function () {
-      let exception = exceptions[0];
-      let prop = exception.getFirstProperty('uid');
+    test('trying to relate unrelated component (with strict)', () => {
+      const exception = exceptions[0];
+      const prop = exception.getFirstProperty('uid');
       prop.setValue('foo');
 
       subject.strictExceptions = true;
-      assert.throws(function () {
+      assert.throws(() => {
         subject.relateException(exception);
       }, /unrelated/);
     });
 
-    test('from ical component', function () {
+    test('from ical component', () => {
       subject = new ICAL.Event(primaryItem, { exceptions: [] });
-      let exception = exceptions[0];
+      const exception = exceptions[0];
       subject.relateException(exception);
 
-      let expected = Object.create(null);
+      const expected = Object.create(null);
       expected[exception.getFirstPropertyValue('recurrence-id').toString()] =
         new ICAL.Event(exception);
 
@@ -467,13 +467,13 @@ suite('ICAL.Event', function () {
       assert.lengthOf(subject.rangeExceptions, 0, 'does not add range');
     });
 
-    suite('with RANGE=THISANDFUTURE', function () {
+    suite('with RANGE=THISANDFUTURE', () => {
       function exceptionTime(index, mod) {
         mod = mod || 0;
 
-        let item = subject.rangeExceptions[index];
-        let utc = item[0];
-        let time = new ICAL.Time();
+        const item = subject.rangeExceptions[index];
+        const utc = item[0];
+        const time = new ICAL.Time();
         time.fromUnixTime(utc + mod);
 
         return time;
@@ -481,7 +481,7 @@ suite('ICAL.Event', function () {
 
       let list;
 
-      setup(function () {
+      setup(() => {
         list = [rangeException(3), rangeException(10), rangeException(1)];
 
         list.forEach(subject.relateException.bind(subject));
@@ -496,8 +496,8 @@ suite('ICAL.Event', function () {
         return [obj.recurrenceId.toUnixTime(), obj.recurrenceId.toString()];
       }
 
-      test('ranges', function () {
-        let expected = [
+      test('ranges', () => {
+        const expected = [
           listDetails(list[2]), // 1st
           listDetails(list[0]), // 2nd
           listDetails(list[1]) // 3rd
@@ -506,12 +506,12 @@ suite('ICAL.Event', function () {
         assert.deepEqual(subject.rangeExceptions, expected);
       });
 
-      test('#findRangeException', function () {
-        let before = exceptionTime(0, -1);
-        let on = exceptionTime(0);
-        let first = exceptionTime(0, 1);
-        let second = exceptionTime(1, 30);
-        let third = exceptionTime(2, 100000);
+      test('#findRangeException', () => {
+        const before = exceptionTime(0, -1);
+        const on = exceptionTime(0);
+        const first = exceptionTime(0, 1);
+        const second = exceptionTime(1, 30);
+        const third = exceptionTime(2, 100000);
 
         assert.ok(!subject.findRangeException(before), 'find before range');
 
@@ -541,24 +541,24 @@ suite('ICAL.Event', function () {
     });
   });
 
-  suite('#isRecurring', function () {
-    test('when is primary recurring item', function () {
+  suite('#isRecurring', () => {
+    test('when is primary recurring item', () => {
       assert.isTrue(subject.isRecurring());
     });
 
-    test('when is exception', function () {
+    test('when is exception', () => {
       subject = new ICAL.Event(exceptions[0]);
       assert.isFalse(subject.isRecurring());
     });
   });
 
-  suite('#modifiesFuture', function () {
-    test('without range or exception', function () {
+  suite('#modifiesFuture', () => {
+    test('without range or exception', () => {
       assert.isFalse(subject.isRecurrenceException());
       assert.isFalse(subject.modifiesFuture());
     });
 
-    test('with range and exception', function () {
+    test('with range and exception', () => {
       subject.component
         .addPropertyWithValue('recurrence-id', ICAL.Time.fromJSDate(new Date()))
         .setParameter('range', ICAL.Event.THISANDFUTURE);
@@ -567,36 +567,36 @@ suite('ICAL.Event', function () {
     });
   });
 
-  suite('#isRecurrenceException', function () {
-    test('when is primary recurring item', function () {
+  suite('#isRecurrenceException', () => {
+    test('when is primary recurring item', () => {
       assert.isFalse(subject.isRecurrenceException());
     });
 
-    test('when is exception', function () {
+    test('when is exception', () => {
       subject = new ICAL.Event(exceptions[0]);
       assert.isTrue(subject.isRecurrenceException());
     });
   });
 
-  suite('date props', function () {
+  suite('date props', () => {
     [
       ['dtstart', 'startDate'],
       ['dtend', 'endDate']
-    ].forEach(function (dateType) {
-      let ical = dateType[0];
-      let prop = dateType[1];
+    ].forEach(dateType => {
+      const ical = dateType[0];
+      const prop = dateType[1];
       let timeProp;
       let changeTime;
 
-      suite('#' + prop, function () {
-        let tzid = 'America/Denver';
+      suite('#' + prop, () => {
+        const tzid = 'America/Denver';
 
-        setup(function () {
+        setup(() => {
           timeProp = primaryItem.getFirstProperty(ical);
         });
 
-        test('get', function () {
-          let expected = timeProp.getFirstValue(ical);
+        test('get', () => {
+          const expected = timeProp.getFirstValue(ical);
           assert.deepEqual(expected, subject[prop]);
         });
 
@@ -615,7 +615,7 @@ suite('ICAL.Event', function () {
           );
         }
 
-        test('changing timezone from America/Los_Angeles', function () {
+        test('changing timezone from America/Los_Angeles', () => {
           changeTime = new ICAL.Time({
             year: 2012,
             month: 1,
@@ -625,7 +625,7 @@ suite('ICAL.Event', function () {
           changesTzid(tzid);
         });
 
-        test('changing timezone from floating to UTC', function () {
+        test('changing timezone from floating to UTC', () => {
           timeProp.setValue(
             new ICAL.Time({
               year: 2012,
@@ -642,7 +642,7 @@ suite('ICAL.Event', function () {
           changesTzid(undefined);
         });
 
-        test('changing timezone to floating', function () {
+        test('changing timezone to floating', () => {
           timeProp.setValue(
             new ICAL.Time({
               year: 2012,
@@ -662,10 +662,10 @@ suite('ICAL.Event', function () {
     });
   });
 
-  suite('remaining properties', function () {
+  suite('remaining properties', () => {
     function testProperty(prop, changeval) {
-      test('#' + prop, function () {
-        let expected = primaryItem.getFirstPropertyValue(prop);
+      test('#' + prop, () => {
+        const expected = primaryItem.getFirstPropertyValue(prop);
         assert.deepEqual(subject[prop], expected);
 
         subject[prop] = changeval;
@@ -681,23 +681,23 @@ suite('ICAL.Event', function () {
     testProperty('sequence', 123);
     testProperty('color', 'turquoise');
 
-    test('#duration', function () {
-      let end = subject.endDate;
-      let start = subject.startDate;
-      let duration = end.subtractDate(start);
+    test('#duration', () => {
+      const end = subject.endDate;
+      const start = subject.startDate;
+      const duration = end.subtractDate(start);
 
       assert.deepEqual(subject.duration.toString(), duration.toString());
     });
 
-    test('#attendees', function () {
-      let props = primaryItem.getAllProperties('attendee');
+    test('#attendees', () => {
+      const props = primaryItem.getAllProperties('attendee');
       assert.deepEqual(subject.attendees, props);
     });
 
-    test('#recurrenceId', function () {
+    test('#recurrenceId', () => {
       subject = new ICAL.Event(exceptions[0]);
-      let expected = exceptions[0].getFirstPropertyValue('recurrence-id');
-      let changeval = exceptions[1].getFirstPropertyValue('recurrence-id');
+      const expected = exceptions[0].getFirstPropertyValue('recurrence-id');
+      const changeval = exceptions[1].getFirstPropertyValue('recurrence-id');
       assert.deepEqual(subject.recurrenceId, expected);
 
       subject.recurrenceId = changeval;
@@ -706,8 +706,8 @@ suite('ICAL.Event', function () {
         changeval
       );
 
-      let tzid = 'America/New_York';
-      let changeval2 = new ICAL.Time({
+      const tzid = 'America/New_York';
+      const changeval2 = new ICAL.Time({
         year: 2012,
         month: 1,
         day: 1,
@@ -727,35 +727,35 @@ suite('ICAL.Event', function () {
     });
   });
 
-  suite('#iterator', function () {
-    test('with start time', function () {
-      let start = subject.startDate;
-      let time = new ICAL.Time({
+  suite('#iterator', () => {
+    test('with start time', () => {
+      const start = subject.startDate;
+      const time = new ICAL.Time({
         day: start.da + 1,
         month: start.month,
         year: start.year
       });
 
-      let iterator = subject.iterator(time);
+      const iterator = subject.iterator(time);
       assert.deepEqual(iterator.last.toString(), time.toString());
       assert.instanceOf(iterator, ICAL.RecurExpansion);
     });
 
-    test('without a start time', function () {
-      let iterator = subject.iterator();
+    test('without a start time', () => {
+      const iterator = subject.iterator();
 
       assert.equal(iterator.last.toString(), subject.startDate.toString());
     });
   });
 
-  suite('duration instead of dtend', function () {
+  suite('duration instead of dtend', () => {
     let icsData;
 
-    suiteSetup(async function () {
+    suiteSetup(async () => {
       icsData = await loadSample('duration_instead_of_dtend.ics');
     });
 
-    test('result', function () {
+    test('result', () => {
       subject = new ICAL.Component(ICAL.parse(icsData));
       subject = new ICAL.Event(subject.getFirstSubcomponent('vevent'));
       assert.equal(
@@ -785,8 +785,8 @@ suite('ICAL.Event', function () {
       assert.equal(subject.duration.toString(), 'P1D');
     });
 
-    test('set', function () {
-      let comp = new ICAL.Component(ICAL.parse(icsData));
+    test('set', () => {
+      const comp = new ICAL.Component(ICAL.parse(icsData));
       subject = new ICAL.Event(comp.getFirstSubcomponent('vevent'));
 
       assert.include(subject.toString(), 'DURATION');
@@ -819,15 +819,15 @@ suite('ICAL.Event', function () {
     });
   });
 
-  suite('only a dtstart date', function () {
+  suite('only a dtstart date', () => {
     let icsData;
 
-    suiteSetup(async function () {
+    suiteSetup(async () => {
       icsData = await loadSample('only_dtstart_date.ics');
     });
 
-    test('result', function () {
-      let comp = new ICAL.Component(ICAL.parse(icsData));
+    test('result', () => {
+      const comp = new ICAL.Component(ICAL.parse(icsData));
       subject = new ICAL.Event(comp.getFirstSubcomponent('vevent'));
       assert.equal(
         subject.startDate.toString(),
@@ -857,15 +857,15 @@ suite('ICAL.Event', function () {
     });
   });
 
-  suite('only a dtstart time', function () {
+  suite('only a dtstart time', () => {
     let icsData;
 
-    suiteSetup(async function () {
+    suiteSetup(async () => {
       icsData = await loadSample('only_dtstart_time.ics');
     });
 
-    test('result', function () {
-      let comp = new ICAL.Component(ICAL.parse(icsData));
+    test('result', () => {
+      const comp = new ICAL.Component(ICAL.parse(icsData));
       subject = new ICAL.Event(comp.getFirstSubcomponent('vevent'));
       assert.equal(
         subject.startDate.toString(),
@@ -895,14 +895,14 @@ suite('ICAL.Event', function () {
     });
   });
 
-  suite('dtend instead of duration', function () {
+  suite('dtend instead of duration', () => {
     let icsData;
 
-    suiteSetup(async function () {
+    suiteSetup(async () => {
       icsData = await loadSample('minimal.ics');
     });
 
-    test('result with different timezones', function () {
+    test('result with different timezones', () => {
       subject = new ICAL.Component(ICAL.parse(icsData)).getFirstSubcomponent(
         'vevent'
       );
@@ -958,8 +958,8 @@ suite('ICAL.Event', function () {
       assert.equal(subject.duration.toString(), 'PT5H30M');
     });
 
-    test('set', function () {
-      let comp = new ICAL.Component(ICAL.parse(icsData));
+    test('set', () => {
+      const comp = new ICAL.Component(ICAL.parse(icsData));
       subject = new ICAL.Event(comp.getFirstSubcomponent('vevent'));
 
       assert.notInclude(subject.toString(), 'DURATION');

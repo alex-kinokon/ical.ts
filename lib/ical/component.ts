@@ -4,8 +4,10 @@
  * Portions Copyright (C) Philipp Kewisch */
 
 import { Property } from './property';
+import { Timezone } from './timezone';
 import { parse } from './parse';
 import { stringify } from './stringify';
+import type { DesignSet } from './design';
 import { design } from './design';
 
 const NAME_INDEX = 0;
@@ -15,28 +17,29 @@ const COMPONENT_INDEX = 2;
 /**
  * Wraps a jCal component, adding convenience methods to add, remove and update subcomponents and
  * properties.
- *
- * @class
- * @alias ICAL.Component
  */
 export class Component {
+  private jCal: any[];
+  parent: Component | null;
+  private _components?: Component[];
+  private _properties?: Property[];
+
   /**
-   * Create an {@link ICAL.Component} by parsing the passed iCalendar string.
+   * Create an {@link Component} by parsing the passed iCalendar string.
    *
-   * @param {String} str        The iCalendar string to parse
+   * @param str The iCalendar string to parse
    */
-  static fromString(str) {
+  static fromString(str: string): Component {
     return new Component(parse.component(str));
   }
 
   /**
    * Creates a new ICAL.Component instance.
    *
-   * @param {Array|String} jCal         Raw jCal component data OR name of new
-   *                                      component
-   * @param {ICAL.Component} parent     Parent component to associate
+   * @param jCal Raw jCal component data OR name of new
+   * @param parent Parent component to associate
    */
-  constructor(jCal, parent?) {
+  constructor(jCal: any[] | string, parent?: Component) {
     if (typeof jCal === 'string') {
       // jCal spec (name, properties, components)
       jCal = [jCal, [], []];
@@ -46,6 +49,10 @@ export class Component {
     this.jCal = jCal;
 
     this.parent = parent || null;
+
+    if (!this.parent && this.name === 'vcalendar') {
+      this._timezoneCache = new Map();
+    }
   }
 
   /**
@@ -54,23 +61,22 @@ export class Component {
    * undefined values for unhydrdated properties. To avoid iterating the
    * array when checking if all properties have been hydrated, we save the
    * count here.
-   *
-   * @type {Number}
-   * @private
    */
-  _hydratedPropertyCount = 0;
+  private _hydratedPropertyCount = 0;
 
   /**
    * The same count as for _hydratedPropertyCount, but for subcomponents
-   *
-   * @type {Number}
-   * @private
    */
-  _hydratedComponentCount = 0;
+  private _hydratedComponentCount = 0;
+
+  /**
+   * A cache of hydrated time zone objects which may be used by consumers, keyed
+   * by time zone ID.
+   */
+  private _timezoneCache: Map<string, Timezone> | null = null;
 
   /**
    * The name of this component
-   * @readonly
    */
   get name() {
     return this.jCal[NAME_INDEX];
@@ -78,16 +84,14 @@ export class Component {
 
   /**
    * The design set for this component, e.g. icalendar vs vcard
-   *
-   * @type {ICAL.design.designSet}
-   * @private
+   * @internal
    */
-  get _designSet() {
-    let parentDesign = this.parent && this.parent._designSet;
+  get _designSet(): DesignSet {
+    const parentDesign = this.parent && this.parent._designSet;
     return parentDesign || design.getDesignSet(this.name);
   }
 
-  _hydrateComponent(index) {
+  private _hydrateComponent(index: number) {
     if (!this._components) {
       this._components = [];
       this._hydratedComponentCount = 0;
@@ -97,13 +101,13 @@ export class Component {
       return this._components[index];
     }
 
-    let comp = new Component(this.jCal[COMPONENT_INDEX][index], this);
+    const comp = new Component(this.jCal[COMPONENT_INDEX][index], this);
 
     this._hydratedComponentCount++;
     return (this._components[index] = comp);
   }
 
-  _hydrateProperty(index) {
+  private _hydrateProperty(index: number) {
     if (!this._properties) {
       this._properties = [];
       this._hydratedPropertyCount = 0;
@@ -113,7 +117,7 @@ export class Component {
       return this._properties[index];
     }
 
-    let prop = new Property(this.jCal[PROPERTY_INDEX][index], this);
+    const prop = new Property(this.jCal[PROPERTY_INDEX][index], this);
 
     this._hydratedPropertyCount++;
     return (this._properties[index] = prop);
@@ -122,25 +126,23 @@ export class Component {
   /**
    * Finds first sub component, optionally filtered by name.
    *
-   * @param {String=} name        Optional name to filter by
-   * @return {?ICAL.Component}     The found subcomponent
+   * @param name Optional name to filter by
+   * @return The found subcomponent
    */
-  getFirstSubcomponent(name) {
+  getFirstSubcomponent(name?: string): Component | null {
     if (name) {
       let i = 0;
-      let comps = this.jCal[COMPONENT_INDEX];
-      let len = comps.length;
+      const comps = this.jCal[COMPONENT_INDEX];
+      const len = comps.length;
 
       for (; i < len; i++) {
         if (comps[i][NAME_INDEX] === name) {
-          let result = this._hydrateComponent(i);
+          const result = this._hydrateComponent(i);
           return result;
         }
       }
-    } else {
-      if (this.jCal[COMPONENT_INDEX].length) {
-        return this._hydrateComponent(0);
-      }
+    } else if (this.jCal[COMPONENT_INDEX].length) {
+      return this._hydrateComponent(0);
     }
 
     // ensure we return a value (strict mode)
@@ -150,16 +152,16 @@ export class Component {
   /**
    * Finds all sub components, optionally filtering by name.
    *
-   * @param {String=} name            Optional name to filter by
-   * @return {ICAL.Component[]}       The found sub components
+   * @param name Optional name to filter by
+   * @return The found sub components
    */
-  getAllSubcomponents(name) {
-    let jCalLen = this.jCal[COMPONENT_INDEX].length;
+  getAllSubcomponents(name?: string): Component[] {
+    const jCalLen = this.jCal[COMPONENT_INDEX].length;
     let i = 0;
 
     if (name) {
-      let comps = this.jCal[COMPONENT_INDEX];
-      let result = [];
+      const comps = this.jCal[COMPONENT_INDEX];
+      const result = [];
 
       for (; i < jCalLen; i++) {
         if (name === comps[i][NAME_INDEX]) {
@@ -181,12 +183,12 @@ export class Component {
   /**
    * Returns true when a named property exists.
    *
-   * @param {String} name     The property name
-   * @return {Boolean}        True, when property is found
+   * @param name The property name
+   * @return True, when property is found
    */
-  hasProperty(name) {
-    let props = this.jCal[PROPERTY_INDEX];
-    let len = props.length;
+  hasProperty(name: string): boolean {
+    const props = this.jCal[PROPERTY_INDEX];
+    const len = props.length;
 
     let i = 0;
     for (; i < len; i++) {
@@ -202,25 +204,23 @@ export class Component {
   /**
    * Finds the first property, optionally with the given name.
    *
-   * @param {String=} name        Lowercase property name
-   * @return {?ICAL.Property}     The found property
+   * @param name Lowercase property name
+   * @return The found property
    */
-  getFirstProperty(name) {
+  getFirstProperty(name?: string): Property | null {
     if (name) {
       let i = 0;
-      let props = this.jCal[PROPERTY_INDEX];
-      let len = props.length;
+      const props = this.jCal[PROPERTY_INDEX];
+      const len = props.length;
 
       for (; i < len; i++) {
         if (props[i][NAME_INDEX] === name) {
-          let result = this._hydrateProperty(i);
+          const result = this._hydrateProperty(i);
           return result;
         }
       }
-    } else {
-      if (this.jCal[PROPERTY_INDEX].length) {
-        return this._hydrateProperty(0);
-      }
+    } else if (this.jCal[PROPERTY_INDEX].length) {
+      return this._hydrateProperty(0);
     }
 
     return null;
@@ -229,11 +229,11 @@ export class Component {
   /**
    * Returns first property's value, if available.
    *
-   * @param {String=} name    Lowercase property name
-   * @return {?String}        The found property value.
+   * @param name Lowercase property name
+   * @return The found property value.
    */
-  getFirstPropertyValue(name) {
-    let prop = this.getFirstProperty(name);
+  getFirstPropertyValue(name?: string): any | null {
+    const prop = this.getFirstProperty(name);
     if (prop) {
       return prop.getFirstValue();
     }
@@ -244,16 +244,16 @@ export class Component {
   /**
    * Get all properties in the component, optionally filtered by name.
    *
-   * @param {String=} name        Lowercase property name
-   * @return {ICAL.Property[]}    List of properties
+   * @param name Lowercase property name
+   * @return List of properties
    */
-  getAllProperties(name) {
-    let jCalLen = this.jCal[PROPERTY_INDEX].length;
+  getAllProperties(name?: string): Property[] {
+    const jCalLen = this.jCal[PROPERTY_INDEX].length;
     let i = 0;
 
     if (name) {
-      let props = this.jCal[PROPERTY_INDEX];
-      let result = [];
+      const props = this.jCal[PROPERTY_INDEX];
+      const result = [];
 
       for (; i < jCalLen; i++) {
         if (name === props[i][NAME_INDEX]) {
@@ -272,11 +272,11 @@ export class Component {
     }
   }
 
-  _removeObjectByIndex(jCalIndex, cache, index) {
+  private _removeObjectByIndex(jCalIndex: number, cache, index) {
     cache = cache || [];
     // remove cached version
     if (cache[index]) {
-      let obj = cache[index];
+      const obj = cache[index];
       if ('parent' in obj) {
         obj.parent = null;
       }
@@ -288,11 +288,11 @@ export class Component {
     this.jCal[jCalIndex].splice(index, 1);
   }
 
-  _removeObject(jCalIndex, cache, nameOrObject) {
+  private _removeObject(jCalIndex: number, cache, nameOrObject) {
     let i = 0;
-    let objects = this.jCal[jCalIndex];
-    let len = objects.length;
-    let cached = this[cache];
+    const objects = this.jCal[jCalIndex];
+    const len = objects.length;
+    const cached = this[cache];
 
     if (typeof nameOrObject === 'string') {
       for (; i < len; i++) {
@@ -313,12 +313,12 @@ export class Component {
     return false;
   }
 
-  _removeAllObjects(jCalIndex, cache, name) {
-    let cached = this[cache];
+  _removeAllObjects(jCalIndex: number, cache: string, name?: string) {
+    const cached = this[cache];
 
     // Unfortunately we have to run through all children to reset their
     // parent property.
-    let objects = this.jCal[jCalIndex];
+    const objects = this.jCal[jCalIndex];
     let i = objects.length - 1;
 
     // descending search required because splice
@@ -333,10 +333,10 @@ export class Component {
   /**
    * Adds a single sub component.
    *
-   * @param {ICAL.Component} component        The component to add
-   * @return {ICAL.Component}                 The passed in component
+   * @param component The component to add
+   * @return The passed in component
    */
-  addSubcomponent(component) {
+  addSubcomponent(component: Component): Component {
     if (!this._components) {
       this._components = [];
       this._hydratedComponentCount = 0;
@@ -346,7 +346,7 @@ export class Component {
       component.parent.removeSubcomponent(component);
     }
 
-    let idx = this.jCal[COMPONENT_INDEX].push(component.jCal);
+    const idx = this.jCal[COMPONENT_INDEX].push(component.jCal);
     this._components[idx - 1] = component;
     this._hydratedComponentCount++;
     component.parent = this;
@@ -357,11 +357,11 @@ export class Component {
    * Removes a single component by name or the instance of a specific
    * component.
    *
-   * @param {ICAL.Component|String} nameOrComp    Name of component, or component
-   * @return {Boolean}                            True when comp is removed
+   * @param nameOrComp Name of component, or component
+   * @return True when comp is removed
    */
-  removeSubcomponent(nameOrComp) {
-    let removed = this._removeObject(
+  removeSubcomponent(nameOrComp: Component | string): boolean {
+    const removed = this._removeObject(
       COMPONENT_INDEX,
       '_components',
       nameOrComp
@@ -376,21 +376,25 @@ export class Component {
    * Removes all components or (if given) all components by a particular
    * name.
    *
-   * @param {String=} name            Lowercase component name
+   * @param name Lowercase component name
    */
-  removeAllSubcomponents(name) {
-    let removed = this._removeAllObjects(COMPONENT_INDEX, '_components', name);
+  removeAllSubcomponents(name?: string) {
+    const removed = this._removeAllObjects(
+      COMPONENT_INDEX,
+      '_components',
+      name
+    );
     this._hydratedComponentCount = 0;
     return removed;
   }
 
   /**
-   * Adds an {@link ICAL.Property} to the component.
+   * Adds an {@link Property} to the component.
    *
-   * @param {ICAL.Property} property      The property to add
-   * @return {ICAL.Property}              The passed in property
+   * @param property The property to add
+   * @return The passed in property
    */
-  addProperty(property) {
+  addProperty(property: Property): Property {
     if (!(property instanceof Property)) {
       throw new TypeError('must be instance of ICAL.Property');
     }
@@ -404,7 +408,7 @@ export class Component {
       property.parent.removeProperty(property);
     }
 
-    let idx = this.jCal[PROPERTY_INDEX].push(property.jCal);
+    const idx = this.jCal[PROPERTY_INDEX].push(property.jCal);
     this._properties[idx - 1] = property;
     this._hydratedPropertyCount++;
     property.parent = this;
@@ -414,12 +418,15 @@ export class Component {
   /**
    * Helper method to add a property with a value to the component.
    *
-   * @param {String}               name         Property name to add
-   * @param {String|Number|Object} value        Property value
-   * @return {ICAL.Property}                    The created property
+   * @param name Property name to add
+   * @param value Property value
+   * @return The created property
    */
-  addPropertyWithValue(name, value) {
-    let prop = new Property(name);
+  addPropertyWithValue(
+    name: string,
+    value: string | number | object
+  ): Property {
+    const prop = new Property(name);
     prop.setValue(value);
 
     this.addProperty(prop);
@@ -432,11 +439,14 @@ export class Component {
    * and sets its value. If multiple properties with the given name exist,
    * only the first is updated.
    *
-   * @param {String}               name         Property name to update
-   * @param {String|Number|Object} value        Property value
-   * @return {ICAL.Property}                    The created property
+   * @param name Property name to update
+   * @param value Property value
+   * @return The created property
    */
-  updatePropertyWithValue(name, value) {
+  updatePropertyWithValue(
+    name: string,
+    value: string | number | object
+  ): Property {
     let prop = this.getFirstProperty(name);
 
     if (prop) {
@@ -452,11 +462,15 @@ export class Component {
    * Removes a single property by name or the instance of the specific
    * property.
    *
-   * @param {String|ICAL.Property} nameOrProp     Property name or instance to remove
-   * @return {Boolean}                            True, when deleted
+   * @param nameOrProp     Property name or instance to remove
+   * @return True, when deleted
    */
-  removeProperty(nameOrProp) {
-    let removed = this._removeObject(PROPERTY_INDEX, '_properties', nameOrProp);
+  removeProperty(nameOrProp: string | Property): boolean {
+    const removed = this._removeObject(
+      PROPERTY_INDEX,
+      '_properties',
+      nameOrProp
+    );
     if (removed) {
       this._hydratedPropertyCount--;
     }
@@ -467,11 +481,11 @@ export class Component {
    * Removes all properties associated with this component, optionally
    * filtered by name.
    *
-   * @param {String=} name        Lowercase property name
-   * @return {Boolean}            True, when deleted
+   * @param name Lowercase property name
+   * @return True, when deleted
    */
-  removeAllProperties(name) {
-    let removed = this._removeAllObjects(PROPERTY_INDEX, '_properties', name);
+  removeAllProperties(name?: string): boolean {
+    const removed = this._removeAllObjects(PROPERTY_INDEX, '_properties', name);
     this._hydratedPropertyCount = 0;
     return removed;
   }
@@ -479,17 +493,61 @@ export class Component {
   /**
    * Returns the Object representation of this component. The returned object
    * is a live jCal object and should be cloned if modified.
-   * @return {Object}
    */
-  toJSON() {
+  toJSON(): object {
     return this.jCal;
   }
 
   /**
    * The string representation of this component.
-   * @return {String}
    */
-  toString() {
+  toString(): string {
     return stringify.component(this.jCal, this._designSet);
+  }
+
+  /**
+   * Retrieve a time zone definition from the component tree, if any is present.
+   * If the tree contains no time zone definitions or the TZID cannot be
+   * matched, returns null.
+   *
+   * @param tzid The ID of the time zone to retrieve
+   * @return The time zone corresponding to the ID, or null
+   */
+  getTimeZoneByID(tzid: string): Timezone | null {
+    // VTIMEZONE components can only appear as a child of the VCALENDAR
+    // component; walk the tree if we're not the root.
+    if (this.parent) {
+      return this.parent.getTimeZoneByID(tzid);
+    }
+
+    // If there is no time zone cache, we are probably parsing an incomplete
+    // file and will have no time zone definitions.
+    if (!this._timezoneCache) {
+      return null;
+    }
+
+    if (this._timezoneCache.has(tzid)) {
+      return this._timezoneCache.get(tzid)!;
+    }
+
+    // If the time zone is not already cached, hydrate it from the
+    // subcomponents.
+    const zones = this.getAllSubcomponents('vtimezone');
+    for (const zone of zones) {
+      if (zone.getFirstProperty('tzid')!.getFirstValue() === tzid) {
+        const hydratedZone = new Timezone({
+          component: zone,
+          tzid
+        });
+
+        this._timezoneCache.set(tzid, hydratedZone);
+
+        return hydratedZone;
+      }
+    }
+
+    // Per the standard, we should always have a time zone defined in a file
+    // for any referenced TZID, but don't blow up if the file is invalid.
+    return null;
   }
 }

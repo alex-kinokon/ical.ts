@@ -3,14 +3,15 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import { isStrictlyNaN, extend } from './helpers';
+import { isStrictlyNaN } from './helpers';
 import { UtcOffset } from './utc_offset';
 import { VCardTime } from './vcard_time';
-import { Recur } from './recur';
+import { Recur, RecurData } from './recur';
 import { Period } from './period';
 import { Duration } from './duration';
 import { Time } from './time';
 import { Binary } from './binary';
+import type { Property } from './property';
 
 /** @module ICAL.design */
 
@@ -19,19 +20,20 @@ const TO_ICAL_NEWLINE = /\\|;|,|\n/g;
 const FROM_VCARD_NEWLINE = /\\\\|\\,|\\[Nn]/g;
 const TO_VCARD_NEWLINE = /\\|,|\n/g;
 
-function createTextType(fromNewline, toNewline) {
-  let result = {
+function createTextType(fromNewline: RegExp, toNewline: RegExp) {
+  const result = {
     matches: /.*/,
 
-    fromICAL: function (aValue, structuredEscape) {
+    fromICAL(aValue: string, structuredEscape: string) {
       return replaceNewline(aValue, fromNewline, structuredEscape);
     },
 
-    toICAL: function (aValue, structuredEscape) {
+    toICAL(aValue: string, structuredEscape: string) {
       let regEx = toNewline;
-      if (structuredEscape)
+      if (structuredEscape) {
         regEx = new RegExp(regEx.source + '|' + structuredEscape, regEx.flags);
-      return aValue.replace(regEx, function (str) {
+      }
+      return aValue.replace(regEx, str => {
         switch (str) {
           case '\\':
             return '\\\\';
@@ -49,6 +51,15 @@ function createTextType(fromNewline, toNewline) {
     }
   };
   return result;
+}
+
+interface DesignSetField<Source, Value, Decorated = never> {
+  matches?: RegExp;
+  values?: Source[];
+  fromICAL?(value: Source): Value;
+  toICAL?(value: Value): Source;
+  decorate?(value: Source): Decorated;
+  undecorate?(value: Decorated): Source;
 }
 
 // default types used multiple times
@@ -72,7 +83,7 @@ const DEFAULT_TYPE_DATE_ANDOR_TIME = {
   allowedTypes: ['date-time', 'date', 'text']
 };
 
-function replaceNewlineReplace(string) {
+function replaceNewlineReplace(string: string) {
   switch (string) {
     case '\\\\':
       return '\\';
@@ -89,54 +100,60 @@ function replaceNewlineReplace(string) {
   }
 }
 
-function replaceNewline(value, newline, structuredEscape) {
+function replaceNewline(
+  value: string,
+  newline: RegExp,
+  structuredEscape: string
+) {
   // avoid regex when possible.
-  if (value.indexOf('\\') === -1) {
+  if (!value.includes('\\')) {
     return value;
   }
-  if (structuredEscape)
+  if (structuredEscape) {
     newline = new RegExp(
       newline.source + '|\\\\' + structuredEscape,
       newline.flags
     );
+  }
   return value.replace(newline, replaceNewlineReplace);
 }
 
-let commonProperties = {
+const commonProperties = {
   categories: DEFAULT_TYPE_TEXT_MULTI,
   url: DEFAULT_TYPE_URI,
   version: DEFAULT_TYPE_TEXT,
   uid: DEFAULT_TYPE_TEXT
 };
 
-let commonValues = {
+const commonValues = {
   boolean: {
     values: ['TRUE', 'FALSE'],
 
-    fromICAL: function (aValue) {
+    fromICAL(aValue) {
       switch (aValue) {
         case 'TRUE':
           return true;
         case 'FALSE':
           return false;
         default:
-          //TODO: parser warning
+          // TODO: parser warning
           return false;
       }
     },
 
-    toICAL: function (aValue) {
+    toICAL(aValue) {
       if (aValue) {
         return 'TRUE';
       }
       return 'FALSE';
     }
-  },
+  } satisfies DesignSetField<'TRUE' | 'FALSE', boolean>,
+
   float: {
     matches: /^[+-]?\d+\.\d+$/,
 
-    fromICAL: function (aValue) {
-      let parsed = parseFloat(aValue);
+    fromICAL(aValue) {
+      const parsed = parseFloat(aValue);
       if (isStrictlyNaN(parsed)) {
         // TODO: parser warning
         return 0.0;
@@ -144,25 +161,27 @@ let commonValues = {
       return parsed;
     },
 
-    toICAL: function (aValue) {
+    toICAL(aValue) {
       return String(aValue);
     }
-  },
+  } satisfies DesignSetField<string, number>,
+
   integer: {
-    fromICAL: function (aValue) {
-      let parsed = parseInt(aValue);
+    fromICAL(aValue) {
+      const parsed = parseInt(aValue);
       if (isStrictlyNaN(parsed)) {
         return 0;
       }
       return parsed;
     },
 
-    toICAL: function (aValue) {
+    toICAL(aValue) {
       return String(aValue);
     }
-  },
+  } satisfies DesignSetField<string, number>,
+
   'utc-offset': {
-    toICAL: function (aValue) {
+    toICAL(aValue) {
       if (aValue.length < 7) {
         // no seconds
         // -0500
@@ -174,7 +193,7 @@ let commonValues = {
       }
     },
 
-    fromICAL: function (aValue) {
+    fromICAL(aValue) {
       if (aValue.length < 6) {
         // no seconds
         // -05:00
@@ -192,17 +211,17 @@ let commonValues = {
       }
     },
 
-    decorate: function (aValue) {
+    decorate(aValue) {
       return UtcOffset.fromString(aValue);
     },
 
-    undecorate: function (aValue) {
+    undecorate(aValue) {
       return aValue.toString();
     }
-  }
+  } satisfies DesignSetField<string, string, UtcOffset>
 };
 
-let icalParams = {
+const icalParams = {
   // Although the syntax is DQUOTE uri DQUOTE, I don't think we should
   // enfoce anything aside from it being a valid content line.
   //
@@ -311,7 +330,8 @@ let icalParams = {
 };
 
 // When adding a value here, be sure to add it to the parameter types!
-const icalValues = extend(commonValues, {
+const icalValues = {
+  ...commonValues,
   text: createTextType(FROM_ICAL_NEWLINE, TO_ICAL_NEWLINE),
 
   uri: {
@@ -320,21 +340,23 @@ const icalValues = extend(commonValues, {
   },
 
   binary: {
-    decorate: function (aString) {
+    decorate(aString) {
       return Binary.fromString(aString);
     },
 
-    undecorate: function (aBinary) {
+    undecorate(aBinary) {
       return aBinary.toString();
     }
-  },
+  } satisfies DesignSetField<string, string, Binary>,
+
   'cal-address': {
     // needs to be an uri
   },
+
   date: {
-    decorate: function (aValue, aProp) {
+    decorate(aValue: string, aProp?: Property) {
       if (design.strict) {
-        return Time.fromDateString(aValue, aProp);
+        return Time.fromDateString(aValue);
       } else {
         return Time.fromString(aValue, aProp);
       }
@@ -343,11 +365,11 @@ const icalValues = extend(commonValues, {
     /**
      * undecorates a time object.
      */
-    undecorate: function (aValue) {
+    undecorate(aValue) {
       return aValue.toString();
     },
 
-    fromICAL: function (aValue) {
+    fromICAL(aValue) {
       // from: 20120901
       // to: 2012-09-01
       if (!design.strict && aValue.length >= 15) {
@@ -364,26 +386,27 @@ const icalValues = extend(commonValues, {
       }
     },
 
-    toICAL: function (aValue) {
+    toICAL(aValue) {
       // from: 2012-09-01
       // to: 20120901
-      let len = aValue.length;
+      const len = aValue.length;
 
-      if (len == 10) {
+      if (len === 10) {
         return aValue.slice(0, 4) + aValue.slice(5, 7) + aValue.slice(8, 10);
       } else if (len >= 19) {
         return icalValues['date-time'].toICAL(aValue);
       } else {
-        //TODO: serialize warning?
+        // TODO: serialize warning?
         return aValue;
       }
     }
-  },
+  } satisfies DesignSetField<string, string, Time>,
+
   'date-time': {
-    fromICAL: function (aValue) {
+    fromICAL(aValue): string {
       // from: 20120901T130000
       // to: 2012-09-01T13:00:00
-      if (!design.strict && aValue.length == 8) {
+      if (!design.strict && aValue.length === 8) {
         // This is probably a date, e.g. 20120901
         return icalValues.date.fromICAL(aValue);
       } else {
@@ -408,12 +431,12 @@ const icalValues = extend(commonValues, {
       }
     },
 
-    toICAL: function (aValue) {
+    toICAL(aValue) {
       // from: 2012-09-01T13:00:00
       // to: 20120901T130000
-      let len = aValue.length;
+      const len = aValue.length;
 
-      if (len == 10 && !design.strict) {
+      if (len === 10 && !design.strict) {
         return icalValues.date.toICAL(aValue);
       } else if (len >= 19) {
         let result =
@@ -436,7 +459,7 @@ const icalValues = extend(commonValues, {
       }
     },
 
-    decorate: function (aValue, aProp) {
+    decorate(aValue: string, aProp?: Property): Time {
       if (design.strict) {
         return Time.fromDateTimeString(aValue, aProp);
       } else {
@@ -444,40 +467,42 @@ const icalValues = extend(commonValues, {
       }
     },
 
-    undecorate: function (aValue) {
+    undecorate(aValue) {
       return aValue.toString();
     }
-  },
+  } satisfies DesignSetField<string, string, Time>,
+
   duration: {
-    decorate: function (aValue) {
+    decorate(aValue) {
       return Duration.fromString(aValue);
     },
-    undecorate: function (aValue) {
+    undecorate(aValue) {
       return aValue.toString();
     }
-  },
+  } satisfies DesignSetField<string, string, Duration>,
+
   period: {
-    fromICAL: function (string) {
-      let parts = string.split('/');
+    fromICAL(string) {
+      const parts = string.split('/');
       parts[0] = icalValues['date-time'].fromICAL(parts[0]);
 
       if (!Duration.isValueString(parts[1])) {
         parts[1] = icalValues['date-time'].fromICAL(parts[1]);
       }
 
-      return parts;
+      return parts as [string, string];
     },
 
-    toICAL: function (parts) {
-      parts = parts.slice();
-      if (!design.strict && parts[0].length == 10) {
+    toICAL(parts) {
+      parts = parts.slice() as [string, string];
+      if (!design.strict && parts[0].length === 10) {
         parts[0] = icalValues.date.toICAL(parts[0]);
       } else {
         parts[0] = icalValues['date-time'].toICAL(parts[0]);
       }
 
       if (!Duration.isValueString(parts[1])) {
-        if (!design.strict && parts[1].length == 10) {
+        if (!design.strict && parts[1].length === 10) {
           parts[1] = icalValues.date.toICAL(parts[1]);
         } else {
           parts[1] = icalValues['date-time'].toICAL(parts[1]);
@@ -487,29 +512,30 @@ const icalValues = extend(commonValues, {
       return parts.join('/');
     },
 
-    decorate: function (aValue, aProp) {
+    decorate(aValue, aProp?: Property) {
       return Period.fromJSON(aValue, aProp, !design.strict);
     },
 
-    undecorate: function (aValue) {
+    undecorate(aValue) {
       return aValue.toJSON();
     }
-  },
+  } satisfies DesignSetField<string, [string, string], Period>,
+
   recur: {
-    fromICAL: function (string) {
+    fromICAL(string) {
       return Recur._stringToData(string, true);
     },
 
-    toICAL: function (data) {
+    toICAL(data) {
       let str = '';
       for (let [k, val] of Object.entries(data)) {
-        if (k == 'until') {
+        if (k === 'until') {
           if (val.length > 10) {
             val = icalValues['date-time'].toICAL(val);
           } else {
             val = icalValues.date.toICAL(val);
           }
-        } else if (k == 'wkst') {
+        } else if (k === 'wkst') {
           if (typeof val === 'number') {
             val = Recur.numericDayToIcalDay(val);
           }
@@ -521,17 +547,17 @@ const icalValues = extend(commonValues, {
       return str.slice(0, Math.max(0, str.length - 1));
     },
 
-    decorate: function decorate(aValue) {
+    decorate(aValue) {
       return Recur.fromData(aValue);
     },
 
-    undecorate: function (aRecur) {
+    undecorate(aRecur) {
       return aRecur.toJSON();
     }
-  },
+  } satisfies DesignSetField<string, RecurData, Recur>,
 
   time: {
-    fromICAL: function (aValue) {
+    fromICAL(aValue) {
       // from: MMHHSS(Z)?
       // to: HH:MM:SS(Z)?
       if (aValue.length < 6) {
@@ -554,11 +580,11 @@ const icalValues = extend(commonValues, {
       return result;
     },
 
-    toICAL: function (aValue) {
+    toICAL(aValue) {
       // from: HH:MM:SS(Z)?
       // to: MMHHSS(Z)?
       if (aValue.length < 8) {
-        //TODO: error
+        // TODO: error
         return aValue;
       }
 
@@ -570,10 +596,11 @@ const icalValues = extend(commonValues, {
 
       return result;
     }
-  }
-});
+  } satisfies DesignSetField<string, string, string>
+};
 
-let icalProperties = extend(commonProperties, {
+const icalProperties = {
+  ...commonProperties,
   action: DEFAULT_TYPE_TEXT,
   attach: { defaultType: 'uri' },
   attendee: { defaultType: 'cal-address' },
@@ -610,7 +637,7 @@ let icalProperties = extend(commonProperties, {
     defaultType: 'date-time',
     allowedTypes: ['date-time', 'date', 'period'],
     multiValue: ',',
-    detectType: function (string) {
+    detectType(string: string) {
       if (string.indexOf('/') !== -1) {
         return 'period';
       }
@@ -631,100 +658,98 @@ let icalProperties = extend(commonProperties, {
   tzurl: DEFAULT_TYPE_URI,
   tzid: DEFAULT_TYPE_TEXT,
   tzname: DEFAULT_TYPE_TEXT
-});
+};
 
 // When adding a value here, be sure to add it to the parameter types!
-const vcardValues = extend(commonValues, {
+const vcardValues = {
+  ...commonValues,
   text: createTextType(FROM_VCARD_NEWLINE, TO_VCARD_NEWLINE),
   uri: createTextType(FROM_VCARD_NEWLINE, TO_VCARD_NEWLINE),
 
   date: {
-    decorate: function (aValue) {
+    decorate(aValue) {
       return VCardTime.fromDateAndOrTimeString(aValue, 'date');
     },
-    undecorate: function (aValue) {
-      return aValue.toString();
+    undecorate(aValue) {
+      return aValue.toString()!;
     },
-    fromICAL: function (aValue) {
-      if (aValue.length == 8) {
+    fromICAL(aValue) {
+      if (aValue.length === 8) {
         return icalValues.date.fromICAL(aValue);
-      } else if (aValue[0] == '-' && aValue.length == 6) {
+      } else if (aValue[0] === '-' && aValue.length === 6) {
         return aValue.slice(0, 4) + '-' + aValue.slice(4);
       } else {
         return aValue;
       }
     },
-    toICAL: function (aValue) {
-      if (aValue.length == 10) {
+    toICAL(aValue) {
+      if (aValue.length === 10) {
         return icalValues.date.toICAL(aValue);
-      } else if (aValue[0] == '-' && aValue.length == 7) {
+      } else if (aValue[0] === '-' && aValue.length === 7) {
         return aValue.slice(0, 4) + aValue.slice(5);
       } else {
         return aValue;
       }
     }
-  },
+  } satisfies DesignSetField<string, string, VCardTime>,
 
   time: {
-    decorate: function (aValue) {
+    decorate(aValue) {
       return VCardTime.fromDateAndOrTimeString('T' + aValue, 'time');
     },
-    undecorate: function (aValue) {
-      return aValue.toString();
+    undecorate(aValue) {
+      return aValue.toString()!;
     },
-    fromICAL: function (aValue) {
-      let splitzone = vcardValues.time._splitZone(aValue, true);
-      let zone = splitzone[0],
-        value = splitzone[1];
+    fromICAL(aValue) {
+      const splitZone = vcardValues.time._splitZone(aValue, true);
+      let [zone, value] = splitZone;
 
-      //console.log("SPLIT: ",splitzone);
-
-      if (value.length == 6) {
+      if (value.length === 6) {
         value =
           value.slice(0, 2) + ':' + value.slice(2, 4) + ':' + value.slice(4, 6);
-      } else if (value.length == 4 && value[0] != '-') {
+      } else if (value.length === 4 && value[0] !== '-') {
         value = value.slice(0, 2) + ':' + value.slice(2, 4);
-      } else if (value.length == 5) {
+      } else if (value.length === 5) {
         value = value.slice(0, 3) + ':' + value.slice(3, 5);
       }
 
-      if (zone.length == 5 && (zone[0] == '-' || zone[0] == '+')) {
+      if (zone.length === 5 && (zone[0] === '-' || zone[0] === '+')) {
         zone = zone.slice(0, 3) + ':' + zone.slice(3);
       }
 
       return value + zone;
     },
 
-    toICAL: function (aValue) {
-      let splitzone = vcardValues.time._splitZone(aValue);
-      let zone = splitzone[0],
-        value = splitzone[1];
+    toICAL(aValue) {
+      const splitZone = vcardValues.time._splitZone(aValue);
+      let [zone, value] = splitZone;
 
-      if (value.length == 8) {
+      if (value.length === 8) {
         value = value.slice(0, 2) + value.slice(3, 5) + value.slice(6, 8);
-      } else if (value.length == 5 && value[0] != '-') {
+      } else if (value.length === 5 && value[0] !== '-') {
         value = value.slice(0, 2) + value.slice(3, 5);
-      } else if (value.length == 6) {
+      } else if (value.length === 6) {
         value = value.slice(0, 3) + value.slice(4, 6);
       }
 
-      if (zone.length == 6 && (zone[0] == '-' || zone[0] == '+')) {
+      if (zone.length === 6 && (zone[0] === '-' || zone[0] === '+')) {
         zone = zone.slice(0, 3) + zone.slice(4);
       }
 
       return value + zone;
     },
 
-    _splitZone: function (aValue, isFromIcal) {
-      let lastChar = aValue.length - 1;
-      let signChar = aValue.length - (isFromIcal ? 5 : 6);
-      let sign = aValue[signChar];
-      let zone, value;
+    _splitZone(aValue: string, isFromIcal: boolean): [string, string] {
+      const lastChar = aValue.length - 1;
+      const signChar = aValue.length - (isFromIcal ? 5 : 6);
+      const sign = aValue[signChar];
+      let zone;
+      let value;
 
-      if (aValue[lastChar] == 'Z') {
+      if (aValue[lastChar] === 'Z') {
         zone = aValue[lastChar];
         value = aValue.slice(0, Math.max(0, lastChar));
-      } else if (aValue.length > 6 && (sign == '-' || sign == '+')) {
+      } else if (aValue.length > 6 && (sign === '-' || sign === '+')) {
         zone = aValue.slice(signChar);
         value = aValue.slice(0, Math.max(0, signChar));
       } else {
@@ -734,45 +759,45 @@ const vcardValues = extend(commonValues, {
 
       return [zone, value];
     }
-  },
+  } satisfies DesignSetField<string, string, VCardTime>,
 
   'date-time': {
-    decorate: function (aValue) {
+    decorate(aValue) {
       return VCardTime.fromDateAndOrTimeString(aValue, 'date-time');
     },
 
-    undecorate: function (aValue) {
-      return aValue.toString();
+    undecorate(aValue) {
+      return aValue.toString()!;
     },
 
-    fromICAL: function (aValue) {
+    fromICAL(aValue) {
       return vcardValues['date-and-or-time'].fromICAL(aValue);
     },
 
-    toICAL: function (aValue) {
+    toICAL(aValue) {
       return vcardValues['date-and-or-time'].toICAL(aValue);
     }
-  },
+  } satisfies DesignSetField<string, string, VCardTime>,
 
   'date-and-or-time': {
-    decorate: function (aValue) {
+    decorate(aValue: string) {
       return VCardTime.fromDateAndOrTimeString(aValue, 'date-and-or-time');
     },
 
-    undecorate: function (aValue) {
+    undecorate(aValue: VCardTime) {
       return aValue.toString();
     },
 
-    fromICAL: function (aValue) {
-      let parts = aValue.split('T');
+    fromICAL(aValue: string) {
+      const parts = aValue.split('T');
       return (
         (parts[0] ? vcardValues.date.fromICAL(parts[0]) : '') +
         (parts[1] ? 'T' + vcardValues.time.fromICAL(parts[1]) : '')
       );
     },
 
-    toICAL: function (aValue) {
-      let parts = aValue.split('T');
+    toICAL(aValue: string) {
+      const parts = aValue.split('T');
       return (
         vcardValues.date.toICAL(parts[0]) +
         (parts[1] ? 'T' + vcardValues.time.toICAL(parts[1]) : '')
@@ -784,24 +809,20 @@ const vcardValues = extend(commonValues, {
     matches: /^[a-zA-Z0-9-]+$/ // Could go with a more strict regex here
   },
   'phone-number': {
-    fromICAL: function (aValue) {
+    fromICAL(aValue: string) {
       return Array.from(aValue)
-        .filter(function (c) {
-          return c === '\\' ? undefined : c;
-        })
+        .filter(c => (c === '\\' ? undefined : c))
         .join('');
     },
-    toICAL: function (aValue) {
+    toICAL(aValue: string) {
       return Array.from(aValue)
-        .map(function (c) {
-          return c === ',' || c === ';' ? '\\' + c : c;
-        })
+        .map(c => (c === ',' || c === ';' ? '\\' + c : c))
         .join('');
     }
   }
-});
+};
 
-let vcardParams = {
+const vcardParams = {
   type: {
     valueType: 'text',
     multiValue: ','
@@ -827,7 +848,8 @@ let vcardParams = {
   }
 };
 
-let vcardProperties = extend(commonProperties, {
+const vcardProperties = {
+  ...commonProperties,
   adr: { defaultType: 'text', structuredValue: ';', multiValue: ',' },
   anniversary: DEFAULT_TYPE_DATE_ANDOR_TIME,
   bday: DEFAULT_TYPE_DATE_ANDOR_TIME,
@@ -859,9 +881,10 @@ let vcardProperties = extend(commonProperties, {
   title: DEFAULT_TYPE_TEXT,
   tz: { defaultType: 'text', allowedTypes: ['text', 'utc-offset', 'uri'] },
   xml: DEFAULT_TYPE_TEXT
-});
+};
 
-let vcard3Values = extend(commonValues, {
+const vcard3Values = {
+  ...commonValues,
   binary: icalValues.binary,
   date: vcardValues.date,
   'date-time': vcardValues['date-time'],
@@ -871,25 +894,25 @@ let vcard3Values = extend(commonValues, {
   time: icalValues.time,
   vcard: icalValues.text,
   'utc-offset': {
-    toICAL: function (aValue) {
+    toICAL(aValue: string) {
       return aValue.slice(0, 7);
     },
 
-    fromICAL: function (aValue) {
+    fromICAL(aValue: string) {
       return aValue.slice(0, 7);
     },
 
-    decorate: function (aValue) {
+    decorate(aValue: string) {
       return UtcOffset.fromString(aValue);
     },
 
-    undecorate: function (aValue) {
+    undecorate(aValue: UtcOffset) {
       return aValue.toString();
     }
   }
-});
+};
 
-let vcard3Params = {
+const vcard3Params = {
   type: {
     valueType: 'text',
     multiValue: ','
@@ -915,7 +938,8 @@ let vcard3Params = {
   }
 };
 
-let vcard3Properties = extend(commonProperties, {
+const vcard3Properties = {
+  ...commonProperties,
   fn: DEFAULT_TYPE_TEXT,
   n: { defaultType: 'text', structuredValue: ';', multiValue: ',' },
   nickname: DEFAULT_TYPE_TEXT_MULTI,
@@ -923,7 +947,7 @@ let vcard3Properties = extend(commonProperties, {
   bday: {
     defaultType: 'date-time',
     allowedTypes: ['date-time', 'date'],
-    detectType: function (string) {
+    detectType(string: string) {
       return string.indexOf('T') === -1 ? 'date' : 'date-time';
     }
   },
@@ -949,7 +973,7 @@ let vcard3Properties = extend(commonProperties, {
   rev: {
     defaultType: 'date-time',
     allowedTypes: ['date-time', 'date'],
-    detectType: function (string) {
+    detectType(string: string) {
       return string.indexOf('T') === -1 ? 'date' : 'date-time';
     }
   },
@@ -958,13 +982,12 @@ let vcard3Properties = extend(commonProperties, {
 
   class: DEFAULT_TYPE_TEXT,
   key: { defaultType: 'binary', allowedTypes: ['binary', 'text'] }
-});
+};
 
 /**
  * iCalendar design set
- * @type {ICAL.design.designSet}
  */
-let icalSet = {
+const icalSet: DesignSet = {
   value: icalValues,
   param: icalParams,
   property: icalProperties,
@@ -973,9 +996,8 @@ let icalSet = {
 
 /**
  * vCard 4.0 design set
- * @type {ICAL.design.designSet}
  */
-let vcardSet = {
+const vcardSet: DesignSet = {
   value: vcardValues,
   param: vcardParams,
   property: vcardProperties,
@@ -984,9 +1006,8 @@ let vcardSet = {
 
 /**
  * vCard 3.0 design set
- * @type {ICAL.design.designSet}
  */
-let vcard3Set = {
+const vcard3Set: DesignSet = {
   value: vcard3Values,
   param: vcard3Params,
   property: vcard3Properties,
@@ -994,26 +1015,26 @@ let vcard3Set = {
 };
 
 /**
+ * A designSet describes value, parameter and property data. It is used by
+ * the parser and stringifier in components and properties to determine they
+ * should be represented.
+ */
+export interface DesignSet {
+  /** Definitions for value types, keys are type names */
+  value: Record<string, any>;
+  /** Definitions for params, keys are param names */
+  param: Record<string, any>;
+  /** Definitions for properties, keys are property names */
+  property: Record<string, any>;
+  /** If content lines may include a group name */
+  propertyGroups: boolean;
+}
+
+/**
  * The design data, used by the parser to determine types for properties and
  * other metadata needed to produce correct jCard/jCal data.
- *
- * @alias ICAL.design
- * @exports module:ICAL.design
  */
 export const design = {
-  /**
-   * A designSet describes value, parameter and property data. It is used by
-   * ther parser and stringifier in components and properties to determine they
-   * should be represented.
-   *
-   * @typedef {Object} designSet
-   * @memberOf ICAL.design
-   * @property {Object} value       Definitions for value types, keys are type names
-   * @property {Object} param       Definitions for params, keys are param names
-   * @property {Object} property    Definitions for properties, keys are property names
-   * @property {boolean} propertyGroups  If content lines may include a group name
-   */
-
   /**
    * Can be set to false to make the parser more lenient.
    */
@@ -1021,28 +1042,16 @@ export const design = {
 
   /**
    * The default set for new properties and components if none is specified.
-   * @type {ICAL.design.designSet}
    */
   defaultSet: icalSet,
 
   /**
    * The default type for unknown properties
-   * @type {String}
    */
   defaultType: 'unknown',
 
   /**
    * Holds the design set for known top-level components
-   *
-   * @type {Object}
-   * @property {ICAL.design.designSet} vcard       vCard VCARD
-   * @property {ICAL.design.designSet} vevent      iCalendar VEVENT
-   * @property {ICAL.design.designSet} vtodo       iCalendar VTODO
-   * @property {ICAL.design.designSet} vjournal    iCalendar VJOURNAL
-   * @property {ICAL.design.designSet} valarm      iCalendar VALARM
-   * @property {ICAL.design.designSet} vtimezone   iCalendar VTIMEZONE
-   * @property {ICAL.design.designSet} daylight    iCalendar DAYLIGHT
-   * @property {ICAL.design.designSet} standard    iCalendar STANDARD
    *
    * @example
    * let propertyName = 'fn';
@@ -1053,43 +1062,48 @@ export const design = {
    * }
    */
   components: {
+    /** vCard VCARD */
     vcard: vcardSet,
     vcard3: vcard3Set,
+    /** iCalendar VEVENT */
     vevent: icalSet,
+    /** iCalendar VTODO */
     vtodo: icalSet,
+    /** iCalendar VJOURNAL */
     vjournal: icalSet,
+    /** iCalendar VALARM */
     valarm: icalSet,
+    /** iCalendar VTIMEZONE */
     vtimezone: icalSet,
+    /** iCalendar DAYLIGHT */
     daylight: icalSet,
+    /** iCalendar STANDARD */
     standard: icalSet
   },
 
   /**
    * The design set for iCalendar (rfc5545/rfc7265) components.
-   * @type {ICAL.design.designSet}
    */
   icalendar: icalSet,
 
   /**
    * The design set for vCard (rfc6350/rfc7095) components.
-   * @type {ICAL.design.designSet}
    */
   vcard: vcardSet,
 
   /**
    * The design set for vCard (rfc2425/rfc2426/rfc7095) components.
-   * @type {ICAL.design.designSet}
    */
   vcard3: vcard3Set,
 
   /**
    * Gets the design set for the given component name.
    *
-   * @param {String} componentName        The name of the component
-   * @return {ICAL.design.designSet}      The design set for the component
+   * @param componentName The name of the component
+   * @return The design set for the component
    */
-  getDesignSet: function (componentName) {
-    let isInDesign = componentName && componentName in design.components;
+  getDesignSet(componentName: string): DesignSet {
+    const isInDesign = componentName && componentName in design.components;
     return isInDesign ? design.components[componentName] : design.defaultSet;
   }
 };

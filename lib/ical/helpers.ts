@@ -5,6 +5,7 @@
 
 import { TimezoneService } from './timezone_service';
 import { config } from './index';
+import type { Component } from './Component';
 
 /**
  * Helper functions used in various places within ical.js
@@ -20,46 +21,50 @@ import { config } from './index';
  * @param {ICAL.Component} vcal     The top-level VCALENDAR component.
  * @return {ICAL.Component}         The ICAL.Component that was passed in.
  */
-export function updateTimezones(vcal) {
-  let allsubs, properties, vtimezones, reqTzid, i;
+export function updateTimezones(vcal: Component) {
+  let allsubs;
+  let properties;
+  let vtimezones;
+  let reqTzid;
+  let i;
 
   if (!vcal || vcal.name !== 'vcalendar') {
-    //not a top-level vcalendar component
+    // not a top-level vcalendar component
     return vcal;
   }
 
-  //Store vtimezone subcomponents in an object reference by tzid.
-  //Store properties from everything else in another array
+  // Store vtimezone subcomponents in an object reference by tzid.
+  // Store properties from everything else in another array
   allsubs = vcal.getAllSubcomponents();
   properties = [];
   vtimezones = {};
   for (i = 0; i < allsubs.length; i++) {
     if (allsubs[i].name === 'vtimezone') {
-      let tzid = allsubs[i].getFirstProperty('tzid').getFirstValue();
+      const tzid = allsubs[i].getFirstProperty('tzid')!.getFirstValue();
       vtimezones[tzid] = allsubs[i];
     } else {
       properties = properties.concat(allsubs[i].getAllProperties());
     }
   }
 
-  //create an object with one entry for each required tz
+  // create an object with one entry for each required tz
   reqTzid = {};
   for (i = 0; i < properties.length; i++) {
-    let tzid = properties[i].getParameter('tzid');
+    const tzid = properties[i].getParameter('tzid');
     if (tzid) {
       reqTzid[tzid] = true;
     }
   }
 
-  //delete any vtimezones that are not on the reqTzid list.
-  for (let [tzid, comp] of Object.entries(vtimezones)) {
+  // delete any vtimezones that are not on the reqTzid list.
+  for (const [tzid, comp] of Object.entries(vtimezones)) {
     if (!reqTzid[tzid]) {
       vcal.removeSubcomponent(comp);
     }
   }
 
-  //create any missing, but registered timezones
-  for (let tzid of Object.keys(reqTzid)) {
+  // create any missing, but registered timezones
+  for (const tzid of Object.keys(reqTzid)) {
     if (!vtimezones[tzid] && TimezoneService.has(tzid)) {
       vcal.addSubcomponent(TimezoneService.get(tzid).component);
     }
@@ -74,7 +79,7 @@ export function updateTimezones(vcal) {
  * @param {Number} number     The number to check
  * @return {Boolean}          True, if the number is strictly NaN
  */
-export function isStrictlyNaN(number) {
+export function isStrictlyNaN(number: number): boolean {
   return typeof number === 'number' && isNaN(number);
 }
 
@@ -85,8 +90,8 @@ export function isStrictlyNaN(number) {
  * @param {String} string     Raw string input
  * @return {Number}           Parsed integer
  */
-export function strictParseInt(string) {
-  let result = parseInt(string, 10);
+export function strictParseInt(string: string): number {
+  const result = parseInt(string, 10);
 
   if (isStrictlyNaN(result)) {
     throw new Error('Could not extract integer from "' + string + '"');
@@ -111,11 +116,11 @@ export function strictParseInt(string) {
  * // => true
  *
  *
- * @param {Object} data       object initialization data
- * @param {Object} type       object type (like ICAL.Time)
- * @return {?}                An instance of the found type.
+ * @param data       object initialization data
+ * @param type       object type (like ICAL.Time)
+ * @return An instance of the found type.
  */
-export function formatClassType(data, type) {
+export function formatClassType(data: any, type: any) {
   if (typeof data === 'undefined') {
     return undefined;
   }
@@ -130,12 +135,16 @@ export function formatClassType(data, type) {
  * Identical to indexOf but will only match values when they are not preceded
  * by a backslash character.
  *
- * @param {String} buffer         String to search
- * @param {String} search         Value to look for
- * @param {Number} pos            Start position
- * @return {Number}               The position, or -1 if not found
+ * @param buffer String to search
+ * @param search Value to look for
+ * @param pos    Start position
+ * @return       The position, or -1 if not found
  */
-export function unescapedIndexOf(buffer, search, pos) {
+export function unescapedIndexOf(
+  buffer: string,
+  search: string,
+  pos?: number
+): number {
   while ((pos = buffer.indexOf(search, pos)) !== -1) {
     if (pos > 0 && buffer[pos - 1] === '\\') {
       pos += 1;
@@ -149,32 +158,35 @@ export function unescapedIndexOf(buffer, search, pos) {
 /**
  * Find the index for insertion using binary search.
  *
- * @param {Array} list            The list to search
- * @param {?} seekVal             The value to insert
- * @param {function(?,?)} cmpfunc The comparison func, that can
- *                                  compare two seekVals
- * @return {Number}               The insert position
+ * @param list    The list to search
+ * @param seekVal The value to insert
+ * @param cmpFunc The comparison func, that can compare two seekVals
+ * @return The insert position
  */
-export function binsearchInsert(list, seekVal, cmpfunc) {
+export function binsearchInsert<T, T1 = T>(
+  list: T[],
+  seekVal: T1,
+  cmpFunc: (a: T1, b: T) => number
+): number {
   if (!list.length) return 0;
 
-  let low = 0,
-    high = list.length - 1,
-    mid,
-    cmpval;
+  let low = 0;
+  let high = list.length - 1;
+  let mid: number;
+  let cmpVal: number;
 
   while (low <= high) {
     mid = low + Math.floor((high - low) / 2);
-    cmpval = cmpfunc(seekVal, list[mid]);
+    cmpVal = cmpFunc(seekVal, list[mid]);
 
-    if (cmpval < 0) high = mid - 1;
-    else if (cmpval > 0) low = mid + 1;
+    if (cmpVal < 0) high = mid - 1;
+    else if (cmpVal > 0) low = mid + 1;
     else break;
   }
 
-  if (cmpval < 0) return mid; // insertion is displacing, so use mid outright.
-  else if (cmpval > 0) return mid + 1;
-  else return mid;
+  if (cmpVal! < 0) return mid!; // insertion is displacing, so use mid outright.
+  else if (cmpVal! > 0) return mid! + 1;
+  else return mid!;
 }
 
 /**
@@ -185,7 +197,7 @@ export function binsearchInsert(list, seekVal, cmpfunc) {
  * @param {Boolean=} aDeep    If true, a deep clone will be performed
  * @return {*}                The copy of the thing
  */
-export function clone(aSrc, aDeep) {
+export function clone<T>(aSrc: T, aDeep: boolean): T {
   if (!aSrc || typeof aSrc != 'object') {
     return aSrc;
   } else if (aSrc instanceof Date) {
@@ -193,14 +205,14 @@ export function clone(aSrc, aDeep) {
   } else if ('clone' in aSrc) {
     return aSrc.clone();
   } else if (Array.isArray(aSrc)) {
-    let arr = [];
+    const arr = [];
     for (let i = 0; i < aSrc.length; i++) {
       arr.push(aDeep ? clone(aSrc[i], true) : aSrc[i]);
     }
     return arr;
   } else {
-    let obj = {};
-    for (let [name, value] of Object.entries(aSrc)) {
+    const obj = {};
+    for (const [name, value] of Object.entries(aSrc)) {
       if (aDeep) {
         obj[name] = clone(value, true);
       } else {
@@ -219,24 +231,25 @@ export function clone(aSrc, aDeep) {
  * SUMMARY:This line will be fold
  *  ed right in the middle of a word.
  *
- * @param {String} aLine      The line to fold
- * @return {String}           The folded line
+ * @param aLine The line to fold
+ * @return The folded line
  */
-export function foldline(aLine) {
+export function foldline(aLine: string): string {
   let result = '';
-  let line = aLine || '',
-    pos = 0,
-    line_length = 0;
-  //pos counts position in line for the UTF-16 presentation
-  //line_length counts the bytes for the UTF-8 presentation
+  let line = aLine || '';
+  let pos = 0;
+  let line_length = 0;
+  // pos counts position in line for the UTF-16 presentation
+  // line_length counts the bytes for the UTF-8 presentation
   while (line.length) {
-    let cp = line.codePointAt(pos);
+    const cp = line.codePointAt(pos)!;
     if (cp < 128) ++line_length;
-    else if (cp < 2048) line_length += 2; //needs 2 UTF-8 bytes
+    else if (cp < 2048) line_length += 2; // needs 2 UTF-8 bytes
     else if (cp < 65536) line_length += 3;
-    else line_length += 4; //cp is less than 1114112
-    if (line_length < config.foldLength + 1) pos += cp > 65535 ? 2 : 1;
-    else {
+    else line_length += 4; // cp is less than 1114112
+    if (line_length < config.foldLength + 1) {
+      pos += cp > 65535 ? 2 : 1;
+    } else {
       result += config.newLineChar + ' ' + line.slice(0, Math.max(0, pos));
       line = line.slice(Math.max(0, pos));
       pos = line_length = 0;
@@ -252,7 +265,7 @@ export function foldline(aLine) {
  * @param {String|Number} data    The string or number to pad
  * @return {String}               The number padded as a string
  */
-export function pad2(data) {
+export function pad2(data: string | number): string {
   if (typeof data !== 'string') {
     // handle fractions.
     if (typeof data === 'number') {
@@ -261,7 +274,7 @@ export function pad2(data) {
     data = String(data);
   }
 
-  let len = data.length;
+  const len = data.length;
 
   switch (len) {
     case 0:
@@ -279,30 +292,6 @@ export function pad2(data) {
  * @param {Number} number     The number to truncate
  * @return {Number}           The truncated number
  */
-export function trunc(number) {
+export function trunc(number: number): number {
   return number < 0 ? Math.ceil(number) : Math.floor(number);
-}
-
-/**
- * Poor-man's cross-browser object extension. Doesn't support all the
- * features, but enough for our usage. Note that the target's properties are
- * not overwritten with the source properties.
- *
- * @example
- * var child = ICAL.helpers.extend(parent, {
- *   "bar": 123
- * });
- *
- * @param {Object} source     The object to extend
- * @param {Object} target     The object to extend with
- * @return {Object}           Returns the target.
- */
-export function extend(source, target) {
-  for (let key in source) {
-    let descr = Object.getOwnPropertyDescriptor(source, key);
-    if (descr && !Object.getOwnPropertyDescriptor(target, key)) {
-      Object.defineProperty(target, key, descr);
-    }
-  }
-  return target;
 }

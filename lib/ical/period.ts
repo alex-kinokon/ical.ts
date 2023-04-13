@@ -5,23 +5,32 @@
 
 import { Time } from './time';
 import { Duration } from './duration';
+import type { Property } from './Property';
+
+export interface PeriodData {
+  /** The start of the period */
+  start?: Time | null;
+  /** The end of the period */
+  end?: Time | null;
+  /** The duration of the period */
+  duration?: Duration;
+}
 
 /**
  * This class represents the "period" value type, with various calculation and manipulation methods.
- *
- * @class
- * @alias ICAL.Period
  */
 export class Period {
+  wrappedJSObject: Period;
+
   /**
    * Creates a new {@link ICAL.Period} instance from the passed string.
    *
-   * @param {String} str            The string to parse
-   * @param {ICAL.Property} prop    The property this period will be on
-   * @return {ICAL.Period}          The created period instance
+   * @param str The string to parse
+   * @param prop The property this period will be on
+   * @return The created period instance
    */
-  static fromString(str, prop) {
-    let parts = str.split('/');
+  static fromString(str: string, prop: Property): Period {
+    const parts = str.split('/');
 
     if (parts.length !== 2) {
       throw new Error(
@@ -29,11 +38,11 @@ export class Period {
       );
     }
 
-    let options = {
+    const options: PeriodData = {
       start: Time.fromDateTimeString(parts[0], prop)
     };
 
-    let end = parts[1];
+    const [, end] = parts;
 
     if (Duration.isValueString(end)) {
       options.duration = Duration.fromString(end);
@@ -45,16 +54,13 @@ export class Period {
   }
 
   /**
-   * Creates a new {@link ICAL.Period} instance from the given data object.
+   * Creates a new {@link Period} instance from the given data object.
    * The passed data object cannot contain both and end date and a duration.
    *
-   * @param {Object} aData                  An object with members of the period
-   * @param {ICAL.Time=} aData.start        The start of the period
-   * @param {ICAL.Time=} aData.end          The end of the period
-   * @param {ICAL.Duration=} aData.duration The duration of the period
-   * @return {ICAL.Period}                  The period instance
+   * @param aData An object with members of the period
+   * @return The period instance
    */
-  static fromData(aData) {
+  static fromData(aData: PeriodData): Period {
     return new Period(aData);
   }
 
@@ -63,13 +69,17 @@ export class Period {
    * member is always the start date string, the second member is either a
    * duration or end date string.
    *
-   * @param {Array<String,String>} aData    The jCal data array
-   * @param {ICAL.Property} aProp           The property this jCal data is on
-   * @param {Boolean} aLenient              If true, data value can be both date and date-time
-   * @return {ICAL.Period}                  The period instance
+   * @param aData The jCal data array
+   * @param aProp The property this jCal data is on
+   * @param aLenient If true, data value can be both date and date-time
+   * @return The period instance
    */
-  static fromJSON(aData, aProp, aLenient) {
-    function fromDateOrDateTimeString(aValue, dateProp) {
+  static fromJSON(
+    aData: string | [string, string],
+    aProp: Property | undefined,
+    aLenient: boolean
+  ): Period {
+    function fromDateOrDateTimeString(aValue: string, dateProp?: Property) {
       if (aLenient) {
         return Time.fromString(aValue, dateProp);
       } else {
@@ -94,19 +104,16 @@ export class Period {
    * Creates a new ICAL.Period instance. The passed data object cannot contain both and end date and
    * a duration.
    *
-   * @param {Object} aData                  An object with members of the period
-   * @param {ICAL.Time=} aData.start        The start of the period
-   * @param {ICAL.Time=} aData.end          The end of the period
-   * @param {ICAL.Duration=} aData.duration The duration of the period
+   * @param aData An object with members of the period
    */
-  constructor(aData) {
+  constructor(aData: PeriodData) {
     this.wrappedJSObject = this;
 
     if (aData && 'start' in aData) {
       if (aData.start && !(aData.start instanceof Time)) {
         throw new TypeError('.start must be an instance of ICAL.Time');
       }
-      this.start = aData.start;
+      this.start = aData.start ?? undefined;
     }
 
     if (aData && aData.end && aData.duration) {
@@ -117,7 +124,7 @@ export class Period {
       if (aData.end && !(aData.end instanceof Time)) {
         throw new TypeError('.end must be an instance of ICAL.Time');
       }
-      this.end = aData.end;
+      this.end = aData.end ?? undefined;
     }
 
     if (aData && 'duration' in aData) {
@@ -130,44 +137,35 @@ export class Period {
 
   /**
    * The start of the period
-   * @type {ICAL.Time}
    */
-  start = null;
+  start?: Time;
 
   /**
    * The end of the period
-   * @type {ICAL.Time}
    */
-  end = null;
+  end?: Time;
 
   /**
    * The duration of the period
-   * @type {ICAL.Duration}
    */
-  duration = null;
+  duration?: Duration;
 
   /**
    * The class identifier.
-   * @constant
-   * @type {String}
-   * @default "icalperiod"
    */
-  icalclass = 'icalperiod';
+  readonly icalclass = 'icalperiod';
 
   /**
    * The type name, to be used in the jCal object.
-   * @constant
-   * @type {String}
-   * @default "period"
    */
-  icaltype = 'period';
+  readonly icaltype = 'period';
 
   /**
    * Returns a clone of the duration object.
    *
-   * @return {ICAL.Period}      The cloned object
+   * @return The cloned object
    */
-  clone() {
+  clone(): Period {
     return Period.fromData({
       start: this.start ? this.start.clone() : null,
       end: this.end ? this.end.clone() : null,
@@ -179,13 +177,13 @@ export class Period {
    * Calculates the duration of the period, either directly or by subtracting
    * start from end date.
    *
-   * @return {ICAL.Duration}      The calculated duration
+   * @return The calculated duration
    */
-  getDuration() {
+  getDuration(): Duration {
     if (this.duration) {
       return this.duration;
     } else {
-      return this.end.subtractDate(this.start);
+      return this.end!.subtractDate(this.start!);
     }
   }
 
@@ -193,43 +191,40 @@ export class Period {
    * Calculates the end date of the period, either directly or by adding
    * duration to start date.
    *
-   * @return {ICAL.Time}          The calculated end date
+   * @return The calculated end date
    */
-  getEnd() {
+  getEnd(): Time {
     if (this.end) {
       return this.end;
     } else {
-      let end = this.start.clone();
-      end.addDuration(this.duration);
+      const end = this.start!.clone();
+      end.addDuration(this.duration!);
       return end;
     }
   }
 
   /**
    * The string representation of this period.
-   * @return {String}
    */
-  toString() {
+  toString(): string {
     return this.start + '/' + (this.end || this.duration);
   }
 
   /**
    * The jCal representation of this period type.
-   * @return {Object}
    */
-  toJSON() {
-    return [this.start.toString(), (this.end || this.duration).toString()];
+  toJSON(): [string, string] {
+    return [this.start!.toString(), (this.end || this.duration)!.toString()];
   }
 
   /**
    * The iCalendar string representation of this period.
-   * @return {String}
    */
-  toICALString() {
+  toICALString(): string {
     return (
-      this.start.toICALString() +
+      this.start!.toICALString() +
       '/' +
-      (this.end || this.duration).toICALString()
+      (this.end || this.duration)!.toICALString()
     );
   }
 }

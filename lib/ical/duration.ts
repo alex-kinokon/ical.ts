@@ -15,6 +15,21 @@ const DATA_PROPS_TO_COPY = [
   'isNegative'
 ];
 
+interface DurationData {
+  /** Duration in weeks */
+  weeks: number;
+  /** Duration in days */
+  days: number;
+  /** Duration in hours */
+  hours: number;
+  /** Duration in minutes */
+  minutes: number;
+  /** Duration in seconds */
+  seconds: number;
+  /** If true, the duration is negative */
+  isNegative: boolean;
+}
+
 /**
  * This class represents the "duration" value type, with various calculation
  * and manipulation methods.
@@ -23,41 +38,42 @@ const DATA_PROPS_TO_COPY = [
  * @alias ICAL.Duration
  */
 export class Duration {
+  declare wrappedJSObject: Duration;
+
   /**
    * Returns a new ICAL.Duration instance from the passed seconds value.
    *
    * @param {Number} aSeconds       The seconds to create the instance from
-   * @return {ICAL.Duration}        The newly created duration instance
+   * @return {Duration}        The newly created duration instance
    */
-  static fromSeconds(aSeconds) {
+  static fromSeconds(aSeconds: number): Duration {
     return new Duration().fromSeconds(aSeconds);
   }
 
   /**
    * Checks if the given string is an iCalendar duration value.
    *
-   * @param {String} value      The raw ical value
-   * @return {Boolean}          True, if the given value is of the
-   *                              duration ical type
+   * @param string The raw ical value
+   * @return True, if the given value is of the duration ical type
    */
-  static isValueString(string) {
+  static isValueString(string: string): boolean {
     return string[0] === 'P' || string[1] === 'P';
   }
 
   /**
-   * Creates a new {@link ICAL.Duration} instance from the passed string.
+   * Creates a new {@link Duration} instance from the passed string.
    *
    * @param {String} aStr       The string to parse
-   * @return {ICAL.Duration}    The created duration instance
+   * @return {Duration}    The created duration instance
    */
-  static fromString(aStr) {
+  static fromString(aStr: string): Duration {
     let pos = 0;
-    let dict = Object.create(null);
+    const dict: DurationData = Object.create(null);
     let chunks = 0;
 
     while ((pos = aStr.search(DURATION_LETTERS)) !== -1) {
-      let type = aStr[pos];
-      let numeric = aStr.slice(0, Math.max(0, pos));
+      const type = aStr[pos];
+      const numeric = aStr.slice(0, Math.max(0, pos));
       aStr = aStr.slice(pos + 1);
 
       chunks += parseDurationChunk(type, numeric, dict);
@@ -66,9 +82,7 @@ export class Duration {
     if (chunks < 2) {
       // There must be at least a chunk with "P" and some unit chunk
       throw new Error(
-        'invalid duration value: Not enough duration components in "' +
-          aStr +
-          '"'
+        `invalid duration value: Not enough duration components in "${aStr}"`
       );
     }
 
@@ -78,109 +92,79 @@ export class Duration {
   /**
    * Creates a new ICAL.Duration instance from the given data object.
    *
-   * @param {Object} aData               An object with members of the duration
-   * @param {Number} aData.weeks         Duration in weeks
-   * @param {Number} aData.days          Duration in days
-   * @param {Number} aData.hours         Duration in hours
-   * @param {Number} aData.minutes       Duration in minutes
-   * @param {Number} aData.seconds       Duration in seconds
-   * @param {Boolean} aData.isNegative   If true, the duration is negative
-   * @return {ICAL.Duration}             The createad duration instance
+   * @param aData An object with members of the duration
+   * @return The created duration instance
    */
-  static fromData(aData) {
+  static fromData(aData: DurationData): Duration {
     return new Duration(aData);
   }
 
   /**
    * Creates a new ICAL.Duration instance.
    *
-   * @param {Object} data               An object with members of the duration
-   * @param {Number} data.weeks         Duration in weeks
-   * @param {Number} data.days          Duration in days
-   * @param {Number} data.hours         Duration in hours
-   * @param {Number} data.minutes       Duration in minutes
-   * @param {Number} data.seconds       Duration in seconds
-   * @param {Boolean} data.isNegative   If true, the duration is negative
+   * @param data An object with members of the duration
    */
-  constructor(data) {
+  constructor(data?: DurationData) {
     this.wrappedJSObject = this;
     this.fromData(data);
   }
 
   /**
    * The weeks in this duration
-   * @type {Number}
-   * @default 0
    */
   weeks = 0;
 
   /**
    * The days in this duration
-   * @type {Number}
-   * @default 0
    */
   days = 0;
 
   /**
    * The days in this duration
-   * @type {Number}
-   * @default 0
    */
   hours = 0;
 
   /**
    * The minutes in this duration
-   * @type {Number}
-   * @default 0
    */
   minutes = 0;
 
   /**
    * The seconds in this duration
-   * @type {Number}
-   * @default 0
    */
   seconds = 0;
 
   /**
    * The seconds in this duration
-   * @type {Boolean}
-   * @default false
    */
   isNegative = false;
 
   /**
    * The class identifier.
-   * @constant
-   * @type {String}
-   * @default "icalduration"
    */
-  icalclass = 'icalduration';
+  readonly icalclass: string = 'icalduration';
 
   /**
    * The type name, to be used in the jCal object.
-   * @constant
-   * @type {String}
-   * @default "duration"
    */
   icaltype = 'duration';
 
   /**
    * Returns a clone of the duration object.
    *
-   * @return {ICAL.Duration}      The cloned object
+   * @return The cloned object
    */
-  clone() {
+  clone(): Duration {
     return Duration.fromData(this);
   }
 
   /**
    * The duration value expressed as a number of seconds.
    *
-   * @return {Number}             The duration value in seconds
+   * @return The duration value in seconds
    */
-  toSeconds() {
-    let seconds =
+  toSeconds(): number {
+    const seconds =
       this.seconds +
       60 * this.minutes +
       3600 * this.hours +
@@ -191,20 +175,20 @@ export class Duration {
 
   /**
    * Reads the passed seconds value into this duration object. Afterwards,
-   * members like {@link ICAL.Duration#days days} and {@link ICAL.Duration#weeks weeks} will be set up
+   * members like {@link Duration#days days} and {@link Duration#weeks weeks} will be set up
    * accordingly.
    *
    * @param {Number} aSeconds     The duration value in seconds
-   * @return {ICAL.Duration}      Returns this instance
+   * @return {Duration}      Returns this instance
    */
-  fromSeconds(aSeconds) {
+  fromSeconds(aSeconds: number): Duration {
     let secs = Math.abs(aSeconds);
 
     this.isNegative = aSeconds < 0;
     this.days = trunc(secs / 86400);
 
     // If we have a flat number of weeks, use them.
-    if (this.days % 7 == 0) {
+    if (this.days % 7 === 0) {
       this.weeks = this.days / 7;
       this.days = 0;
     } else {
@@ -226,22 +210,18 @@ export class Duration {
   /**
    * Sets up the current instance using members from the passed data object.
    *
-   * @param {Object} aData               An object with members of the duration
-   * @param {Number} aData.weeks         Duration in weeks
-   * @param {Number} aData.days          Duration in days
-   * @param {Number} aData.hours         Duration in hours
-   * @param {Number} aData.minutes       Duration in minutes
-   * @param {Number} aData.seconds       Duration in seconds
-   * @param {Boolean} aData.isNegative   If true, the duration is negative
+   * @param aData An object with members of the duration
    */
-  fromData(aData) {
-    for (let prop of DATA_PROPS_TO_COPY) {
-      if (aData && prop in aData) {
-        this[prop] = aData[prop];
-      } else {
-        this[prop] = 0;
-      }
-    }
+  fromData(aData?: DurationData) {
+    Object.assign(
+      this,
+      Object.fromEntries(
+        DATA_PROPS_TO_COPY.map(prop => [
+          prop,
+          aData?.[prop as keyof DurationData] ?? 0
+        ])
+      )
+    );
   }
 
   /**
@@ -259,13 +239,13 @@ export class Duration {
   /**
    * Compares the duration instance with another one.
    *
-   * @param {ICAL.Duration} aOther        The instance to compare with
-   * @return {Number}                     -1, 0 or 1 for less/equal/greater
+   * @param aOther The instance to compare with
+   * @return -1, 0 or 1 for less/equal/greater
    */
-  compare(aOther) {
-    let thisSeconds = this.toSeconds();
-    let otherSeconds = aOther.toSeconds();
-    return (thisSeconds > otherSeconds) - (thisSeconds < otherSeconds);
+  compare(aOther: Duration): number {
+    const thisSeconds = this.toSeconds();
+    const otherSeconds = aOther.toSeconds();
+    return +(thisSeconds > otherSeconds) - +(thisSeconds < otherSeconds);
   }
 
   /**
@@ -278,10 +258,9 @@ export class Duration {
 
   /**
    * The string representation of this duration.
-   * @return {String}
    */
-  toString() {
-    if (this.toSeconds() == 0) {
+  toString(): string {
+    if (this.toSeconds() === 0) {
       return 'PT0S';
     } else {
       let str = '';
@@ -302,9 +281,8 @@ export class Duration {
 
   /**
    * The iCalendar string representation of this duration.
-   * @return {String}
    */
-  toICALString() {
+  toICALString(): string {
     return this.toString();
   }
 }
@@ -313,12 +291,16 @@ export class Duration {
  * Internal helper function to handle a chunk of a duration.
  *
  * @private
- * @param {String} letter type of duration chunk
- * @param {String} number numeric value or -/+
- * @param {Object} dict target to assign values to
+ * @param letter type of duration chunk
+ * @param number numeric value or -/+
+ * @param object target to assign values to
  */
-function parseDurationChunk(letter, number, object) {
-  let type;
+function parseDurationChunk(
+  letter: string,
+  number: string | number,
+  object: DurationData
+) {
+  let type: keyof DurationData | undefined;
   switch (letter) {
     case 'P':
       if (number && number === '-') {
@@ -354,17 +336,13 @@ function parseDurationChunk(letter, number, object) {
         'invalid duration value: Missing number before "' + letter + '"'
       );
     }
-    let num = parseInt(number, 10);
+    const num = parseInt(number as any, 10);
     if (isStrictlyNaN(num)) {
       throw new Error(
-        'invalid duration value: Invalid number "' +
-          number +
-          '" before "' +
-          letter +
-          '"'
+        `invalid duration value: Invalid number "${number}" before "${letter}"`
       );
     }
-    object[type] = num;
+    (object as any)[type] = num;
   }
 
   return 1;

@@ -1,3 +1,4 @@
+/* eslint-disable class-methods-use-this */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -32,39 +33,31 @@ import { Timezone } from './timezone';
  * };
  *
  * parser.process(stringOrComponent);
- *
- * @class
- * @alias ICAL.ComponentParser
  */
 export class ComponentParser {
   /**
    * Creates a new ICAL.ComponentParser instance.
    *
-   * @param {Object=} options                   Component parser options
-   * @param {Boolean} options.parseEvent        Whether events should be parsed
-   * @param {Boolean} options.parseTimezeone    Whether timezones should be parsed
+   * @param options Component parser options
    */
-  constructor(options?) {
-    if (typeof options === 'undefined') {
-      options = {};
-    }
-
-    for (let [key, value] of Object.entries(options)) {
-      this[key] = value;
-    }
+  constructor(
+    options: {
+      /** Whether events should be parsed */
+      parseEvent?: boolean;
+      /** Whether timezones should be parsed */
+      parseTimezone?: boolean;
+    } = {}
+  ) {
+    Object.assign(this, options);
   }
 
   /**
    * When true, parse events
-   *
-   * @type {Boolean}
    */
   parseEvent = true;
 
   /**
    * When true, parse timezones
-   *
-   * @type {Boolean}
    */
   parseTimezone = true;
 
@@ -72,33 +65,28 @@ export class ComponentParser {
 
   /**
    * Fired when parsing is complete
-   * @callback
    */
-  oncomplete = /* c8 ignore next */ function () {};
+  oncomplete: () => void = /* c8 ignore next */ () => {};
 
   /**
    * Fired if an error occurs during parsing.
    *
    * @callback
-   * @param {Error} err details of error
+   * @param err details of error
    */
-  onerror = /* c8 ignore next */ function (err) {};
+  onerror = /* c8 ignore next */ (err: Error) => {};
 
   /**
    * Fired when a top level component (VTIMEZONE) is found
-   *
-   * @callback
-   * @param {ICAL.Timezone} component     Timezone object
+   * @param component     Timezone object
    */
-  ontimezone = /* c8 ignore next */ function (component) {};
+  ontimezone = /* c8 ignore next */ (component: Timezone) => {};
 
   /**
    * Fired when a top level component (VEVENT) is found.
-   *
-   * @callback
-   * @param {ICAL.Event} component    Top level component
+   * @param component    Top level component
    */
-  onevent = /* c8 ignore next */ function (component) {};
+  onevent = /* c8 ignore next */ (component: Event) => {};
 
   /**
    * Process a string or parse ical object.  This function itself will return
@@ -106,11 +94,11 @@ export class ComponentParser {
    *
    * Events must be registered prior to calling this method.
    *
-   * @param {ICAL.Component|String|Object} ical      The component to process,
-   *        either in its final form, as a jCal Object, or string representation
+   * @param ical The component to process, either in its final form, as a jCal
+   *    Object, or string representation
    */
-  process(ical) {
-    //TODO: this is sync now in the future we will have a incremental parser.
+  process(ical: Component | string | Record<string, any>) {
+    // TODO: this is sync now in the future we will have a incremental parser.
     if (typeof ical === 'string') {
       ical = parse(ical);
     }
@@ -119,9 +107,9 @@ export class ComponentParser {
       ical = new Component(ical);
     }
 
-    let components = ical.getAllSubcomponents();
+    const components = ical.getAllSubcomponents();
     let i = 0;
-    let len = components.length;
+    const len = components.length;
     let component;
 
     for (; i < len; i++) {
@@ -130,12 +118,12 @@ export class ComponentParser {
       switch (component.name) {
         case 'vtimezone':
           if (this.parseTimezone) {
-            let tzid = component.getFirstPropertyValue('tzid');
+            const tzid = component.getFirstPropertyValue('tzid');
             if (tzid) {
               this.ontimezone(
                 new Timezone({
-                  tzid: tzid,
-                  component: component
+                  tzid,
+                  component
                 })
               );
             }
@@ -151,7 +139,7 @@ export class ComponentParser {
       }
     }
 
-    //XXX: ideally we should do a "nextTick" here
+    // XXX: ideally we should do a "nextTick" here
     //     so in all cases this is actually async.
     this.oncomplete();
   }

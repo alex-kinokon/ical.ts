@@ -4,9 +4,10 @@
  * Portions Copyright (C) Philipp Kewisch */
 
 import { RecurIterator } from './recur_iterator';
+import type { WeekDay } from './time';
 import { Time } from './time';
 import { design } from './design';
-import { strictParseInt, clone } from './helpers';
+import { clone, strictParseInt } from './helpers';
 
 const VALID_DAY_NAMES = /^(SU|MO|TU|WE|TH|FR|SA)$/;
 const VALID_BYDAY_PART =
@@ -28,10 +29,8 @@ const REVERSE_DOW_MAP = Object.fromEntries(
 /**
  * Possible frequency values for the FREQ part
  * (YEARLY, MONTHLY, WEEKLY, DAILY, HOURLY, MINUTELY, SECONDLY)
- *
- * @typedef {String} frequencyValues
- * @memberof ICAL.Recur
  */
+export type FrequencyValue = typeof ALLOWED_FREQ[number];
 
 const ALLOWED_FREQ = [
   'SECONDLY',
@@ -41,7 +40,41 @@ const ALLOWED_FREQ = [
   'WEEKLY',
   'MONTHLY',
   'YEARLY'
-];
+] as const;
+
+/**
+ * An object with members of the recurrence
+ */
+export interface RecurData {
+  /** The frequency value */
+  freq?: FrequencyValue;
+  /** The INTERVAL value */
+  interval?: number;
+  /** The week start value */
+  wkst?: WeekDay;
+  /** The end of the recurrence set */
+  until?: Time;
+  /** The number of occurrences */
+  count?: number;
+  /** The seconds for the BYSECOND part */
+  bysecond?: number[];
+  /** The minutes for the BYMINUTE part */
+  byminute?: number[];
+  /** The hours for the BYHOUR part */
+  byhour?: number[];
+  /** The BYDAY values */
+  byday?: string[];
+  /** The days for the BYMONTHDAY part */
+  bymonthday?: number[];
+  /** The days for the BYYEARDAY part */
+  byyearday?: number[];
+  /** The weeks for the BYWEEKNO part */
+  byweekno?: number[];
+  /** The month for the BYMONTH part */
+  bymonth?: number[];
+  /** The positionals for the BYSETPOS part */
+  bysetpos?: number[];
+}
 
 /**
  * This class represents the "recur" value type, used for example by RRULE. It provides methods to
@@ -51,14 +84,16 @@ const ALLOWED_FREQ = [
  * @alias ICAL.Recur
  */
 export class Recur {
+  wrappedJSObject: Recur;
+
   /**
    * Creates a new {@link ICAL.Recur} instance from the passed string.
    *
-   * @param {String} string         The string to parse
-   * @return {ICAL.Recur}           The created recurrence instance
+   * @param string The string to parse
+   * @return The created recurrence instance
    */
-  static fromString(string) {
-    let data = this._stringToData(string, false);
+  static fromString(string: string): Recur {
+    const data = this._stringToData(string, false);
     return new Recur(data);
   }
 
@@ -66,23 +101,9 @@ export class Recur {
    * Creates a new {@link ICAL.Recur} instance using members from the passed
    * data object.
    *
-   * @param {Object} aData                              An object with members of the recurrence
-   * @param {ICAL.Recur.frequencyValues=} aData.freq    The frequency value
-   * @param {Number=} aData.interval                    The INTERVAL value
-   * @param {ICAL.Time.weekDay=} aData.wkst             The week start value
-   * @param {ICAL.Time=} aData.until                    The end of the recurrence set
-   * @param {Number=} aData.count                       The number of occurrences
-   * @param {Array.<Number>=} aData.bysecond            The seconds for the BYSECOND part
-   * @param {Array.<Number>=} aData.byminute            The minutes for the BYMINUTE part
-   * @param {Array.<Number>=} aData.byhour              The hours for the BYHOUR part
-   * @param {Array.<String>=} aData.byday               The BYDAY values
-   * @param {Array.<Number>=} aData.bymonthday          The days for the BYMONTHDAY part
-   * @param {Array.<Number>=} aData.byyearday           The days for the BYYEARDAY part
-   * @param {Array.<Number>=} aData.byweekno            The weeks for the BYWEEKNO part
-   * @param {Array.<Number>=} aData.bymonth             The month for the BYMONTH part
-   * @param {Array.<Number>=} aData.bysetpos            The positionals for the BYSETPOS part
+   * @param aData An object with members of the recurrence
    */
-  static fromData(aData) {
+  static fromData(aData: RecurData) {
     return new Recur(aData);
   }
 
@@ -91,40 +112,39 @@ export class Recur {
    * method.
    *
    * @private
-   * @param {String} string     The string to parse
-   * @param {Boolean} fmtIcal   If true, the string is considered to be an
-   *                              iCalendar string
-   * @return {ICAL.Recur}       The recurrence instance
+   * @param string The string to parse
+   * @param fmtIcal If true, the string is considered to be an iCalendar string
+   * @return The recurrence instance
    */
-  static _stringToData(string, fmtIcal) {
-    let dict = Object.create(null);
+  static _stringToData(string: string, fmtIcal: boolean): RecurData {
+    const dict: RecurData = Object.create(null);
 
     // split is slower in FF but fast enough.
     // v8 however this is faster then manual split?
-    let values = string.split(';');
-    let len = values.length;
+    const values = string.split(';');
+    const len = values.length;
 
     for (let i = 0; i < len; i++) {
-      let parts = values[i].split('=');
-      let ucname = parts[0].toUpperCase();
-      let lcname = parts[0].toLowerCase();
-      let name = fmtIcal ? lcname : ucname;
-      let value = parts[1];
+      const parts = values[i].split('=');
+      const ucname = parts[0].toUpperCase();
+      const lcname = parts[0].toLowerCase();
+      const name = fmtIcal ? lcname : ucname;
+      const [, value] = parts;
 
       if (ucname in partDesign) {
-        let partArr = value.split(',');
+        const partArr = value.split(',');
         let partArrIdx = 0;
-        let partArrLen = partArr.length;
+        const partArrLen = partArr.length;
 
         for (; partArrIdx < partArrLen; partArrIdx++) {
           partArr[partArrIdx] = partDesign[ucname](partArr[partArrIdx]);
         }
-        dict[name] = partArr.length == 1 ? partArr[0] : partArr;
+        (dict as any)[name] = partArr.length === 1 ? partArr[0] : partArr;
       } else if (ucname in optionDesign) {
         optionDesign[ucname](value, dict, fmtIcal);
       } else {
         // Don't swallow unknown values. Just set them as they are.
-        dict[lcname] = value;
+        (dict as any)[lcname] = value;
       }
     }
 
@@ -135,31 +155,29 @@ export class Recur {
    * Convert an ical representation of a day (SU, MO, etc..)
    * into a numeric value of that day.
    *
-   * @param {String} string     The iCalendar day name
-   * @param {ICAL.Time.weekDay=} aWeekStart
-   *        The week start weekday, defaults to SUNDAY
-   * @return {Number}           Numeric value of given day
+   * @param string     The iCalendar day name
+   * @param aWeekStart The week start weekday, defaults to SUNDAY
+   * @return           Numeric value of given day
    */
-  static icalDayToNumericDay(string, aWeekStart) {
-    //XXX: this is here so we can deal
+  static icalDayToNumericDay(string: string, aWeekStart?: WeekDay): number {
+    // XXX: this is here so we can deal
     //     with possibly invalid string values.
-    let firstDow = aWeekStart || Time.SUNDAY;
-    return ((DOW_MAP[string] - firstDow + 7) % 7) + 1;
+    const firstDow = aWeekStart || Time.SUNDAY;
+    return ((DOW_MAP[string as keyof typeof DOW_MAP] - firstDow + 7) % 7) + 1;
   }
 
   /**
    * Convert a numeric day value into its ical representation (SU, MO, etc..)
    *
-   * @param {Number} num        Numeric value of given day
-   * @param {ICAL.Time.weekDay=} aWeekStart
-   *        The week start weekday, defaults to SUNDAY
-   * @return {String}           The ICAL day value, e.g SU,MO,...
+   * @param num        Numeric value of given day
+   * @param aWeekStart The week start weekday, defaults to SUNDAY
+   * @return           The ICAL day value, e.g SU,MO,...
    */
-  static numericDayToIcalDay(num, aWeekStart) {
-    //XXX: this is here so we can deal with possibly invalid number values.
+  static numericDayToIcalDay(num: number, aWeekStart?: WeekDay): string {
+    // XXX: this is here so we can deal with possibly invalid number values.
     //     Also, this allows consistent mapping between day numbers and day
     //     names for external users.
-    let firstDow = aWeekStart || Time.SUNDAY;
+    const firstDow = aWeekStart || Time.SUNDAY;
     let dow = num + firstDow - Time.SUNDAY;
     if (dow > 7) {
       dow -= 7;
@@ -170,23 +188,9 @@ export class Recur {
   /**
    * Create a new instance of the Recur class.
    *
-   * @param {Object} data                               An object with members of the recurrence
-   * @param {ICAL.Recur.frequencyValues=} data.freq     The frequency value
-   * @param {Number=} data.interval                     The INTERVAL value
-   * @param {ICAL.Time.weekDay=} data.wkst              The week start value
-   * @param {ICAL.Time=} data.until                     The end of the recurrence set
-   * @param {Number=} data.count                        The number of occurrences
-   * @param {Array.<Number>=} data.bysecond             The seconds for the BYSECOND part
-   * @param {Array.<Number>=} data.byminute             The minutes for the BYMINUTE part
-   * @param {Array.<Number>=} data.byhour               The hours for the BYHOUR part
-   * @param {Array.<String>=} data.byday                The BYDAY values
-   * @param {Array.<Number>=} data.bymonthday           The days for the BYMONTHDAY part
-   * @param {Array.<Number>=} data.byyearday            The days for the BYYEARDAY part
-   * @param {Array.<Number>=} data.byweekno             The weeks for the BYWEEKNO part
-   * @param {Array.<Number>=} data.bymonth              The month for the BYMONTH part
-   * @param {Array.<Number>=} data.bysetpos             The positionals for the BYSETPOS part
+   * @param data An object with members of the recurrence
    */
-  constructor(data) {
+  constructor(data: RecurData) {
     this.wrappedJSObject = this;
     this.parts = {};
 
@@ -197,57 +201,43 @@ export class Recur {
 
   /**
    * An object holding the BY-parts of the recurrence rule
-   * @type {Object}
    */
-  parts = null;
+  parts!: object;
 
   /**
    * The interval value for the recurrence rule.
-   * @type {Number}
    */
   interval = 1;
 
   /**
    * The week start day
-   *
-   * @type {ICAL.Time.weekDay}
-   * @default ICAL.Time.MONDAY
    */
-  wkst = Time.MONDAY;
+  wkst: WeekDay = Time.MONDAY;
 
   /**
    * The end of the recurrence
-   * @type {?ICAL.Time}
    */
-  until = null;
+  until?: Time;
 
   /**
    * The maximum number of occurrences
-   * @type {?Number}
    */
-  count = null;
+  count?: number;
 
   /**
    * The frequency value.
-   * @type {ICAL.Recur.frequencyValues}
    */
-  freq = null;
+  freq?: FrequencyValue;
 
   /**
    * The class identifier.
-   * @constant
-   * @type {String}
-   * @default "icalrecur"
    */
-  icalclass = 'icalrecur';
+  readonly icalclass = 'icalrecur';
 
   /**
    * The type name, to be used in the jCal object.
-   * @constant
-   * @type {String}
-   * @default "recur"
    */
-  icaltype = 'recur';
+  readonly icaltype = 'recur';
 
   /**
    * Create a new iterator for this recurrence rule. The passed start date
@@ -265,10 +255,10 @@ export class Recur {
    *   console.log(next.toString());
    * }
    *
-   * @param {ICAL.Time} aStart        The item's start date
-   * @return {ICAL.RecurIterator}     The recurrence iterator
+   * @param aStart The item's start date
+   * @return       The recurrence iterator
    */
-  iterator(aStart) {
+  iterator(aStart: Time): RecurIterator {
     return new RecurIterator({
       rule: this,
       dtstart: aStart
@@ -278,18 +268,18 @@ export class Recur {
   /**
    * Returns a clone of the recurrence object.
    *
-   * @return {ICAL.Recur}      The cloned object
+   * @return The cloned object
    */
-  clone() {
+  clone(): Recur {
     return new Recur(this.toJSON());
   }
 
   /**
    * Checks if the current rule is finite, i.e. has a count or until part.
    *
-   * @return {Boolean}        True, if the rule is finite
+   * @return True, if the rule is finite
    */
-  isFinite() {
+  isFinite(): boolean {
     return !!(this.count || this.until);
   }
 
@@ -297,9 +287,9 @@ export class Recur {
    * Checks if the current rule has a count part, and not limited by an until
    * part.
    *
-   * @return {Boolean}        True, if the rule is by count
+   * @return True, if the rule is by count
    */
-  isByCount() {
+  isByCount(): boolean {
     return !!(this.count && !this.until);
   }
 
@@ -308,11 +298,11 @@ export class Recur {
    * in the sense of {@link ICAL.Component}, but a part of the recurrence
    * rule, i.e. BYMONTH.
    *
-   * @param {String} aType            The name of the component part
-   * @param {Array|String} aValue     The component value
+   * @param aType  The name of the component part
+   * @param aValue The component value
    */
-  addComponent(aType, aValue) {
-    let ucname = aType.toUpperCase();
+  addComponent(aType: string, aValue: string | any[]) {
+    const ucname = aType.toUpperCase();
     if (ucname in this.parts) {
       this.parts[ucname].push(aValue);
     } else {
@@ -323,21 +313,21 @@ export class Recur {
   /**
    * Sets the component value for the given by-part.
    *
-   * @param {String} aType        The component part name
-   * @param {Array} aValues       The component values
+   * @param aType        The component part name
+   * @param aValues      The component values
    */
-  setComponent(aType, aValues) {
+  setComponent(aType: string, aValues: any[]) {
     this.parts[aType.toUpperCase()] = aValues.slice();
   }
 
   /**
    * Gets (a copy) of the requested component value.
    *
-   * @param {String} aType        The component part name
-   * @return {Array}              The component part value
+   * @param aType The component part name
+   * @return      The component part value
    */
-  getComponent(aType) {
-    let ucname = aType.toUpperCase();
+  getComponent(aType: string): any[] {
+    const ucname = aType.toUpperCase();
     return ucname in this.parts ? this.parts[ucname].slice() : [];
   }
 
@@ -351,12 +341,12 @@ export class Recur {
    * occurrences manually, see the example on the
    * {@link ICAL.Recur#iterator iterator} method.
    *
-   * @param {ICAL.Time} aStartTime        The start of the event series
-   * @param {ICAL.Time} aRecurrenceId     The date of the last occurrence
-   * @return {ICAL.Time}                  The next occurrence after
+   * @param aStartTime    The start of the event series
+   * @param aRecurrenceId The date of the last occurrence
+   * @return              The next occurrence after
    */
-  getNextOccurrence(aStartTime, aRecurrenceId) {
-    let iter = this.iterator(aStartTime);
+  getNextOccurrence(aStartTime: Time, aRecurrenceId: Time): Time {
+    const iter = this.iterator(aStartTime);
     let next;
 
     do {
@@ -373,25 +363,11 @@ export class Recur {
   /**
    * Sets up the current instance using members from the passed data object.
    *
-   * @param {Object} data                               An object with members of the recurrence
-   * @param {ICAL.Recur.frequencyValues=} data.freq     The frequency value
-   * @param {Number=} data.interval                     The INTERVAL value
-   * @param {ICAL.Time.weekDay=} data.wkst              The week start value
-   * @param {ICAL.Time=} data.until                     The end of the recurrence set
-   * @param {Number=} data.count                        The number of occurrences
-   * @param {Array.<Number>=} data.bysecond             The seconds for the BYSECOND part
-   * @param {Array.<Number>=} data.byminute             The minutes for the BYMINUTE part
-   * @param {Array.<Number>=} data.byhour               The hours for the BYHOUR part
-   * @param {Array.<String>=} data.byday                The BYDAY values
-   * @param {Array.<Number>=} data.bymonthday           The days for the BYMONTHDAY part
-   * @param {Array.<Number>=} data.byyearday            The days for the BYYEARDAY part
-   * @param {Array.<Number>=} data.byweekno             The weeks for the BYWEEKNO part
-   * @param {Array.<Number>=} data.bymonth              The month for the BYMONTH part
-   * @param {Array.<Number>=} data.bysetpos             The positionals for the BYSETPOS part
+   * @param data An object with members of the recurrence
    */
-  fromData(data) {
-    for (let key in data) {
-      let uckey = key.toUpperCase();
+  fromData(data: RecurData) {
+    for (const key in data) {
+      const uckey = key.toUpperCase();
 
       if (uckey in partDesign) {
         if (Array.isArray(data[key])) {
@@ -419,10 +395,9 @@ export class Recur {
 
   /**
    * The jCal representation of this recurrence type.
-   * @return {Object}
    */
-  toJSON() {
-    let res = Object.create(null);
+  toJSON(): object {
+    const res = Object.create(null);
     res.freq = this.freq;
 
     if (this.count) {
@@ -433,7 +408,7 @@ export class Recur {
       res.interval = this.interval;
     }
 
-    for (let [k, kparts] of Object.entries(this.parts)) {
+    for (const [k, kparts] of Object.entries(this.parts)) {
       if (Array.isArray(kparts) && kparts.length == 1) {
         res[k.toLowerCase()] = kparts[0];
       } else {
@@ -452,9 +427,8 @@ export class Recur {
 
   /**
    * The string representation of this recurrence rule.
-   * @return {String}
    */
-  toString() {
+  toString(): string {
     // TODO retain order
     let str = 'FREQ=' + this.freq;
     if (this.count) {
@@ -463,7 +437,7 @@ export class Recur {
     if (this.interval > 1) {
       str += ';INTERVAL=' + this.interval;
     }
-    for (let [k, v] of Object.entries(this.parts)) {
+    for (const [k, v] of Object.entries(this.parts)) {
       str += ';' + k + '=' + v;
     }
     if (this.until) {
@@ -476,7 +450,7 @@ export class Recur {
   }
 }
 
-function parseNumericValue(type, min, max, value) {
+function parseNumericValue(type, min: number, max: number, value: number) {
   let result = value;
 
   if (value[0] === '+') {
@@ -496,8 +470,10 @@ function parseNumericValue(type, min, max, value) {
   return result;
 }
 
-const optionDesign = {
-  FREQ: function (value, dict, fmtIcal) {
+const optionDesign: {
+  [key: string]: (value: string, dict: RecurData, fmtIcal: boolean) => void;
+} = {
+  FREQ(value, dict, fmtIcal) {
     // yes this is actually equal or faster then regex.
     // upside here is we can enumerate the valid values.
     if (ALLOWED_FREQ.indexOf(value) !== -1) {
@@ -513,11 +489,11 @@ const optionDesign = {
     }
   },
 
-  COUNT: function (value, dict, fmtIcal) {
+  COUNT(value, dict, fmtIcal) {
     dict.count = strictParseInt(value);
   },
 
-  INTERVAL: function (value, dict, fmtIcal) {
+  INTERVAL(value, dict, fmtIcal) {
     dict.interval = strictParseInt(value);
     if (dict.interval < 1) {
       // 0 or negative values are not allowed, some engines seem to generate
@@ -526,7 +502,7 @@ const optionDesign = {
     }
   },
 
-  UNTIL: function (value, dict, fmtIcal) {
+  UNTIL(value, dict, fmtIcal) {
     if (value.length > 10) {
       dict.until = design.icalendar.value['date-time'].fromICAL(value);
     } else {
@@ -537,7 +513,7 @@ const optionDesign = {
     }
   },
 
-  WKST: function (value, dict, fmtIcal) {
+  WKST(value, dict, fmtIcal) {
     if (VALID_DAY_NAMES.test(value)) {
       dict.wkst = Recur.icalDayToNumericDay(value);
     } else {
@@ -550,7 +526,7 @@ const partDesign = {
   BYSECOND: parseNumericValue.bind(undefined, 'BYSECOND', 0, 60),
   BYMINUTE: parseNumericValue.bind(undefined, 'BYMINUTE', 0, 59),
   BYHOUR: parseNumericValue.bind(undefined, 'BYHOUR', 0, 23),
-  BYDAY: function (value) {
+  BYDAY: function (value: string) {
     if (VALID_BYDAY_PART.test(value)) {
       return value;
     } else {

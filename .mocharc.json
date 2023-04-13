@@ -1,5 +1,5 @@
 {
-  "require": ["./tools/babel-register.js"],
+  "require": ["./tools/mocha-register.js"],
   "extension": ["js", "ts"],
   "ui": "tdd",
   "reporter": "spec"

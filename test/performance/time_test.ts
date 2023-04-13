@@ -1,9 +1,9 @@
 import { suite } from 'mocha';
-import { perfTest, ICAL } from '../support/helper';
+import { ICAL, perfTest } from '../support/helper';
 
-suite('ICAL.Time', function () {
-  perfTest('subtract date', function () {
-    let time = new ICAL.Time({
+suite('ICAL.Time', () => {
+  perfTest('subtract date', () => {
+    const time = new ICAL.Time({
       year: 2012,
       month: 1,
       day: 1,
@@ -11,7 +11,7 @@ suite('ICAL.Time', function () {
       minute: 3
     });
 
-    let time2 = new ICAL.Time({
+    const time2 = new ICAL.Time({
       year: 2012,
       month: 10,
       day: 1,
@@ -22,14 +22,14 @@ suite('ICAL.Time', function () {
     time.subtractDate(time2);
   });
 
-  let dur = new ICAL.Duration({
+  const dur = new ICAL.Duration({
     days: 3,
     hour: 3,
     minutes: 3
   });
 
-  perfTest('add duration', function () {
-    let time = new ICAL.Time({
+  perfTest('add duration', () => {
+    const time = new ICAL.Time({
       year: 2012,
       month: 1,
       day: 32,
@@ -42,8 +42,8 @@ suite('ICAL.Time', function () {
     time.year; // eslint-disable-line no-unused-expressions
   });
 
-  perfTest('create and clone time', function () {
-    let time = new ICAL.Time({
+  perfTest('create and clone time', () => {
+    const time = new ICAL.Time({
       year: 2012,
       month: 1,
       day: 32,
@@ -61,26 +61,26 @@ suite('ICAL.Time', function () {
     time.clone();
   });
 
-  let _time = new ICAL.Time({
+  const _time = new ICAL.Time({
     year: 2012,
     month: 1,
     day: 32,
     seconds: 1
   });
 
-  perfTest('toUnixTime', function () {
+  perfTest('toUnixTime', () => {
     _time.toUnixTime();
   });
 
-  perfTest('fromUnixTime', function () {
+  perfTest('fromUnixTime', () => {
     _time.fromUnixTime(1234567890);
   });
 
-  perfTest('dayOfWeek', function () {
+  perfTest('dayOfWeek', () => {
     _time.dayOfWeek();
   });
 
-  perfTest('weekNumber', function () {
+  perfTest('weekNumber', () => {
     _time.weekNumber();
   });
 });

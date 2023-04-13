@@ -1,20 +1,20 @@
 import { suite, suiteSetup } from 'mocha';
 import { loadSample } from '../support/helper';
-import { perfTest, ICAL } from '../support/helper';
+import { ICAL, perfTest } from '../support/helper';
 
-suite('ICAL parse/stringify', function () {
+suite('ICAL parse/stringify', () => {
   let icsData;
   let parsed;
-  suiteSetup(async function () {
+  suiteSetup(async () => {
     icsData = await loadSample('parserv2.ics');
     parsed = ICAL.parse(icsData);
   });
 
-  perfTest('#parse', function () {
+  perfTest('#parse', () => {
     ICAL.parse(icsData);
   });
 
-  perfTest('#stringify', function () {
+  perfTest('#stringify', () => {
     ICAL.stringify(parsed);
   });
 });

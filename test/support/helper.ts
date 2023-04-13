@@ -3,12 +3,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import * as ICAL from '../../lib/ical/';
-import chai, { assert } from 'chai';
-import Benchmark from 'benchmark';
 import { URL } from 'url';
 import { readFile, readdir } from 'fs/promises';
+import chai, { assert } from 'chai';
+import Benchmark from 'benchmark';
 import { suiteSetup, suiteTeardown, test } from 'mocha';
+import * as ICAL from '../../lib/ical/';
 
 /* eslint-enable no-var, no-redeclare*/
 
@@ -18,14 +18,14 @@ export function hasProperties(given, props, msg?) {
   msg = typeof msg === 'undefined' ? '' : msg + ': ';
 
   if (props instanceof Array) {
-    props.forEach(function (prop) {
+    props.forEach(prop => {
       assert.ok(
         prop in given,
         msg + 'given should have "' + prop + '" property'
       );
     });
   } else {
-    for (let key in props) {
+    for (const key in props) {
       assert.deepEqual(
         given[key],
         props[key],
@@ -45,9 +45,9 @@ let _timezones;
  */
 export async function registerTimezone(zoneName: string) {
   function register(icsData) {
-    let parsed = ICAL.parse(icsData);
-    let calendar = new ICAL.Component(parsed);
-    let vtimezone = calendar.getFirstSubcomponent('vtimezone');
+    const parsed = ICAL.parse(icsData);
+    const calendar = new ICAL.Component(parsed);
+    const vtimezone = calendar.getFirstSubcomponent('vtimezone');
 
     ICAL.TimezoneService.register(vtimezone);
   }
@@ -56,14 +56,14 @@ export async function registerTimezone(zoneName: string) {
     _timezones = Object.create(null);
   }
 
-  let ics = _timezones[zoneName];
+  const ics = _timezones[zoneName];
 
   if (ics) {
     return register(ics);
   } else {
-    let path = 'samples/timezones/' + zoneName + '.ics';
-    let data = await load(path);
-    let zone = register(data);
+    const path = 'samples/timezones/' + zoneName + '.ics';
+    const data = await load(path);
+    const zone = register(data);
     _timezones[zone] = data;
     return zone;
   }
@@ -78,12 +78,12 @@ export async function registerTimezone(zoneName: string) {
  * need them.
  */
 export function useTimezones(...allZones: string[]) {
-  suiteTeardown(function () {
+  suiteTeardown(() => {
     // to ensure clean tests
     ICAL.TimezoneService.reset();
   });
 
-  suiteSetup(async function () {
+  suiteSetup(async () => {
     // By default, Z/UTC/GMT are already registered
     if (ICAL.TimezoneService.count > 3) {
       throw new Error('Can only register zones once');
@@ -109,11 +109,11 @@ export async function loadSample(file: string) {
   return load('samples/' + file);
 }
 
-let icalPerf = {};
+const icalPerf = {};
 function perfTestDefine(this: Mocha.Context, scope, done) {
   this.timeout(0);
-  let benchSuite = new Benchmark.Suite();
-  let currentTest = this.test!;
+  const benchSuite = new Benchmark.Suite();
+  const currentTest = this.test!;
   benchSuite.add('latest', scope.bind(this));
 
   Object.entries(icalPerf).forEach(([key, ical]) => {
@@ -124,7 +124,7 @@ function perfTestDefine(this: Mocha.Context, scope, done) {
 
   currentTest._benchCycle = [];
 
-  benchSuite.on('cycle', function (event) {
+  benchSuite.on('cycle', event => {
     currentTest._benchCycle.push(String(event.target));
   });
 
@@ -154,13 +154,14 @@ perfTest.skip = function (name: string, scope: () => void) {
 
 export const mochaHooks = {
   async beforeAll() {
-    let benchmark = new URL('../../tools/benchmark', $import.meta.url).pathname;
-    let files = await readdir(benchmark);
-    for (let file of files) {
-      let match = file.match(/^ical_(\w+).c?js$/);
+    const benchmark = new URL('../../tools/benchmark', $import.meta.url)
+      .pathname;
+    const files = await readdir(benchmark);
+    for (const file of files) {
+      const match = file.match(/^ical_(\w+).c?js$/);
       if (match) {
         try {
-          let module = await import(`../../tools/benchmark/${file}`);
+          const module = await import(`../../tools/benchmark/${file}`);
           if (module.default) {
             icalPerf[match[1]] = module.default;
           } else {

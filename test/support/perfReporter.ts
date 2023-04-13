@@ -9,7 +9,7 @@ const {
 } = Mocha.Runner.constants;
 
 const { Base } = Mocha.reporters;
-const color = Base.color;
+const { color } = Base;
 
 // this reporter outputs test results, indenting two spaces per suite
 class MyReporter extends Base {
@@ -36,7 +36,7 @@ class MyReporter extends Base {
       .on(EVENT_TEST_PASS, test => {
         // Test#fullTitle() returns the suite name(s)
         // prepended to the test title
-        let fmt =
+        const fmt =
           this.indent() +
           color('checkmark', '  ' + Base.symbols.ok) +
           color('pass', ' %s') +

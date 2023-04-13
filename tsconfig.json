@@ -1,10 +1,12 @@
 {
   "compilerOptions": {
     "declaration": true,
-    "target": "ESNext",
-    "moduleResolution": "node",
+    "target": "esnext",
+    "moduleResolution": "bundler",
     "esModuleInterop": true,
     "strict": true,
-    "noImplicitAny": true
+    "noImplicitAny": true,
+    "stripInternal": true,
+    "useDefineForClassFields": true
   }
 }
