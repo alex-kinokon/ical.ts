@@ -1,0 +1,383 @@
+<!DOCTYPE html><html class="default" lang="en"><head><meta charSet="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>RecurExpansion | ical.js - v2.0.0</title><meta name="description" content="Documentation for ical.js"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="../assets/style.css"/><link rel="stylesheet" href="../assets/highlight.css"/><script defer src="../assets/main.js"></script><script async src="../assets/search.js" id="search-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os"</script><header class="tsd-page-toolbar">
+<div class="tsd-toolbar-contents container">
+<div class="table-cell" id="tsd-search" data-base="..">
+<div class="field"><label for="tsd-search-field" class="tsd-widget tsd-toolbar-icon search no-caption"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M15.7824 13.833L12.6666 10.7177C12.5259 10.5771 12.3353 10.499 12.1353 10.499H11.6259C12.4884 9.39596 13.001 8.00859 13.001 6.49937C13.001 2.90909 10.0914 0 6.50048 0C2.90959 0 0 2.90909 0 6.49937C0 10.0896 2.90959 12.9987 6.50048 12.9987C8.00996 12.9987 9.39756 12.4863 10.5008 11.6239V12.1332C10.5008 12.3332 10.5789 12.5238 10.7195 12.6644L13.8354 15.7797C14.1292 16.0734 14.6042 16.0734 14.8948 15.7797L15.7793 14.8954C16.0731 14.6017 16.0731 14.1267 15.7824 13.833ZM6.50048 10.499C4.29094 10.499 2.50018 8.71165 2.50018 6.49937C2.50018 4.29021 4.28781 2.49976 6.50048 2.49976C8.71001 2.49976 10.5008 4.28708 10.5008 6.49937C10.5008 8.70852 8.71314 10.499 6.50048 10.499Z" fill="var(--color-text)"></path></svg></label><input type="text" id="tsd-search-field" aria-label="Search"/></div>
+<div class="field">
+<div id="tsd-toolbar-links"></div></div>
+<ul class="results">
+<li class="state loading">Preparing search index...</li>
+<li class="state failure">The search index is not available</li></ul><a href="../index.html" class="title">ical.js - v2.0.0</a></div>
+<div class="table-cell" id="tsd-widgets"><a href="#" class="tsd-widget tsd-toolbar-icon menu no-caption" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="2" fill="var(--color-text)"></rect><rect x="1" y="7" width="14" height="2" fill="var(--color-text)"></rect><rect x="1" y="11" width="14" height="2" fill="var(--color-text)"></rect></svg></a></div></div></header>
+<div class="container container-main">
+<div class="col-content">
+<div class="tsd-page-title">
+<ul class="tsd-breadcrumb">
+<li><a href="../modules.html">ical.js</a></li>
+<li><a href="RecurExpansion.html">RecurExpansion</a></li></ul>
+<h1>Class RecurExpansion</h1></div>
+<section class="tsd-panel tsd-comment">
+<div class="tsd-comment tsd-typography"><p>Primary class for expanding recurring rules.  Can take multiple rrules, rdates, exdate(s) and
+iterate (in order) over each next occurrence.</p>
+<p>Once initialized this class can also be serialized saved and continue iteration from the last
+point.</p>
+<p>NOTE: it is intended that this class is to be used with ICAL.Event which handles recurrence
+exceptions.</p>
+
+<h3>Example</h3><pre><code class="language-ts"><span class="hl-7">// assuming event is a parsed ical component</span><br/><span class="hl-3">var</span><span class="hl-1"> </span><span class="hl-0">event</span><span class="hl-1">;</span><br/><br/><span class="hl-3">var</span><span class="hl-1"> </span><span class="hl-0">expand</span><span class="hl-1"> = </span><span class="hl-3">new</span><span class="hl-1"> </span><span class="hl-5">ICAL</span><span class="hl-1">.</span><span class="hl-2">RecurExpansion</span><span class="hl-1">({</span><br/><span class="hl-1">  </span><span class="hl-0">component:</span><span class="hl-1"> </span><span class="hl-0">event</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-0">dtstart:</span><span class="hl-1"> </span><span class="hl-0">event</span><span class="hl-1">.</span><span class="hl-2">getFirstPropertyValue</span><span class="hl-1">(</span><span class="hl-8">&#39;dtstart&#39;</span><span class="hl-1">)</span><br/><span class="hl-1">});</span><br/><br/><span class="hl-7">// remember there are infinite rules so it is a good idea to limit the scope of the iterations</span><br/><span class="hl-7">// then resume later on.</span><br/><br/><span class="hl-7">// next is always an ICAL.Time or null</span><br/><span class="hl-3">var</span><span class="hl-1"> </span><span class="hl-0">next</span><span class="hl-1">;</span><br/><br/><span class="hl-9">while</span><span class="hl-1"> (</span><span class="hl-0">someCondition</span><span class="hl-1"> &amp;&amp; (</span><span class="hl-0">next</span><span class="hl-1"> = </span><span class="hl-0">expand</span><span class="hl-1">.</span><span class="hl-2">next</span><span class="hl-1">())) {</span><br/><span class="hl-1">  </span><span class="hl-7">// do something with next</span><br/><span class="hl-1">}</span><br/><br/><span class="hl-7">// save instance for later</span><br/><span class="hl-3">var</span><span class="hl-1"> </span><span class="hl-0">json</span><span class="hl-1"> = </span><span class="hl-5">JSON</span><span class="hl-1">.</span><span class="hl-2">stringify</span><span class="hl-1">(</span><span class="hl-0">expand</span><span class="hl-1">);</span><br/><br/><span class="hl-7">//...</span><br/><br/><span class="hl-7">// NOTE: if the component&#39;s properties have changed you will need to rebuild the class and start</span><br/><span class="hl-7">// over. This only works when the component&#39;s recurrence info is the same.</span><br/><span class="hl-3">var</span><span class="hl-1"> </span><span class="hl-0">expand</span><span class="hl-1"> = </span><span class="hl-3">new</span><span class="hl-1"> </span><span class="hl-5">ICAL</span><span class="hl-1">.</span><span class="hl-2">RecurExpansion</span><span class="hl-1">(</span><span class="hl-5">JSON</span><span class="hl-1">.</span><span class="hl-2">parse</span><span class="hl-1">(</span><span class="hl-0">json</span><span class="hl-1">));</span>
+</code></pre>
+
+<h3>Alias</h3><p>ICAL.RecurExpansion</p>
+</div></section>
+<section class="tsd-panel tsd-hierarchy">
+<h4>Hierarchy</h4>
+<ul class="tsd-hierarchy">
+<li><span class="target">RecurExpansion</span></li></ul></section><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/alex-kinokon/ical.ts/blob/e6be01d/lib/ical/recur_expansion.ts#L59">recur_expansion.ts:59</a></li></ul></aside>
+<section class="tsd-panel-group tsd-index-group">
+<section class="tsd-panel tsd-index-panel">
+<details class="tsd-index-content tsd-index-accordion" open><summary class="tsd-accordion-summary tsd-index-summary">
+<h5 class="tsd-index-heading uppercase" role="button" aria-expanded="false" tabIndex=0><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1.5 5.50969L8 11.6609L14.5 5.50969L12.5466 3.66086L8 7.96494L3.45341 3.66086L1.5 5.50969Z" fill="var(--color-text)"></path></svg> Index</h5></summary>
+<div class="tsd-accordion-details">
+<section class="tsd-index-section">
+<h3 class="tsd-index-heading">Constructors</h3>
+<div class="tsd-index-list"><a href="RecurExpansion.html#constructor" class="tsd-index-link tsd-kind-constructor tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><rect fill="var(--color-icon-background)" stroke="#4D7FFF" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="12" id="icon-512-path"></rect><path d="M11.898 16.1201C11.098 16.1201 10.466 15.8961 10.002 15.4481C9.53803 15.0001 9.30603 14.3841 9.30603 13.6001V9.64012C9.30603 8.85612 9.53803 8.24012 10.002 7.79212C10.466 7.34412 11.098 7.12012 11.898 7.12012C12.682 7.12012 13.306 7.34812 13.77 7.80412C14.234 8.25212 14.466 8.86412 14.466 9.64012H13.386C13.386 9.14412 13.254 8.76412 12.99 8.50012C12.734 8.22812 12.37 8.09212 11.898 8.09212C11.426 8.09212 11.054 8.22412 10.782 8.48812C10.518 8.75212 10.386 9.13212 10.386 9.62812V13.6001C10.386 14.0961 10.518 14.4801 10.782 14.7521C11.054 15.0161 11.426 15.1481 11.898 15.1481C12.37 15.1481 12.734 15.0161 12.99 14.7521C13.254 14.4801 13.386 14.0961 13.386 13.6001H14.466C14.466 14.3761 14.234 14.9921 13.77 15.4481C13.306 15.8961 12.682 16.1201 11.898 16.1201Z" fill="var(--color-text)" id="icon-512-text"></path></svg><span>constructor</span></a>
+</div></section>
+<section class="tsd-index-section">
+<h3 class="tsd-index-heading">Properties</h3>
+<div class="tsd-index-list"><a href="RecurExpansion.html#complete" class="tsd-index-link tsd-kind-property tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><rect fill="var(--color-icon-background)" stroke="#FF984D" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="12" id="icon-1024-path"></rect><path d="M9.354 16V7.24H12.174C12.99 7.24 13.638 7.476 14.118 7.948C14.606 8.412 14.85 9.036 14.85 9.82C14.85 10.604 14.606 11.232 14.118 11.704C13.638 12.168 12.99 12.4 12.174 12.4H10.434V16H9.354ZM10.434 11.428H12.174C12.646 11.428 13.022 11.284 13.302 10.996C13.59 10.7 13.734 10.308 13.734 9.82C13.734 9.324 13.59 8.932 13.302 8.644C13.022 8.356 12.646 8.212 12.174 8.212H10.434V11.428Z" fill="var(--color-text)" id="icon-1024-text"></path></svg><span>complete</span></a>
+<a href="RecurExpansion.html#dtstart" class="tsd-index-link tsd-kind-property tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg><span>dtstart</span></a>
+<a href="RecurExpansion.html#exDate" class="tsd-index-link tsd-kind-property tsd-parent-kind-class tsd-is-private"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg><span>ex<wbr/>Date</span></a>
+<a href="RecurExpansion.html#exDateInc" class="tsd-index-link tsd-kind-property tsd-parent-kind-class tsd-is-private"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg><span>ex<wbr/>Date<wbr/>Inc</span></a>
+<a href="RecurExpansion.html#exDates" class="tsd-index-link tsd-kind-property tsd-parent-kind-class tsd-is-private"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg><span>ex<wbr/>Dates</span></a>
+<a href="RecurExpansion.html#last" class="tsd-index-link tsd-kind-property tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg><span>last</span></a>
+<a href="RecurExpansion.html#ruleDate" class="tsd-index-link tsd-kind-property tsd-parent-kind-class tsd-is-private"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg><span>rule<wbr/>Date</span></a>
+<a href="RecurExpansion.html#ruleDateInc" class="tsd-index-link tsd-kind-property tsd-parent-kind-class tsd-is-private"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg><span>rule<wbr/>Date<wbr/>Inc</span></a>
+<a href="RecurExpansion.html#ruleDates" class="tsd-index-link tsd-kind-property tsd-parent-kind-class tsd-is-private"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg><span>rule<wbr/>Dates</span></a>
+<a href="RecurExpansion.html#ruleIterators" class="tsd-index-link tsd-kind-property tsd-parent-kind-class tsd-is-private"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg><span>rule<wbr/>Iterators</span></a>
+</div></section>
+<section class="tsd-index-section">
+<h3 class="tsd-index-heading">Methods</h3>
+<div class="tsd-index-list"><a href="RecurExpansion.html#_extractDates" class="tsd-index-link tsd-kind-method tsd-parent-kind-class tsd-is-private"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><rect fill="var(--color-icon-background)" stroke="#FF4DB8" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="12" id="icon-2048-path"></rect><path d="M9.162 16V7.24H10.578L11.514 10.072C11.602 10.328 11.674 10.584 11.73 10.84C11.794 11.088 11.842 11.28 11.874 11.416C11.906 11.28 11.954 11.088 12.018 10.84C12.082 10.584 12.154 10.324 12.234 10.06L13.122 7.24H14.538V16H13.482V12.82C13.482 12.468 13.49 12.068 13.506 11.62C13.53 11.172 13.558 10.716 13.59 10.252C13.622 9.78 13.654 9.332 13.686 8.908C13.726 8.476 13.762 8.1 13.794 7.78L12.366 12.16H11.334L9.894 7.78C9.934 8.092 9.97 8.456 10.002 8.872C10.042 9.28 10.078 9.716 10.11 10.18C10.142 10.636 10.166 11.092 10.182 11.548C10.206 12.004 10.218 12.428 10.218 12.82V16H9.162Z" fill="var(--color-text)" id="icon-2048-text"></path></svg><span>_extract<wbr/>Dates</span></a>
+<a href="RecurExpansion.html#_init" class="tsd-index-link tsd-kind-method tsd-parent-kind-class tsd-is-private"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>_init</span></a>
+<a href="RecurExpansion.html#_nextExDay" class="tsd-index-link tsd-kind-method tsd-parent-kind-class tsd-is-private"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>_next<wbr/>Ex<wbr/>Day</span></a>
+<a href="RecurExpansion.html#_nextRecurrenceIter" class="tsd-index-link tsd-kind-method tsd-parent-kind-class tsd-is-private"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>_next<wbr/>Recurrence<wbr/>Iter</span></a>
+<a href="RecurExpansion.html#_nextRuleDay" class="tsd-index-link tsd-kind-method tsd-parent-kind-class tsd-is-private"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>_next<wbr/>Rule<wbr/>Day</span></a>
+<a href="RecurExpansion.html#fromData" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>from<wbr/>Data</span></a>
+<a href="RecurExpansion.html#next" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>next</span></a>
+<a href="RecurExpansion.html#toJSON" class="tsd-index-link tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>toJSON</span></a>
+</div></section></div></details></section></section>
+<section class="tsd-panel-group tsd-member-group">
+<h2>Constructors</h2>
+<section class="tsd-panel tsd-member tsd-kind-constructor tsd-parent-kind-class"><a id="constructor" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><span>constructor</span><a href="#constructor" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none" id="icon-anchor-a"></path><path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" id="icon-anchor-b"></path><path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" id="icon-anchor-c"></path></svg></a></h3>
+<ul class="tsd-signatures tsd-kind-constructor tsd-parent-kind-class">
+<li class="tsd-signature tsd-anchor-link" id="constructor.new_RecurExpansion">new <wbr/>Recur<wbr/>Expansion<span class="tsd-signature-symbol">(</span>options<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">RecurExpansionOptions</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="RecurExpansion.html" class="tsd-signature-type" data-tsd-kind="Class">RecurExpansion</a><a href="#constructor.new_RecurExpansion" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
+<li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Creates a new ICAL.RecurExpansion instance.</p>
+<p>The options object can be filled with the specified initial values. It can also contain
+additional members, as a result of serializing a previous expansion state, as shown in the
+example.</p>
+
+<h3>Alias</h3><p>ICAL.RecurExpansion</p>
+</div>
+<div class="tsd-parameters">
+<h4 class="tsd-parameters-title">Parameters</h4>
+<ul class="tsd-parameter-list">
+<li>
+<h5>options: <span class="tsd-signature-type">RecurExpansionOptions</span></h5>
+<div class="tsd-comment tsd-typography"><p>Recurrence expansion options</p>
+</div></li></ul></div>
+<h4 class="tsd-returns-title">Returns <a href="RecurExpansion.html" class="tsd-signature-type" data-tsd-kind="Class">RecurExpansion</a></h4><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/alex-kinokon/ical.ts/blob/e6be01d/lib/ical/recur_expansion.ts#L74">recur_expansion.ts:74</a></li></ul></aside></li></ul></section></section>
+<section class="tsd-panel-group tsd-member-group">
+<h2>Properties</h2>
+<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="complete" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><span>complete</span><a href="#complete" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
+<div class="tsd-signature">complete<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> = false</span></div>
+<div class="tsd-comment tsd-typography"><p>True when iteration is fully completed.</p>
+</div><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/alex-kinokon/ical.ts/blob/e6be01d/lib/ical/recur_expansion.ts#L83">recur_expansion.ts:83</a></li></ul></aside></section>
+<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="dtstart" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><span>dtstart</span><a href="#dtstart" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
+<div class="tsd-signature">dtstart<span class="tsd-signature-symbol">:</span> <a href="Time.html" class="tsd-signature-type" data-tsd-kind="Class">Time</a></div>
+<div class="tsd-comment tsd-typography"><p>Start date of recurring rules.</p>
+</div><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/alex-kinokon/ical.ts/blob/e6be01d/lib/ical/recur_expansion.ts#L123">recur_expansion.ts:123</a></li></ul></aside></section>
+<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private"><a id="exDate" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>ex<wbr/>Date</span><a href="#exDate" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
+<div class="tsd-signature">ex<wbr/>Date<span class="tsd-signature-symbol">:</span> <a href="Time.html" class="tsd-signature-type" data-tsd-kind="Class">Time</a></div>
+<div class="tsd-comment tsd-typography"><p>Current negative date.</p>
+</div><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/alex-kinokon/ical.ts/blob/e6be01d/lib/ical/recur_expansion.ts#L113">recur_expansion.ts:113</a></li></ul></aside></section>
+<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private"><a id="exDateInc" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>ex<wbr/>Date<wbr/>Inc</span><a href="#exDateInc" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
+<div class="tsd-signature">ex<wbr/>Date<wbr/>Inc<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 0</span></div>
+<div class="tsd-comment tsd-typography"><p>Current position in exDates array</p>
+</div><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/alex-kinokon/ical.ts/blob/e6be01d/lib/ical/recur_expansion.ts#L108">recur_expansion.ts:108</a></li></ul></aside></section>
+<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private"><a id="exDates" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>ex<wbr/>Dates</span><a href="#exDates" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
+<div class="tsd-signature">ex<wbr/>Dates<span class="tsd-signature-symbol">:</span> <a href="Time.html" class="tsd-signature-type" data-tsd-kind="Class">Time</a><span class="tsd-signature-symbol">[]</span></div>
+<div class="tsd-comment tsd-typography"><p>Array of exdate instances.</p>
+</div><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/alex-kinokon/ical.ts/blob/e6be01d/lib/ical/recur_expansion.ts#L61">recur_expansion.ts:61</a></li>
+<li>Defined in <a href="https://github.com/alex-kinokon/ical.ts/blob/e6be01d/lib/ical/recur_expansion.ts#L98">recur_expansion.ts:98</a></li></ul></aside></section>
+<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class"><a id="last" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><span>last</span><a href="#last" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
+<div class="tsd-signature">last<span class="tsd-signature-symbol">:</span> <a href="Time.html" class="tsd-signature-type" data-tsd-kind="Class">Time</a></div>
+<div class="tsd-comment tsd-typography"><p>Last expanded time</p>
+</div><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/alex-kinokon/ical.ts/blob/e6be01d/lib/ical/recur_expansion.ts#L128">recur_expansion.ts:128</a></li></ul></aside></section>
+<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private"><a id="ruleDate" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>rule<wbr/>Date</span><a href="#ruleDate" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
+<div class="tsd-signature">rule<wbr/>Date<span class="tsd-signature-symbol">:</span> <a href="Time.html" class="tsd-signature-type" data-tsd-kind="Class">Time</a></div>
+<div class="tsd-comment tsd-typography"><p>Current additional date.</p>
+</div><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/alex-kinokon/ical.ts/blob/e6be01d/lib/ical/recur_expansion.ts#L118">recur_expansion.ts:118</a></li></ul></aside></section>
+<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private"><a id="ruleDateInc" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>rule<wbr/>Date<wbr/>Inc</span><a href="#ruleDateInc" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
+<div class="tsd-signature">rule<wbr/>Date<wbr/>Inc<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 0</span></div>
+<div class="tsd-comment tsd-typography"><p>Current position in ruleDates array.</p>
+</div><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/alex-kinokon/ical.ts/blob/e6be01d/lib/ical/recur_expansion.ts#L103">recur_expansion.ts:103</a></li></ul></aside></section>
+<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private"><a id="ruleDates" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>rule<wbr/>Dates</span><a href="#ruleDates" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
+<div class="tsd-signature">rule<wbr/>Dates<span class="tsd-signature-symbol">:</span> <a href="Time.html" class="tsd-signature-type" data-tsd-kind="Class">Time</a><span class="tsd-signature-symbol">[]</span></div>
+<div class="tsd-comment tsd-typography"><p>Array of rdate instances.</p>
+</div><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/alex-kinokon/ical.ts/blob/e6be01d/lib/ical/recur_expansion.ts#L60">recur_expansion.ts:60</a></li>
+<li>Defined in <a href="https://github.com/alex-kinokon/ical.ts/blob/e6be01d/lib/ical/recur_expansion.ts#L93">recur_expansion.ts:93</a></li></ul></aside></section>
+<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private"><a id="ruleIterators" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>rule<wbr/>Iterators</span><a href="#ruleIterators" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
+<div class="tsd-signature">rule<wbr/>Iterators<span class="tsd-signature-symbol">:</span> <a href="RecurIterator.html" class="tsd-signature-type" data-tsd-kind="Class">RecurIterator</a><span class="tsd-signature-symbol">[]</span></div>
+<div class="tsd-comment tsd-typography"><p>Array of rrule iterators.</p>
+</div><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/alex-kinokon/ical.ts/blob/e6be01d/lib/ical/recur_expansion.ts#L88">recur_expansion.ts:88</a></li></ul></aside></section></section>
+<section class="tsd-panel-group tsd-member-group">
+<h2>Methods</h2>
+<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-private"><a id="_extractDates" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>_extract<wbr/>Dates</span><a href="#_extractDates" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
+<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-private">
+<li class="tsd-signature tsd-anchor-link" id="_extractDates._extractDates-1">_extract<wbr/>Dates<span class="tsd-signature-symbol">(</span>component<span class="tsd-signature-symbol">: </span><a href="Component.html" class="tsd-signature-type" data-tsd-kind="Class">Component</a>, propertyName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="Time.html" class="tsd-signature-type" data-tsd-kind="Class">Time</a><span class="tsd-signature-symbol">[]</span><a href="#_extractDates._extractDates-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
+<li class="tsd-description"><code class="tsd-tag ts-flagPrivate">Private</code> 
+<div class="tsd-comment tsd-typography"><p>Extract all dates from the properties in the given component. The
+properties will be filtered by the property name.</p>
+
+<h3>Returns</h3><p>The extracted dates.</p>
+</div>
+<div class="tsd-parameters">
+<h4 class="tsd-parameters-title">Parameters</h4>
+<ul class="tsd-parameter-list">
+<li>
+<h5>component: <a href="Component.html" class="tsd-signature-type" data-tsd-kind="Class">Component</a></h5>
+<div class="tsd-comment tsd-typography"><p>The component to search in</p>
+</div></li>
+<li>
+<h5>propertyName: <span class="tsd-signature-type">string</span></h5>
+<div class="tsd-comment tsd-typography"><p>The property name to search for</p>
+</div></li></ul></div>
+<h4 class="tsd-returns-title">Returns <a href="Time.html" class="tsd-signature-type" data-tsd-kind="Class">Time</a><span class="tsd-signature-symbol">[]</span></h4><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/alex-kinokon/ical.ts/blob/e6be01d/lib/ical/recur_expansion.ts#L295">recur_expansion.ts:295</a></li></ul></aside></li></ul></section>
+<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-private"><a id="_init" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>_init</span><a href="#_init" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
+<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-private">
+<li class="tsd-signature tsd-anchor-link" id="_init._init-1">_init<span class="tsd-signature-symbol">(</span>component<span class="tsd-signature-symbol">: </span><a href="Component.html" class="tsd-signature-type" data-tsd-kind="Class">Component</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#_init._init-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
+<li class="tsd-description"><code class="tsd-tag ts-flagPrivate">Private</code> 
+<div class="tsd-comment tsd-typography"><p>Initialize the recurrence expansion.</p>
+</div>
+<div class="tsd-parameters">
+<h4 class="tsd-parameters-title">Parameters</h4>
+<ul class="tsd-parameter-list">
+<li>
+<h5>component: <a href="Component.html" class="tsd-signature-type" data-tsd-kind="Class">Component</a></h5>
+<div class="tsd-comment tsd-typography"><p>The component to initialize from.</p>
+</div></li></ul></div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/alex-kinokon/ical.ts/blob/e6be01d/lib/ical/recur_expansion.ts#L317">recur_expansion.ts:317</a></li></ul></aside></li></ul></section>
+<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-private"><a id="_nextExDay" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>_next<wbr/>Ex<wbr/>Day</span><a href="#_nextExDay" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
+<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-private">
+<li class="tsd-signature tsd-anchor-link" id="_nextExDay._nextExDay-1">_next<wbr/>Ex<wbr/>Day<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#_nextExDay._nextExDay-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
+<li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Advance to the next exdate</p>
+</div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/alex-kinokon/ical.ts/blob/e6be01d/lib/ical/recur_expansion.ts#L388">recur_expansion.ts:388</a></li></ul></aside></li></ul></section>
+<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-private"><a id="_nextRecurrenceIter" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>_next<wbr/>Recurrence<wbr/>Iter</span><a href="#_nextRecurrenceIter" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
+<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-private">
+<li class="tsd-signature tsd-anchor-link" id="_nextRecurrenceIter._nextRecurrenceIter-1">_next<wbr/>Recurrence<wbr/>Iter<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><a href="RecurIterator.html" class="tsd-signature-type" data-tsd-kind="Class">RecurIterator</a><a href="#_nextRecurrenceIter._nextRecurrenceIter-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
+<li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Find and return the recurrence rule with the most recent event and
+return it.</p>
+
+<h3>Returns</h3><p>Found iterator.</p>
+</div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><a href="RecurIterator.html" class="tsd-signature-type" data-tsd-kind="Class">RecurIterator</a></h4><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/alex-kinokon/ical.ts/blob/e6be01d/lib/ical/recur_expansion.ts#L405">recur_expansion.ts:405</a></li></ul></aside></li></ul></section>
+<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-private"><a id="_nextRuleDay" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><code class="tsd-tag ts-flagPrivate">Private</code> <span>_next<wbr/>Rule<wbr/>Day</span><a href="#_nextRuleDay" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
+<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-private">
+<li class="tsd-signature tsd-anchor-link" id="_nextRuleDay._nextRuleDay-1">_next<wbr/>Rule<wbr/>Day<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#_nextRuleDay._nextRuleDay-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
+<li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Advance to the next rule date</p>
+</div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/alex-kinokon/ical.ts/blob/e6be01d/lib/ical/recur_expansion.ts#L395">recur_expansion.ts:395</a></li></ul></aside></li></ul></section>
+<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="fromData" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><span>from<wbr/>Data</span><a href="#fromData" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
+<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+<li class="tsd-signature tsd-anchor-link" id="fromData.fromData-1">from<wbr/>Data<span class="tsd-signature-symbol">(</span>options<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">RecurExpansionOptions</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span><a href="#fromData.fromData-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
+<li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Initialize the recurrence expansion from the data object. The options
+object may also contain additional members, see the
+ICAL.RecurExpansion constructor for more details.</p>
+</div>
+<div class="tsd-parameters">
+<h4 class="tsd-parameters-title">Parameters</h4>
+<ul class="tsd-parameter-list">
+<li>
+<h5>options: <span class="tsd-signature-type">RecurExpansionOptions</span></h5>
+<div class="tsd-comment tsd-typography"><p>Recurrence expansion options</p>
+</div></li></ul></div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/alex-kinokon/ical.ts/blob/e6be01d/lib/ical/recur_expansion.ts#L142">recur_expansion.ts:142</a></li></ul></aside></li></ul></section>
+<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="next" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><span>next</span><a href="#next" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
+<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+<li class="tsd-signature tsd-anchor-link" id="next.next-1">next<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="Time.html" class="tsd-signature-type" data-tsd-kind="Class">Time</a><a href="#next.next-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
+<li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Retrieve the next occurrence in the series.</p>
+</div>
+<h4 class="tsd-returns-title">Returns <a href="Time.html" class="tsd-signature-type" data-tsd-kind="Class">Time</a></h4><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/alex-kinokon/ical.ts/blob/e6be01d/lib/ical/recur_expansion.ts#L188">recur_expansion.ts:188</a></li></ul></aside></li></ul></section>
+<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class"><a id="toJSON" class="tsd-anchor"></a>
+<h3 class="tsd-anchor-link"><span>toJSON</span><a href="#toJSON" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></h3>
+<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+<li class="tsd-signature tsd-anchor-link" id="toJSON.toJSON-1">toJSON<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Record</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><a href="#toJSON.toJSON-1" aria-label="Permalink" class="tsd-anchor-icon"><svg class="icon icon-tabler icon-tabler-link" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-anchor-a"></use><use href="#icon-anchor-b"></use><use href="#icon-anchor-c"></use></svg></a></li>
+<li class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Converts object into a serialize-able format. This format can be passed
+back into the expansion to resume iteration.</p>
+</div>
+<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Record</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></h4><aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/alex-kinokon/ical.ts/blob/e6be01d/lib/ical/recur_expansion.ts#L261">recur_expansion.ts:261</a></li></ul></aside></li></ul></section></section></div>
+<div class="col-sidebar">
+<div class="page-menu">
+<div class="tsd-navigation settings">
+<details class="tsd-index-accordion"><summary class="tsd-accordion-summary">
+<h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4.93896 8.531L12 15.591L19.061 8.531L16.939 6.409L12 11.349L7.06098 6.409L4.93896 8.531Z" fill="var(--color-text)"></path></svg>Settings</h3></summary>
+<div class="tsd-accordion-details">
+<div class="tsd-filter-visibility">
+<h4 class="uppercase">Member Visibility</h4><form>
+<ul id="tsd-filter-options">
+<li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li>
+<li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-private" name="private"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Private</span></label></li>
+<li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li>
+<li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-external" name="external"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>External</span></label></li></ul></form></div>
+<div class="tsd-theme-toggle">
+<h4 class="uppercase">Theme</h4><select id="theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div>
+<details open class="tsd-index-accordion tsd-page-navigation"><summary class="tsd-accordion-summary">
+<h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4.93896 8.531L12 15.591L19.061 8.531L16.939 6.409L12 11.349L7.06098 6.409L4.93896 8.531Z" fill="var(--color-text)"></path></svg>On This Page</h3></summary>
+<div class="tsd-accordion-details">
+<ul>
+<li><a href="#constructor" class="tsd-kind-constructor tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-512-path"></use><use href="#icon-512-text"></use></svg><span>constructor</span></a></li>
+<li><a href="#complete" class="tsd-kind-property tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg><span>complete</span></a></li>
+<li><a href="#dtstart" class="tsd-kind-property tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg><span>dtstart</span></a></li>
+<li><a href="#exDate" class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg><span>ex<wbr/>Date</span></a></li>
+<li><a href="#exDateInc" class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg><span>ex<wbr/>Date<wbr/>Inc</span></a></li>
+<li><a href="#exDates" class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg><span>ex<wbr/>Dates</span></a></li>
+<li><a href="#last" class="tsd-kind-property tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg><span>last</span></a></li>
+<li><a href="#ruleDate" class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg><span>rule<wbr/>Date</span></a></li>
+<li><a href="#ruleDateInc" class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg><span>rule<wbr/>Date<wbr/>Inc</span></a></li>
+<li><a href="#ruleDates" class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg><span>rule<wbr/>Dates</span></a></li>
+<li><a href="#ruleIterators" class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-1024-path"></use><use href="#icon-1024-text"></use></svg><span>rule<wbr/>Iterators</span></a></li>
+<li><a href="#_extractDates" class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>_extract<wbr/>Dates</span></a></li>
+<li><a href="#_init" class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>_init</span></a></li>
+<li><a href="#_nextExDay" class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>_next<wbr/>Ex<wbr/>Day</span></a></li>
+<li><a href="#_nextRecurrenceIter" class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>_next<wbr/>Recurrence<wbr/>Iter</span></a></li>
+<li><a href="#_nextRuleDay" class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>_next<wbr/>Rule<wbr/>Day</span></a></li>
+<li><a href="#fromData" class="tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>from<wbr/>Data</span></a></li>
+<li><a href="#next" class="tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>next</span></a></li>
+<li><a href="#toJSON" class="tsd-kind-method tsd-parent-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-2048-path"></use><use href="#icon-2048-text"></use></svg><span>toJSON</span></a></li></ul></div></details></div>
+<div class="site-menu">
+<nav class="tsd-navigation"><a href="../modules.html"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-namespace)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6" id="icon-4-path"></rect><path d="M9.33 16V7.24H10.77L13.446 14.74C13.43 14.54 13.41 14.296 13.386 14.008C13.37 13.712 13.354 13.404 13.338 13.084C13.33 12.756 13.326 12.448 13.326 12.16V7.24H14.37V16H12.93L10.266 8.5C10.282 8.692 10.298 8.936 10.314 9.232C10.33 9.52 10.342 9.828 10.35 10.156C10.366 10.476 10.374 10.784 10.374 11.08V16H9.33Z" fill="var(--color-text)" id="icon-4-text"></path></svg><span>ical.js -<wbr/> v2.0.0</span></a>
+<ul class="tsd-small-nested-navigation">
+<li>
+<details class="tsd-index-accordion tsd-kind-namespace" data-key="helpers"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4.93896 8.531L12 15.591L19.061 8.531L16.939 6.409L12 11.349L7.06098 6.409L4.93896 8.531Z" fill="var(--color-text)"></path></svg><a href="../modules/helpers.html"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4-path"></use><use href="#icon-4-text"></use></svg><span>helpers</span></a></summary>
+<div class="tsd-accordion-details">
+<ul class="tsd-nested-navigation">
+<li><a href="../functions/helpers.binsearchInsert.html" class="tsd-kind-function tsd-parent-kind-namespace"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-function)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6" id="icon-64-path"></rect><path d="M9.39 16V7.24H14.55V8.224H10.446V11.128H14.238V12.112H10.47V16H9.39Z" fill="var(--color-text)" id="icon-64-text"></path></svg><span>binsearch<wbr/>Insert</span></a></li>
+<li><a href="../functions/helpers.clone.html" class="tsd-kind-function tsd-parent-kind-namespace"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg><span>clone</span></a></li>
+<li><a href="../functions/helpers.foldline.html" class="tsd-kind-function tsd-parent-kind-namespace"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg><span>foldline</span></a></li>
+<li><a href="../functions/helpers.formatClassType.html" class="tsd-kind-function tsd-parent-kind-namespace"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg><span>format<wbr/>Class<wbr/>Type</span></a></li>
+<li><a href="../functions/helpers.isStrictlyNaN.html" class="tsd-kind-function tsd-parent-kind-namespace"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg><span>is<wbr/>Strictly<wbr/>NaN</span></a></li>
+<li><a href="../functions/helpers.pad2.html" class="tsd-kind-function tsd-parent-kind-namespace"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg><span>pad2</span></a></li>
+<li><a href="../functions/helpers.strictParseInt.html" class="tsd-kind-function tsd-parent-kind-namespace"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg><span>strict<wbr/>Parse<wbr/>Int</span></a></li>
+<li><a href="../functions/helpers.trunc.html" class="tsd-kind-function tsd-parent-kind-namespace"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg><span>trunc</span></a></li>
+<li><a href="../functions/helpers.unescapedIndexOf.html" class="tsd-kind-function tsd-parent-kind-namespace"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg><span>unescaped<wbr/>Index<wbr/>Of</span></a></li>
+<li><a href="../functions/helpers.updateTimezones.html" class="tsd-kind-function tsd-parent-kind-namespace"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg><span>update<wbr/>Timezones</span></a></li></ul></div></details></li>
+<li>
+<details class="tsd-index-accordion tsd-kind-namespace" data-key="parse"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4.93896 8.531L12 15.591L19.061 8.531L16.939 6.409L12 11.349L7.06098 6.409L4.93896 8.531Z" fill="var(--color-text)"></path></svg><a href="../modules/parse.html"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4-path"></use><use href="#icon-4-text"></use></svg><span>parse</span></a></summary>
+<div class="tsd-accordion-details">
+<ul class="tsd-nested-navigation">
+<li><a href="../variables/parse.ParserError.html" class="tsd-kind-variable tsd-parent-kind-namespace"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-variable)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6" id="icon-32-path"></rect><path d="M11.106 16L8.85 7.24H9.966L11.454 13.192C11.558 13.608 11.646 13.996 11.718 14.356C11.79 14.708 11.842 14.976 11.874 15.16C11.906 14.976 11.954 14.708 12.018 14.356C12.09 13.996 12.178 13.608 12.282 13.192L13.758 7.24H14.85L12.582 16H11.106Z" fill="var(--color-text)" id="icon-32-text"></path></svg><span>Parser<wbr/>Error</span></a></li>
+<li><a href="../functions/parse._eachLine.html" class="tsd-kind-function tsd-parent-kind-namespace tsd-is-private"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg><span>_each<wbr/>Line</span></a></li>
+<li><a href="../functions/parse._handleContentLine.html" class="tsd-kind-function tsd-parent-kind-namespace tsd-is-private"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg><span>_handle<wbr/>Content<wbr/>Line</span></a></li>
+<li><a href="../functions/parse._parseMultiValue.html" class="tsd-kind-function tsd-parent-kind-namespace tsd-is-private"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg><span>_parse<wbr/>Multi<wbr/>Value</span></a></li>
+<li><a href="../functions/parse._parseParameters.html" class="tsd-kind-function tsd-parent-kind-namespace tsd-is-private"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg><span>_parse<wbr/>Parameters</span></a></li>
+<li><a href="../functions/parse._parseValue.html" class="tsd-kind-function tsd-parent-kind-namespace tsd-is-private"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg><span>_parse<wbr/>Value</span></a></li>
+<li><a href="../functions/parse._rfc6868Escape.html" class="tsd-kind-function tsd-parent-kind-namespace"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg><span>_rfc6868<wbr/>Escape</span></a></li>
+<li><a href="../functions/parse.component.html" class="tsd-kind-function tsd-parent-kind-namespace"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg><span>component</span></a></li>
+<li><a href="../functions/parse.property.html" class="tsd-kind-function tsd-parent-kind-namespace"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg><span>property</span></a></li></ul></div></details></li>
+<li>
+<details class="tsd-index-accordion tsd-kind-namespace" data-key="stringify"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4.93896 8.531L12 15.591L19.061 8.531L16.939 6.409L12 11.349L7.06098 6.409L4.93896 8.531Z" fill="var(--color-text)"></path></svg><a href="../modules/stringify.html"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4-path"></use><use href="#icon-4-text"></use></svg><span>stringify</span></a></summary>
+<div class="tsd-accordion-details">
+<ul class="tsd-nested-navigation">
+<li><a href="../functions/stringify._rfc6868Unescape.html" class="tsd-kind-function tsd-parent-kind-namespace"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg><span>_rfc6868<wbr/>Unescape</span></a></li>
+<li><a href="../functions/stringify.component.html" class="tsd-kind-function tsd-parent-kind-namespace"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg><span>component</span></a></li>
+<li><a href="../functions/stringify.multiValue.html" class="tsd-kind-function tsd-parent-kind-namespace"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg><span>multi<wbr/>Value</span></a></li>
+<li><a href="../functions/stringify.property.html" class="tsd-kind-function tsd-parent-kind-namespace"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg><span>property</span></a></li>
+<li><a href="../functions/stringify.propertyValue.html" class="tsd-kind-function tsd-parent-kind-namespace"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg><span>property<wbr/>Value</span></a></li>
+<li><a href="../functions/stringify.value.html" class="tsd-kind-function tsd-parent-kind-namespace"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg><span>value</span></a></li></ul></div></details></li>
+<li><a href="Binary.html" class="tsd-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-class)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6" id="icon-128-path"></rect><path d="M11.898 16.1201C11.098 16.1201 10.466 15.8961 10.002 15.4481C9.53803 15.0001 9.30603 14.3841 9.30603 13.6001V9.64012C9.30603 8.85612 9.53803 8.24012 10.002 7.79212C10.466 7.34412 11.098 7.12012 11.898 7.12012C12.682 7.12012 13.306 7.34812 13.77 7.80412C14.234 8.25212 14.466 8.86412 14.466 9.64012H13.386C13.386 9.14412 13.254 8.76412 12.99 8.50012C12.734 8.22812 12.37 8.09212 11.898 8.09212C11.426 8.09212 11.054 8.22412 10.782 8.48812C10.518 8.75212 10.386 9.13212 10.386 9.62812V13.6001C10.386 14.0961 10.518 14.4801 10.782 14.7521C11.054 15.0161 11.426 15.1481 11.898 15.1481C12.37 15.1481 12.734 15.0161 12.99 14.7521C13.254 14.4801 13.386 14.0961 13.386 13.6001H14.466C14.466 14.3761 14.234 14.9921 13.77 15.4481C13.306 15.8961 12.682 16.1201 11.898 16.1201Z" fill="var(--color-text)" id="icon-128-text"></path></svg><span>Binary</span></a></li>
+<li><a href="Component.html" class="tsd-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-128-path"></use><use href="#icon-128-text"></use></svg><span>Component</span></a></li>
+<li><a href="ComponentParser.html" class="tsd-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-128-path"></use><use href="#icon-128-text"></use></svg><span>Component<wbr/>Parser</span></a></li>
+<li><a href="Duration.html" class="tsd-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-128-path"></use><use href="#icon-128-text"></use></svg><span>Duration</span></a></li>
+<li><a href="Event.html" class="tsd-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-128-path"></use><use href="#icon-128-text"></use></svg><span>Event</span></a></li>
+<li><a href="Period.html" class="tsd-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-128-path"></use><use href="#icon-128-text"></use></svg><span>Period</span></a></li>
+<li><a href="Property.html" class="tsd-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-128-path"></use><use href="#icon-128-text"></use></svg><span>Property</span></a></li>
+<li><a href="Recur.html" class="tsd-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-128-path"></use><use href="#icon-128-text"></use></svg><span>Recur</span></a></li>
+<li><a href="RecurExpansion.html" class="current tsd-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-128-path"></use><use href="#icon-128-text"></use></svg><span>Recur<wbr/>Expansion</span></a></li>
+<li><a href="RecurIterator.html" class="tsd-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-128-path"></use><use href="#icon-128-text"></use></svg><span>Recur<wbr/>Iterator</span></a></li>
+<li><a href="Time.html" class="tsd-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-128-path"></use><use href="#icon-128-text"></use></svg><span>Time</span></a></li>
+<li><a href="Timezone.html" class="tsd-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-128-path"></use><use href="#icon-128-text"></use></svg><span>Timezone</span></a></li>
+<li><a href="UtcOffset.html" class="tsd-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-128-path"></use><use href="#icon-128-text"></use></svg><span>Utc<wbr/>Offset</span></a></li>
+<li><a href="VCardTime.html" class="tsd-kind-class"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-128-path"></use><use href="#icon-128-text"></use></svg><span>VCard<wbr/>Time</span></a></li>
+<li><a href="../variables/TimezoneService.html" class="tsd-kind-variable"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-32-path"></use><use href="#icon-32-text"></use></svg><span>Timezone<wbr/>Service</span></a></li>
+<li><a href="../variables/config.html" class="tsd-kind-variable"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-32-path"></use><use href="#icon-32-text"></use></svg><span>config</span></a></li>
+<li><a href="../variables/design.html" class="tsd-kind-variable"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-32-path"></use><use href="#icon-32-text"></use></svg><span>design</span></a></li>
+<li><a href="../functions/parse-1.html" class="tsd-kind-function"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg><span>parse</span></a></li>
+<li><a href="../functions/stringify-1.html" class="tsd-kind-function"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-64-path"></use><use href="#icon-64-text"></use></svg><span>stringify</span></a></li></ul></nav></div></div></div>
+<div class="tsd-generator">
+<p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></div>
+<div class="overlay"></div></body></html>
