@@ -1,4 +1,4 @@
-# ical.js - Javascript parser for iCalendar, jCal, vCard, jCard.
+# ical.ts - TypeScript parser for iCalendar, jCal, vCard, jCard.
 
 [📖 Documentations](https://alex-kinokon.github.io/ical.ts/modules.html)
 
@@ -37,7 +37,7 @@ You can install ICAL.js via [npm](https://www.npmjs.com/), if you would like to 
 npm install ical.js
 ```
 
-ICAL.js has no dependencies and is written in modern JavaScript. It should work in all versions of Node.js and modern browsers.
+ICAL.js has no dependencies and is written in modern TypeScript. It should work in all versions of Node.js and modern browsers.
 
 ## Timezones
 
@@ -49,7 +49,7 @@ files, you'll need to also import `ical.timezones.js`.
 
 For a few guides with code samples, please check out
 [the wiki](https://github.com/kewisch/ical.js/wiki). If you prefer,
-full API documentation [is available here](http://kewisch.github.io/ical.js/api/).
+full API documentation [is available here](https://alex-kinokon.github.io/ical.ts/modules.html).
 If you are missing anything, please don't hesitate to create an issue.
 
 ## Developing
