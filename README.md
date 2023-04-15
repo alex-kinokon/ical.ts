@@ -1,5 +1,7 @@
 # ical.ts - TypeScript parser for iCalendar, jCal, vCard, jCard.
 
+A fork of https://github.com/kewisch/ical.js.
+
 [📖 Documentations](https://alex-kinokon.github.io/ical.ts/modules.html)
 
 [![CI](https://github.com/alex-kinokon/ical.ts/actions/workflows/ci.yml/badge.svg)](https://github.com/alex-kinokon/ical.ts/actions/workflows/ci.yml)
