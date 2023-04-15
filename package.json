@@ -12,6 +12,15 @@
     "type": "git",
     "url": "https://github.com/kewisch/ical.js.git"
   },
+  "exports": {
+    ".": {
+      "default": "./dist/ical.cjs",
+      "import": "./dist/ical.js"
+    },
+    "./timezones": {
+      "default": "./dist/ical.timezones.js"
+    }
+  },
   "keywords": [
     "calendar",
     "iCalendar",
