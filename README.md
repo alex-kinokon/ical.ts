@@ -1,5 +1,10 @@
 # ical.js - Javascript parser for iCalendar, jCal, vCard, jCard.
 
+[📖 Documentations](https://alex-kinokon.github.io/ical.ts/modules.html)
+
+[![CI](https://github.com/alex-kinokon/ical.ts/actions/workflows/ci.yml/badge.svg)](https://github.com/alex-kinokon/ical.ts/actions/workflows/ci.yml)
+[![Coverage Status](https://coveralls.io/repos/github/alex-kinokon/ical.ts/badge.svg?branch=main)](https://coveralls.io/github/alex-kinokon/ical.ts?branch=main)
+
 This is a library to parse the formats defined in the following rfcs and their extensions:
 
 - [rfc 5545](http://tools.ietf.org/html/rfc5545) (iCalendar)
@@ -12,8 +17,6 @@ Project](http://www.mozilla.org/projects/calendar/), but the library has been wr
 in mind. This library enables you to do all sorts of cool experiments with calendar data and the
 web. Most algorithms here were taken from [libical](https://github.com/libical/libical). If you are
 bugfixing this library, please check if the fix can be upstreamed to libical.
-
-![Build Status](https://github.com/kewisch/ical.js/workflows/Checkin/badge.svg) [![Coverage Status](https://coveralls.io/repos/kewisch/ical.js/badge.svg)](https://coveralls.io/r/kewisch/ical.js) [![npm version](https://badge.fury.io/js/ical.js.svg)](http://badge.fury.io/js/ical.js) [![CDNJS](https://img.shields.io/cdnjs/v/ical.js.svg)](https://cdnjs.com/libraries/ical.js)
 
 ## Sandbox and Validator
 
