@@ -8,3 +8,4 @@ tools/vzic/
 tools/tzdb/
 tools/libical/
 coverage/
+docs

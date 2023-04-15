@@ -32,7 +32,7 @@ export function updateTimezones(vcal: Component) {
   // Store vtimezone subcomponents in an object reference by tzid.
   // Store properties from everything else in another array
   const allsubs = vcal.getAllSubcomponents();
-  const properties = [];
+  let properties = [];
   const vtimezones = {};
   for (i = 0; i < allsubs.length; i++) {
     if (allsubs[i].name === 'vtimezone') {
