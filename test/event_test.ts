@@ -291,7 +291,7 @@ suite('ICAL.Event', () => {
         // Run the following tests twice, the second time around the results
         // will be cached.
         for (let i = 0; i < 2; i++) {
-          const suffix = i == 1 ? ' (cached)' : '';
+          const suffix = i === 1 ? ' (cached)' : '';
           const details = subject.getOccurrenceDetails(occurs);
 
           assert.ok(details, 'has details' + suffix);

@@ -235,7 +235,7 @@ export class RecurIterator {
     }
 
     // BYYEARDAY may only appear in YEARLY rules
-    if (this.rule.freq != 'YEARLY' && 'BYYEARDAY' in parts) {
+    if (this.rule.freq !== 'YEARLY' && 'BYYEARDAY' in parts) {
       throw new Error('BYYEARDAY may only appear in YEARLY rules');
     }
 
@@ -410,7 +410,7 @@ export class RecurIterator {
     );
 
     // TODO is this valid?
-    if (this.last.compare(before) == 0) {
+    if (this.last.compare(before) === 0) {
       throw new Error(
         'Same occurrence found twice, protecting ' +
           'you from death by recursion'
@@ -714,7 +714,7 @@ export class RecurIterator {
   next_month() {
     let data_valid = 1;
 
-    if (this.next_hour() == 0) {
+    if (this.next_hour() === 0) {
       return data_valid;
     }
 
@@ -861,11 +861,11 @@ export class RecurIterator {
   }
 
   next_year() {
-    if (this.next_hour() == 0) {
+    if (this.next_hour() === 0) {
       return 0;
     }
 
-    if (++this.days_index == this.days.length) {
+    if (++this.days_index === this.days.length) {
       this.days_index = 0;
       do {
         this.increment_year(this.rule.interval);
@@ -973,7 +973,7 @@ export class RecurIterator {
       this.last.month %= 12;
       this.last.month++;
 
-      if (years != 0) {
+      if (years !== 0) {
         this.increment_year(years);
       }
     }
@@ -987,7 +987,7 @@ export class RecurIterator {
     this.last[aDateAttr] += inc;
     const nextunit = trunc(this.last[aDateAttr] / aFactor);
     this.last[aDateAttr] %= aFactor;
-    if (nextunit != 0) {
+    if (nextunit !== 0) {
       this['increment_' + aNextIncrement](nextunit);
     }
   }
@@ -1053,11 +1053,11 @@ export class RecurIterator {
 
     const partCount = Object.keys(parts).length;
 
-    if (partCount == 0) {
+    if (partCount === 0) {
       const t1 = this.dtstart.clone();
       t1.year = this.last.year;
       this.days.push(t1.dayOfYear());
-    } else if (partCount == 1 && 'BYMONTH' in parts) {
+    } else if (partCount === 1 && 'BYMONTH' in parts) {
       for (const month of this.by_data.BYMONTH) {
         const t2 = this.dtstart.clone();
         t2.year = aYear;
@@ -1144,7 +1144,7 @@ export class RecurIterator {
             const first_matching_day = ((dow + 7 - first_dow) % 7) + 1;
             const last_matching_day = daysInMonth - ((last_dow + 7 - dow) % 7);
 
-            if (pos == 0) {
+            if (pos === 0) {
               for (let day = first_matching_day; day <= daysInMonth; day += 7) {
                 this.days.push(doy_offset + day);
               }
@@ -1167,7 +1167,7 @@ export class RecurIterator {
       // Return dates in order of occurrence (1,2,3,...) instead
       // of by groups of weekdays (1,8,15,...,2,9,16,...).
       this.days.sort((a, b) => a - b); // Comparator function allows to sort numbers.
-    } else if (partCount == 2 && 'BYDAY' in parts && 'BYMONTHDAY' in parts) {
+    } else if (partCount === 2 && 'BYDAY' in parts && 'BYMONTHDAY' in parts) {
       const expandedDays = this.expand_by_day(aYear);
 
       for (const day of expandedDays) {
@@ -1177,7 +1177,7 @@ export class RecurIterator {
         }
       }
     } else if (
-      partCount == 3 &&
+      partCount === 3 &&
       'BYDAY' in parts &&
       'BYMONTHDAY' in parts &&
       'BYMONTH' in parts
@@ -1206,13 +1206,13 @@ export class RecurIterator {
         }
       }
     } else if (
-      partCount == 3 &&
+      partCount === 3 &&
       'BYDAY' in parts &&
       'BYWEEKNO' in parts &&
       'BYMONTHDAY' in parts
     ) {
       // TODO unimplemted in libical
-    } else if (partCount == 1 && 'BYYEARDAY' in parts) {
+    } else if (partCount === 1 && 'BYYEARDAY' in parts) {
       this.days = this.days.concat(this.by_data.BYYEARDAY);
     } else {
       this.days = [];
@@ -1243,7 +1243,7 @@ export class RecurIterator {
       let pos = parts[0];
       const dow = parts[1];
 
-      if (pos == 0) {
+      if (pos === 0) {
         const tmp_start_doy = ((dow + 7 - start_dow) % 7) + 1;
 
         for (let doy = tmp_start_doy; doy <= end_year_day; doy += 7) {
@@ -1283,8 +1283,8 @@ export class RecurIterator {
         const this_dow = tt.dayOfWeek();
 
         if (
-          (pos == 0 && dow == this_dow) ||
-          tt.nthWeekDay(dow, pos) == tt.day
+          (pos === 0 && dow === this_dow) ||
+          tt.nthWeekDay(dow, pos) === tt.day
         ) {
           return 1;
         }
@@ -1332,11 +1332,11 @@ export class RecurIterator {
       RecurIterator._expandMap[this.rule.freq][indexMapValue];
     let pass = false;
 
-    if (aRuleType in this.by_data && ruleMapValue == RecurIterator.CONTRACT) {
+    if (aRuleType in this.by_data && ruleMapValue === RecurIterator.CONTRACT) {
       const ruleType = this.by_data[aRuleType];
 
       for (const bydata of ruleType) {
-        if (bydata == v) {
+        if (bydata === v) {
           pass = true;
           break;
         }
@@ -1373,11 +1373,11 @@ export class RecurIterator {
     const ruleMapValue =
       RecurIterator._expandMap[this.rule.freq][indexMapValue];
 
-    if (ruleMapValue != RecurIterator.CONTRACT) {
+    if (ruleMapValue !== RecurIterator.CONTRACT) {
       if (!(aRuleType in this.by_data)) {
         this.by_data[aRuleType] = [deftime];
       }
-      if (this.rule.freq != req) {
+      if (this.rule.freq !== req) {
         return this.by_data[aRuleType][0];
       }
     }

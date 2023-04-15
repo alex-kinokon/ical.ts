@@ -126,21 +126,21 @@ suite('parserv2', () => {
     });
 
     test('missing value with param delimiter', () => {
-      const ical = 'BEGIN:VCALENDAR\n' + 'X-FOO;\n';
+      const ical = 'BEGIN:VCALENDAR\nX-FOO;\n';
       assert.throws(() => {
         subject(ical);
       }, 'Invalid parameters in');
     });
 
     test('missing param name ', () => {
-      const ical = 'BEGIN:VCALENDAR\n' + 'X-FOO;=\n';
+      const ical = 'BEGIN:VCALENDAR\nX-FOO;=\n';
       assert.throws(() => {
         subject(ical);
       }, 'Empty parameter name in');
     });
 
     test('missing param value', () => {
-      const ical = 'BEGIN:VCALENDAR\n' + 'X-FOO;BAR=\n';
+      const ical = 'BEGIN:VCALENDAR\nX-FOO;BAR=\n';
       assert.throws(() => {
         subject(ical);
       }, 'Missing parameter value in');

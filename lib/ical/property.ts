@@ -89,11 +89,11 @@ export class Property {
     // Before setting the parent, check if the design set has changed. If it
     // has, we later need to update the type if it was unknown before.
     const designSetChanged =
-      !this._parent || (p && p._designSet != this._parent._designSet);
+      !this._parent || (p && p._designSet !== this._parent._designSet);
 
     this._parent = p;
 
-    if (this.type == design.defaultType && designSetChanged) {
+    if (this.type === design.defaultType && designSetChanged) {
       this.jCal[TYPE_INDEX] = this.getDefaultType();
       this._updateType();
     }

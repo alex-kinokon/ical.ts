@@ -6,7 +6,8 @@
 import { isStrictlyNaN } from './helpers';
 import { UtcOffset } from './utc_offset';
 import { VCardTime } from './vcard_time';
-import { Recur, RecurData } from './recur';
+import type { RecurData } from './recur';
+import { Recur } from './recur';
 import { Period } from './period';
 import { Duration } from './duration';
 import { Time } from './time';

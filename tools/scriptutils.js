@@ -5,13 +5,14 @@
 
 /* eslint-env node */
 
-import { Octokit } from '@octokit/core';
-import fetch from 'node-fetch';
-import yauzl from 'yauzl-promise';
 import fs from 'fs/promises';
 import fsc from 'fs';
 import path from 'path';
 import { pipeline } from 'stream/promises';
+import yauzl from 'yauzl-promise';
+import fetch from 'node-fetch';
+import { Octokit } from '@octokit/core';
+import { name } from '../package.json';
 
 const octokit = new Octokit();
 
@@ -24,15 +25,17 @@ async function get_latest_release(outFile) {
     }
   );
 
-  let release = response.data.name;
+  const release = response.data.name;
 
-  let icaljsAsset = response.data.assets.find(asset => asset.name == 'ical.js');
+  const icaljsAsset = response.data.assets.find(
+    asset => asset.name === 'ical.js'
+  );
   if (!icaljsAsset) {
     console.error('ical.js asset missing from ' + release);
   }
   response = await fetch(icaljsAsset.browser_download_url);
 
-  let icaljs = await response.text();
+  const icaljs = await response.text();
 
   await fs.writeFile(outFile, icaljs);
   console.log('Latest release written to ' + outFile);
@@ -44,45 +47,45 @@ async function get_latest_main(outFile) {
     {
       workflow_id: 'ci.yml',
       branch: 'es6',
-      //branch: "main",
+      // branch: "main",
       status: 'success',
-      //exclude_pull_requests: true,
-      //event: "push",
+      // exclude_pull_requests: true,
+      // event: "push",
       owner: 'mozilla-comm',
       repo: 'ical.js'
     }
   );
 
-  let workflows = response.data.workflow_runs;
+  const workflows = response.data.workflow_runs;
 
   workflows.sort((a, b) => {
-    let datea = new Date(a);
-    let dateb = new Date(b);
+    const datea = new Date(a);
+    const dateb = new Date(b);
 
     return (datea < dateb) - (dateb < datea);
   });
 
-  let archive_download_url = `https://nightly.link/mozilla-comm/ical.js/actions/runs/${workflows[0].id}/distribution.zip`;
+  const archive_download_url = `https://nightly.link/mozilla-comm/ical.js/actions/runs/${workflows[0].id}/distribution.zip`;
   console.log(archive_download_url);
   response = await fetch(archive_download_url);
   if (!response.ok) {
     throw new Error(response.status);
   }
 
-  let buffer = Buffer.from(await response.arrayBuffer());
-  let archive = await yauzl.fromBuffer(buffer);
+  const buffer = Buffer.from(await response.arrayBuffer());
+  const archive = await yauzl.fromBuffer(buffer);
 
   let entry;
   do {
     entry = await archive.readEntry();
-  } while (entry && entry.fileName == 'ical.js');
+  } while (entry && entry.fileName === 'ical.js');
 
   if (!entry) {
     throw new Error('ical.js not found in distribution');
   }
 
-  let stream = await entry.openReadStream();
-  let writeStream = fsc.createWriteStream(outFile);
+  const stream = await entry.openReadStream();
+  const writeStream = fsc.createWriteStream(outFile);
 
   await pipeline(stream, writeStream);
 
@@ -98,54 +101,59 @@ async function performance_downloader() {
 
 async function generateZonesFile(tzdbDir) {
   async function processZone(zoneFile) {
-    let contents = await fs.readFile(zoneFile, 'utf-8');
-    let lines = contents.split('\r\n');
-    let vtimezone = lines
+    const contents = await fs.readFile(zoneFile, 'utf-8');
+    const lines = contents.split('\r\n');
+    const vtimezone = lines
       .slice(
         lines.indexOf('BEGIN:VTIMEZONE') + 1,
         lines.indexOf('END:VTIMEZONE')
       )
       .join('\r\n');
-    return `  register(${JSON.stringify(vtimezone)});`;
+    return `register(${JSON.stringify(vtimezone)});`;
   }
 
-  let tzdbVersion = (
+  const tzdbVersion = (
     await fs.readFile(path.join(tzdbDir, 'version'), 'utf-8')
   ).trim();
 
-  let lines = [
-    `(function() {`,
-    `  function register(tzdata) { ICAL.TimezoneService.register(ICAL.Component.fromString("BEGIN:VTIMEZONE\\r\\n" + tzdata + "END:VTIMEZONE")) };`,
-    `  ICAL.TimezoneService.IANA_TZDB_VERSION = "${tzdbVersion}";`
+  const lines = [
+    `const { Component, TimezoneService } = require("${name}");`,
+    '',
+    '/** @param {string} tzdata */',
+    `function register(tzdata) {`,
+    `  TimezoneService.register(`,
+    `    Component.fromString("BEGIN:VTIMEZONE\\r\\n" + tzdata + "END:VTIMEZONE")`,
+    `  );`,
+    `};
+    `,
+    `TimezoneService.IANA_TZDB_VERSION = "${tzdbVersion}";`
   ];
 
-  let contents = await fs.readFile(
+  const contents = await fs.readFile(
     path.join(tzdbDir, 'zoneinfo', 'zones.tab'),
     'utf-8'
   );
-  for (let line of contents.split('\n')) {
-    let parts = line.split(' ');
-    if (parts.length == 3 && parts[2].length) {
+  for (const line of contents.split('\n')) {
+    const parts = line.split(' ');
+    if (parts.length === 3 && parts[2].length) {
       lines.push(
         await processZone(path.join(tzdbDir, 'zoneinfo', parts[2] + '.ics'))
       );
-    } else if (parts.length == 1 && parts[0].length) {
+    } else if (parts.length === 1 && parts[0].length) {
       lines.push(
         await processZone(path.join(tzdbDir, 'zoneinfo', parts[0] + '.ics'))
       );
     }
   }
 
-  lines.push('})();');
-
   return lines.join('\n');
 }
 
 async function get_tzdb_version() {
-  let response = await fetch('https://www.iana.org/time-zones');
-  let text = await response.text();
+  const response = await fetch('https://www.iana.org/time-zones');
+  const text = await response.text();
 
-  let match = text.match(/version">([0-9a-z]*)<\/span>/);
+  const match = text.match(/version">([0-9a-z]*)<\/span>/);
   if (!match) {
     throw new Error('Could not detect latest timezone database version');
   }

@@ -5,7 +5,7 @@
 
 import { TimezoneService } from './timezone_service';
 import { config } from './index';
-import type { Component } from './Component';
+import type { Component } from './component';
 
 /**
  * Helper functions used in various places within ical.js
@@ -22,10 +22,6 @@ import type { Component } from './Component';
  * @return {ICAL.Component}         The ICAL.Component that was passed in.
  */
 export function updateTimezones(vcal: Component) {
-  let allsubs;
-  let properties;
-  let vtimezones;
-  let reqTzid;
   let i;
 
   if (!vcal || vcal.name !== 'vcalendar') {
@@ -35,9 +31,9 @@ export function updateTimezones(vcal: Component) {
 
   // Store vtimezone subcomponents in an object reference by tzid.
   // Store properties from everything else in another array
-  allsubs = vcal.getAllSubcomponents();
-  properties = [];
-  vtimezones = {};
+  const allsubs = vcal.getAllSubcomponents();
+  const properties = [];
+  const vtimezones = {};
   for (i = 0; i < allsubs.length; i++) {
     if (allsubs[i].name === 'vtimezone') {
       const tzid = allsubs[i].getFirstProperty('tzid')!.getFirstValue();
@@ -48,7 +44,7 @@ export function updateTimezones(vcal: Component) {
   }
 
   // create an object with one entry for each required tz
-  reqTzid = {};
+  const reqTzid = {};
   for (i = 0; i < properties.length; i++) {
     const tzid = properties[i].getParameter('tzid');
     if (tzid) {

@@ -493,7 +493,7 @@ export class Time {
     hour: number,
     minute: number,
     second: number,
-    timezone: Timezone
+    timezone?: Timezone
   ) {
     this.fromData({
       year,
@@ -596,6 +596,7 @@ export class Time {
     const Y = this.year - (this.month < 3 ? 1 : 0);
 
     let h = q + Y + trunc(((m + 1) * 26) / 10) + trunc(Y / 4);
+    // eslint-disable-next-line no-constant-condition
     if (true /* gregorian */) {
       // eslint-disable-line no-constant-condition
       h += trunc(Y / 100) * 6 + trunc(Y / 400);

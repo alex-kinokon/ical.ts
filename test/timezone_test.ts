@@ -12,11 +12,11 @@ suite('timezone', () => {
     }
 
     suite(tzid, () => {
-      if (tzid == 'UTC') {
+      if (tzid === 'UTC') {
         setup(() => {
           timezone = ICAL.Timezone.utcTimezone;
         });
-      } else if (tzid == 'floating') {
+      } else if (tzid === 'floating') {
         setup(() => {
           timezone = ICAL.Timezone.localTimezone;
         });

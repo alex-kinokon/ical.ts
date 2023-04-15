@@ -33,7 +33,7 @@ suite('design', () => {
       test('#(un)decorate', () => {
         const expectedDecode = 'The quick brown fox jumps over the lazy dog.';
         const undecorated =
-          'VGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcy' + 'BvdmVyIHRoZSBsYXp5IGRvZy4=';
+          'VGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZy4=';
 
         const decorated = subject.decorate(undecorated);
         const decoded = decorated.decodeValue();

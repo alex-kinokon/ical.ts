@@ -30,7 +30,7 @@ const REVERSE_DOW_MAP = Object.fromEntries(
  * Possible frequency values for the FREQ part
  * (YEARLY, MONTHLY, WEEKLY, DAILY, HOURLY, MINUTELY, SECONDLY)
  */
-export type FrequencyValue = typeof ALLOWED_FREQ[number];
+export type FrequencyValue = (typeof ALLOWED_FREQ)[number];
 
 const ALLOWED_FREQ = [
   'SECONDLY',
@@ -384,7 +384,7 @@ export class Recur {
       optionDesign.INTERVAL(this.interval, this);
     }
 
-    if (this.wkst && typeof this.wkst != 'number') {
+    if (this.wkst && typeof this.wkst !== 'number') {
       this.wkst = Recur.icalDayToNumericDay(this.wkst);
     }
 
@@ -409,7 +409,7 @@ export class Recur {
     }
 
     for (const [k, kparts] of Object.entries(this.parts)) {
-      if (Array.isArray(kparts) && kparts.length == 1) {
+      if (Array.isArray(kparts) && kparts.length === 1) {
         res[k.toLowerCase()] = kparts[0];
       } else {
         res[k.toLowerCase()] = clone(kparts);

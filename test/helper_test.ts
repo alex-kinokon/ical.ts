@@ -123,8 +123,7 @@ suite('ICAL.helpers', () => {
     });
 
     test('timezones already correct', () => {
-      let vtimezones;
-      vtimezones = cal.getAllSubcomponents('vtimezone');
+      const vtimezones = cal.getAllSubcomponents('vtimezone');
       assert.strictEqual(vtimezones.length, 1);
       assert.strictEqual(
         vtimezones[0].getFirstProperty('tzid').getFirstValue(),
