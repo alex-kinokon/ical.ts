@@ -1,6 +1,6 @@
 # ical.ts - TypeScript parser for iCalendar, jCal, vCard, jCard.
 
-A fork of https://github.com/kewisch/ical.js.
+A fork of https://github.com/kewisch/ical.js. Based on [#ac6e512](https://github.com/kewisch/ical.js/commit/ac6e5124884b6aa2eacb1f87a9d85d51425b8fc3).
 
 [📖 Documentations](https://alex-kinokon.github.io/ical.ts/modules.html)
 
@@ -36,7 +36,7 @@ There is also a validator that demonstrates how to use the library in a webpage 
 You can install ICAL.js via [npm](https://www.npmjs.com/), if you would like to use it in Node.js:
 
 ```
-npm install ical.js
+npm install alex-kinokon/ical.ts#build
 ```
 
 ICAL.js has no dependencies and is written in modern TypeScript. It should work in all versions of Node.js and modern browsers.

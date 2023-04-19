@@ -1,8 +1,9 @@
 {
   "name": "ical.js",
-  "version": "2.0.0",
-  "author": "Philipp Kewisch",
+  "version": "0.1.0",
+  "author": "alex-kinokon",
   "contributors": [
+    "Philipp Kewisch",
     "Github Contributors (https://github.com/kewisch/ical.js/graphs/contributors)"
   ],
   "description": "Javascript parser for ics (rfc5545) and vcard (rfc6350) data",
@@ -72,11 +73,7 @@
     "ghpages": "npm run jsdoc"
   },
   "files": [
-    "dist/ical.js",
-    "dist/ical.min.js",
-    "dist/ical.es5.cjs",
-    "dist/ical.es5.min.cjs",
-    "lib/ical/*.js"
+    "dist"
   ],
   "c8": {
     "include": "lib/ical",
