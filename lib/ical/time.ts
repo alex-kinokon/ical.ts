@@ -975,7 +975,7 @@ export class Time {
    * @param aOther The instance to compare with
    * @return       -1, 0 or 1 for less/equal/greater
    */
-  compare(other: Duration): number {
+  compare(other: Time): number {
     const a = this.toUnixTime();
     const b = other.toUnixTime();
 
