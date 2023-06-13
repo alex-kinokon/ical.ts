@@ -398,7 +398,7 @@ export class Event {
    * will remove any `dtend` properties.
    * @type {Duration}
    */
-  get duration() {
+  get duration(): Duration {
     const duration = this._firstProp('duration');
     if (!duration) {
       return this.endDate.subtractDateTz(this.startDate);
@@ -406,7 +406,7 @@ export class Event {
     return duration;
   }
 
-  set duration(value) {
+  set duration(value: Duration) {
     if (this.component.hasProperty('dtend')) {
       this.component.removeProperty('dtend');
     }
