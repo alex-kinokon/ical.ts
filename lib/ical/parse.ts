@@ -3,7 +3,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import type { Component } from './component';
 import type { DesignSet } from './design';
 import { design } from './design';
 import { unescapedIndexOf } from './helpers';
@@ -14,11 +13,28 @@ const PARAM_DELIMITER = ';';
 const PARAM_NAME_DELIMITER = '=';
 const DEFAULT_VALUE_TYPE = 'unknown';
 const DEFAULT_PARAM_TYPE = 'text';
-const RFC6868_REPLACE_MAP = { "^'": '"', '^n': '\n', '^^': '^' };
+const RFC6868_REPLACE_MAP: Record<string, string> = {
+  "^'": '"',
+  '^n': '\n',
+  '^^': '^'
+};
 
-interface ParseState {
-  component: [];
-  stack: [][];
+export type ParseComponent = [
+  name: string,
+  properties: (ParseComponent | Record<string, string>)[],
+  components: ParseComponent[]
+];
+
+/**
+ * The state for parsing content lines from an iCalendar/vCard string.
+ */
+interface ParserState {
+  /** The design set to use for parsing */
+  designSet: DesignSet;
+  /** The stack of components being processed */
+  stack?: ParseComponent[];
+  /** The currently active component */
+  component: ParseComponent;
 }
 
 /**
@@ -34,8 +50,8 @@ interface ParseState {
  * @return {Object|Object[]}  A single jCal object, or an array thereof
  */
 export function parse(input: string) {
-  let state: ParseState = {} as any;
-  const root = (state.component = []);
+  let state: ParserState = {} as any;
+  const root = (state.component = [] as unknown as ParseComponent);
 
   state.stack = [root];
 
@@ -50,7 +66,7 @@ export function parse(input: string) {
     throw new ParserError('invalid ical body. component began but did not end');
   }
 
-  state = null;
+  state = null!;
 
   return root.length === 1 ? root[0] : root;
 }
@@ -67,8 +83,8 @@ export function parse(input: string) {
  *   The jCal Object containing the property
  */
 parse.property = (str: string, designSet?: DesignSet) => {
-  const state = {
-    component: [[], []],
+  const state: ParserState = {
+    component: [[], []] as unknown as ParseComponent,
     designSet: designSet || design.defaultSet
   };
   parse._handleContentLine(str, state);
@@ -116,18 +132,6 @@ class ParserError extends Error {
 
 // classes & constants
 parse.ParserError = ParserError;
-
-/**
- * The state for parsing content lines from an iCalendar/vCard string.
- */
-interface ParserState {
-  /** The design set to use for parsing */
-  designSet: DesignSet;
-  /** The stack of components being processed */
-  stack: Component[];
-  /** The currently active component */
-  component: Component;
-}
 
 /**
  * Handles a single line of iCalendar/vCard, updating the state.
@@ -201,13 +205,13 @@ parse._handleContentLine = function (line: string, state: ParserState) {
     value = line.slice(Math.max(0, valuePos + 1));
 
     if (name === 'begin') {
-      const newComponent = [value.toLowerCase(), [], []];
-      if (state.stack.length === 1) {
+      const newComponent: ParseComponent = [value.toLowerCase(), [], []];
+      if (state.stack!.length === 1) {
         state.component.push(newComponent);
       } else {
         state.component[2].push(newComponent);
       }
-      state.stack.push(state.component);
+      state.stack!.push(state.component);
       state.component = newComponent;
       if (!state.designSet) {
         state.designSet = design.getDesignSet(state.component[0]);
@@ -250,11 +254,11 @@ parse._handleContentLine = function (line: string, state: ParserState) {
     propertyDetails = state.designSet.property[ungroupedName];
 
     if ('multiValue' in propertyDetails) {
-      multiValue = propertyDetails.multiValue;
+      ({ multiValue } = propertyDetails);
     }
 
     if ('structuredValue' in propertyDetails) {
-      structuredValue = propertyDetails.structuredValue;
+      ({ structuredValue } = propertyDetails);
     }
 
     if (value && 'detectType' in propertyDetails) {

@@ -13,6 +13,8 @@ import { design } from './design';
 import { stringify } from './stringify';
 import { parse } from './parse';
 import type { Component } from './component';
+import type { Time } from './time';
+import type { Duration, Period, Recur, UtcOffset } from './index';
 
 /**
  * Provides a layer on top of the raw jCal object for manipulating a single property, with its
@@ -212,7 +214,7 @@ export class Property {
    * @param name Parameter name (lowercase)
    * @return Parameter value
    */
-  getParameter(name: string): any[] | string | undefined {
+  getParameter<T = any[] | string>(name: string): T | undefined {
     if (name in this.jCal[PROP_INDEX]) {
       return this.jCal[PROP_INDEX][name];
     } else {
@@ -298,8 +300,20 @@ export class Property {
    *
    * @return First property value
    */
-  getFirstValue(): any {
-    return this._hydrateValue(0);
+  getFirstValue<
+    T extends
+      | Time
+      | Recur
+      | Period
+      | UtcOffset
+      | Duration
+      | string
+      | number
+      | null
+      | true
+  >(): T {
+    const b = this._hydrateValue(0);
+    return b;
   }
 
   /**
@@ -377,9 +391,9 @@ export class Property {
    *
    * @param value New property value.
    */
-  setValue(value: string | Record<string, any>) {
+  setValue(value: string | null | Record<string, any>) {
     this.removeAllValues();
-    if (typeof value === 'object' && 'icaltype' in value) {
+    if (typeof value === 'object' && value != null && 'icaltype' in value) {
       this.resetType(value.icaltype);
     }
 

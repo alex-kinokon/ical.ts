@@ -1,3 +1,5 @@
+dist
+mochawesome-report
 node_modules
 bower_components
 *.pyc
@@ -8,3 +10,4 @@ tools/tzdb/
 tools/libical/
 coverage/
 docs
+repl.ts

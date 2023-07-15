@@ -1,26 +1,25 @@
 {
-  "name": "ical.js",
-  "version": "0.1.0",
+  "name": "ical.ts",
+  "version": "0.1.0-beta.1",
   "author": "alex-kinokon",
   "contributors": [
     "Philipp Kewisch",
     "Github Contributors (https://github.com/kewisch/ical.js/graphs/contributors)"
   ],
   "description": "Javascript parser for ics (rfc5545) and vcard (rfc6350) data",
-  "main": "dist/ical.cjs",
-  "module": "dist/ical.js",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kewisch/ical.js.git"
+    "url": "https://github.com/alex-kinokon/ical.ts.git"
   },
   "exports": {
     ".": {
-      "default": "./dist/ical.cjs",
-      "import": "./dist/ical.js"
+      "default": "./dist/index.js",
+      "import": "./dist/index.mjs"
     },
-    "./timezones": {
-      "default": "./dist/ical.timezones.js"
-    }
+    "./timezones.json": "./dist/timezones.json"
   },
   "keywords": [
     "calendar",
@@ -31,31 +30,33 @@
     "parser"
   ],
   "devDependencies": {
-    "@octokit/core": "^4.2.1",
-    "@rollup/plugin-node-resolve": "^15.0.2",
+    "@emotion/css": "^11.11.2",
+    "@octokit/core": "^5.0.0",
+    "@proteria/hooks": "^0.0.1",
     "@types/benchmark": "^2.1.2",
     "@types/chai": "^4.3.5",
     "@types/mocha": "github:alex-kinokon/mocha-types",
-    "@types/node": "^20.2.3",
-    "@typescript-eslint/eslint-plugin": "5.59.7",
-    "@typescript-eslint/parser": "5.59.7",
+    "@types/node": "^20.2.5",
+    "@typescript-eslint/eslint-plugin": "5.59.9",
+    "@typescript-eslint/parser": "5.59.9",
     "benchmark": "^2.1.4",
-    "c8": "^7.13.0",
+    "c8": "^7.14.0",
     "chai": "^4.3.7",
+    "esbin": "^0.0.1-beta.1",
     "esbuild": "^0.17.19",
     "esbuild-register": "^3.4.2",
-    "eslint": "8.41.0",
+    "eslint": "8.42.0",
     "eslint-config-prettier": "8.8.0",
     "eslint-import-resolver-typescript": "3.5.5",
     "eslint-plugin-import": "2.27.5",
     "mocha": "^10.2.0",
+    "mochawesome": "^7.1.3",
     "node-fetch": "^3.3.1",
     "prettier": "^2.8.8",
-    "rollup": "^3.23.0",
-    "rollup-plugin-ts": "^3.2.0",
-    "typedoc": "^0.24.7",
-    "typescript": "^5.0.4",
-    "yauzl-promise": "^4.0.0"
+    "typedoc": "^0.24.8",
+    "typescript": "^5.1.6",
+    "yauzl-promise": "^4.0.0",
+    "zod": "^3.21.4"
   },
   "license": "MPL-2.0",
   "engine": {
@@ -67,7 +68,9 @@
     "test-acceptance": "mocha test/acceptance/*_test.ts",
     "test-performance": "mocha --reporter test/support/perfReporter.ts test/performance/*_test.ts",
     "test-all": "npm run test-unit && npm run test-acceptance && npm run test-performance",
-    "build": "rollup -c --bundleConfigAsCjs",
+    "build": "./esbuild.ts",
+    "build:types": "tsc -p ./tsconfig.emit.json",
+    "build:timezones": "node -r esbuild-register tools/scriptutils.js generate-zones tools/tzdb > dist/timezones.json",
     "lint": "eslint lib/ical test tools/scriptutils.js",
     "jsdoc": "rm -rf docs; typedoc --includeVersion --skipErrorChecking --out docs lib/ical/index.ts",
     "ghpages": "npm run jsdoc"
@@ -105,7 +108,7 @@
       "main": {
         "repository": "https://github.com/kewisch/ical.js.git",
         "branch": "main",
-        "commit": "ac6e5124884b6aa2eacb1f87a9d85d51425b8fc3"
+        "commit": "35533497954b2c6e20a902789fe11e95740c3cf6"
       }
     }
   },

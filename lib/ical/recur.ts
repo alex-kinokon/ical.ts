@@ -7,7 +7,7 @@ import { RecurIterator } from './recur_iterator';
 import type { WeekDay } from './time';
 import { Time } from './time';
 import { design } from './design';
-import { clone, strictParseInt } from './helpers';
+import { shallowClone, strictParseInt } from './helpers';
 
 const VALID_DAY_NAMES = /^(SU|MO|TU|WE|TH|FR|SA)$/;
 const VALID_BYDAY_PART =
@@ -412,7 +412,7 @@ export class Recur {
       if (Array.isArray(kparts) && kparts.length === 1) {
         res[k.toLowerCase()] = kparts[0];
       } else {
-        res[k.toLowerCase()] = clone(kparts);
+        res[k.toLowerCase()] = shallowClone(kparts);
       }
     }
 

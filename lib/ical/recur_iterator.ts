@@ -3,25 +3,44 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import { clone, formatClassType, trunc } from './helpers';
+import { formatClassType, trunc } from './helpers';
+import type { RecurData } from './recur';
 import { Recur } from './recur';
-import type { WeekDay } from './time';
+import type { TimeData, WeekDay } from './time';
 import { Time } from './time';
 
-interface RecurIteratorData {
-  /** The iterator options */
-  options?: object;
+export interface RecurIteratorData {
   /** The rule to iterate. */
-  rule: Recur;
+  rule: Recur | RecurData;
   /** The start date of the event. */
-  dtstart: Time;
+  dtstart: Time | TimeData;
   /**
    * When true, assume that options are
    * from a previously constructed iterator. Initialization will not be
    * repeated.
    */
   initialized?: boolean;
+  by_data?: {
+    [key in RecurRuleName]: number[];
+  };
+  last?: TimeData;
+  occurrence_number?: number;
+  days?: number[];
+  by_indices?: {
+    [key in RecurRuleName]?: number;
+  };
 }
+
+type RecurRuleName =
+  | 'BYSECOND'
+  | 'BYMINUTE'
+  | 'BYHOUR'
+  | 'BYDAY'
+  | 'BYMONTHDAY'
+  | 'BYYEARDAY'
+  | 'BYWEEKNO'
+  | 'BYMONTH'
+  | 'BYSETPOS';
 
 /**
  * An iterator for a single recurrence rule. This class usually doesn't have to be instanciated
@@ -31,7 +50,7 @@ interface RecurIteratorData {
  * @alias ICAL.RecurIterator
  */
 export class RecurIterator {
-  static _indexMap = {
+  static _indexMap: Record<RecurRuleName, number> = {
     BYSECOND: 0,
     BYMINUTE: 1,
     BYHOUR: 2,
@@ -105,12 +124,12 @@ export class RecurIterator {
   private initialized = false;
 
   /**
-   * The initializd by-data.
+   * The initialized by-data.
    */
   private by_data!: Record<string, any>;
 
   /**
-   * The expanded yeardays
+   * The expanded year days
    */
   private days!: number[];
 
@@ -144,34 +163,25 @@ export class RecurIterator {
       throw new Error('iterator requires a (ICAL.Time) dtstart');
     }
 
-    if (options.by_data) {
-      this.by_data = options.by_data;
-    } else {
-      this.by_data = clone(this.rule.parts, true);
-    }
+    this.by_data = options.by_data ?? structuredClone(this.rule.parts);
 
     if (options.occurrence_number) {
       this.occurrence_number = options.occurrence_number;
     }
-
     this.days = options.days || [];
     if (options.last) {
       this.last = formatClassType(options.last, Time);
     }
 
-    this.by_indices = options.by_indices;
-
-    if (!this.by_indices) {
-      this.by_indices = {
-        BYSECOND: 0,
-        BYMINUTE: 0,
-        BYHOUR: 0,
-        BYDAY: 0,
-        BYMONTH: 0,
-        BYWEEKNO: 0,
-        BYMONTHDAY: 0
-      };
-    }
+    this.by_indices = options.by_indices ?? {
+      BYSECOND: 0,
+      BYMINUTE: 0,
+      BYHOUR: 0,
+      BYDAY: 0,
+      BYMONTH: 0,
+      BYWEEKNO: 0,
+      BYMONTHDAY: 0
+    };
 
     this.initialized = options.initialized || false;
 
@@ -195,7 +205,7 @@ export class RecurIterator {
       this.sort_byday_rules(parts.BYDAY);
     }
 
-    // If the BYYEARDAY appares, no other date rule part may appear
+    // If the BYYEARDAY appears, no other date rule part may appear
     if ('BYYEARDAY' in parts) {
       if (
         'BYMONTH' in parts ||
@@ -325,7 +335,7 @@ export class RecurIterator {
           tempLast = this.last.clone();
         }
       }
-      this.last = tempLast.clone();
+      this.last = tempLast!.clone();
 
       // XXX: This feels like a hack, but we need to initialize
       //     the BYMONTHDAY case correctly and byDayAndMonthDay handles
@@ -410,7 +420,7 @@ export class RecurIterator {
     );
 
     // TODO is this valid?
-    if (this.last.compare(before) === 0) {
+    if (this.last.compare(before!) === 0) {
       throw new Error(
         'Same occurrence found twice, protecting ' +
           'you from death by recursion'
@@ -430,7 +440,7 @@ export class RecurIterator {
     return this.next_generic('BYSECOND', 'SECONDLY', 'second', 'minute');
   }
 
-  increment_second(inc) {
+  increment_second(inc: number) {
     return this.increment_generic(inc, 'second', 60, 'minute');
   }
 
@@ -909,7 +919,13 @@ export class RecurIterator {
     }
   }
 
-  next_generic(aRuleType, aInterval, aDateAttr, aFollowingAttr, aPreviousIncr) {
+  next_generic(
+    aRuleType: RecurRuleName,
+    aInterval,
+    aDateAttr,
+    aFollowingAttr,
+    aPreviousIncr
+  ) {
     const has_by_rule = aRuleType in this.by_data;
     const this_freq = this.rule.freq === aInterval;
     let end_of_data = 0;

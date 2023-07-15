@@ -5,7 +5,7 @@
 
 import { Time } from './time';
 import { Duration } from './duration';
-import type { Property } from './Property';
+import type { Property } from './property';
 
 export interface PeriodData {
   /** The start of the period */
@@ -13,7 +13,7 @@ export interface PeriodData {
   /** The end of the period */
   end?: Time | null;
   /** The duration of the period */
-  duration?: Duration;
+  duration?: Duration | null;
 }
 
 /**
@@ -148,7 +148,7 @@ export class Period {
   /**
    * The duration of the period
    */
-  duration?: Duration;
+  duration?: Duration | null;
 
   /**
    * The class identifier.

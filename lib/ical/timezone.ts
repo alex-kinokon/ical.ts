@@ -3,10 +3,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
+import type { TimeData } from './time';
 import { Time } from './time';
 import { Component } from './component';
 import { parse } from './parse';
-import { binsearchInsert, clone } from './helpers';
+import { binsearchInsert } from './helpers';
 
 const OPTIONS = ['tzid', 'location', 'tznames', 'latitude', 'longitude'];
 
@@ -88,29 +89,29 @@ export class Timezone {
    * Convert the date/time from one zone to the next.
    *
    * @param tt        The time to convert
-   * @param from_zone The source zone to convert from
-   * @param to_zone   The target zone to convert to
+   * @param fromZone The source zone to convert from
+   * @param toZone   The target zone to convert to
    * @return          The converted date/time object
    */
-  static convert_time(
+  static convertTime(
     tt: Time,
-    from_zone: Timezone,
-    to_zone: Timezone
+    fromZone: Timezone,
+    toZone: Timezone
   ): Time | null {
     if (
       tt.isDate ||
-      from_zone.tzid === to_zone.tzid ||
-      from_zone === Timezone.localTimezone ||
-      to_zone === Timezone.localTimezone
+      fromZone.tzid === toZone.tzid ||
+      fromZone === Timezone.localTimezone ||
+      toZone === Timezone.localTimezone
     ) {
-      tt.zone = to_zone;
+      tt.zone = toZone;
       return tt;
     }
 
-    let utcOffset = from_zone.utcOffset(tt);
+    let utcOffset = fromZone.utcOffset(tt);
     tt.adjust(0, 0, 0, -utcOffset);
 
-    utcOffset = to_zone.utcOffset(tt);
+    utcOffset = toZone.utcOffset(tt);
     tt.adjust(0, 0, 0, utcOffset);
 
     return null;
@@ -159,8 +160,8 @@ export class Timezone {
    * @param minutes    The extra amount of minutes
    * @param seconds    The extra amount of seconds
    */
-  private static adjust_change(
-    change: object,
+  private static adjustChange(
+    change: Required<TimeData>,
     days: number,
     hours: number,
     minutes: number,
@@ -307,11 +308,11 @@ export class Timezone {
 
     // TODO: replace with bin search?
     for (;;) {
-      const change = clone(this.changes[change_num], true);
-      if (change.utcOffset < change.prevUtcOffset) {
-        Timezone.adjust_change(change, 0, 0, 0, change.utcOffset);
+      const change = structuredClone(this.changes[change_num]);
+      if (change.utcOffset! < change.prevUtcOffset!) {
+        Timezone.adjustChange(change, 0, 0, 0, change.utcOffset);
       } else {
-        Timezone.adjust_change(change, 0, 0, 0, change.prevUtcOffset);
+        Timezone.adjustChange(change, 0, 0, 0, change.prevUtcOffset);
       }
 
       const cmp = Timezone._compare_change_fn(tt_change, change);
@@ -342,8 +343,8 @@ export class Timezone {
       zone_change.utcOffset! - zone_change.prevUtcOffset!;
 
     if (utcOffset_change < 0 && change_num_to_use > 0) {
-      const tmp_change = clone(zone_change, true);
-      Timezone.adjust_change(tmp_change, 0, 0, 0, tmp_change.prevUtcOffset);
+      const tmp_change = structuredClone(zone_change);
+      Timezone.adjustChange(tmp_change, 0, 0, 0, tmp_change.prevUtcOffset);
 
       if (Timezone._compare_change_fn(tt_change, tmp_change) < 0) {
         const prev_zone_change = this.changes[change_num_to_use - 1];
@@ -448,7 +449,7 @@ export class Timezone {
       change.minute = dtstart.minute;
       change.second = dtstart.second;
 
-      Timezone.adjust_change(change, 0, 0, 0, -change.prevUtcOffset!);
+      Timezone.adjustChange(change, 0, 0, 0, -change.prevUtcOffset!);
       changes.push(change);
     } else {
       const props = aComponent.getAllProperties('rdate');
@@ -466,7 +467,7 @@ export class Timezone {
           change.second = dtstart.second;
 
           if (dtstart.zone !== Timezone.utcTimezone) {
-            Timezone.adjust_change(change, 0, 0, 0, -change.prevUtcOffset!);
+            Timezone.adjustChange(change, 0, 0, 0, -change.prevUtcOffset!);
           }
         } else {
           change.hour = time.hour;
@@ -474,7 +475,7 @@ export class Timezone {
           change.second = time.second;
 
           if (time.zone !== Timezone.utcTimezone) {
-            Timezone.adjust_change(change, 0, 0, 0, -change.prevUtcOffset!);
+            Timezone.adjustChange(change, 0, 0, 0, -change.prevUtcOffset!);
           }
         }
 
@@ -509,7 +510,7 @@ export class Timezone {
           change.second = occ.second;
           change.isDate = occ.isDate;
 
-          Timezone.adjust_change(change, 0, 0, 0, -change.prevUtcOffset!);
+          Timezone.adjustChange(change, 0, 0, 0, -change.prevUtcOffset!);
           changes.push(change);
         }
       }

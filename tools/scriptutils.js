@@ -109,25 +109,17 @@ async function generateZonesFile(tzdbDir) {
         lines.indexOf('END:VTIMEZONE')
       )
       .join('\r\n');
-    return `register(${JSON.stringify(vtimezone)});`;
+    return vtimezone;
   }
 
   const tzdbVersion = (
     await fs.readFile(path.join(tzdbDir, 'version'), 'utf-8')
   ).trim();
 
-  const lines = [
-    `const { Component, TimezoneService } = require("${name}");`,
-    '',
-    '/** @param {string} tzdata */',
-    `function register(tzdata) {`,
-    `  TimezoneService.register(`,
-    `    Component.fromString("BEGIN:VTIMEZONE\\r\\n" + tzdata + "END:VTIMEZONE")`,
-    `  );`,
-    `};
-    `,
-    `TimezoneService.IANA_TZDB_VERSION = "${tzdbVersion}";`
-  ];
+  const json = {
+    version: tzdbVersion,
+    tzdata: []
+  };
 
   const contents = await fs.readFile(
     path.join(tzdbDir, 'zoneinfo', 'zones.tab'),
@@ -136,17 +128,17 @@ async function generateZonesFile(tzdbDir) {
   for (const line of contents.split('\n')) {
     const parts = line.split(' ');
     if (parts.length === 3 && parts[2].length) {
-      lines.push(
+      json.tzdata.push(
         await processZone(path.join(tzdbDir, 'zoneinfo', parts[2] + '.ics'))
       );
     } else if (parts.length === 1 && parts[0].length) {
-      lines.push(
+      json.tzdata.push(
         await processZone(path.join(tzdbDir, 'zoneinfo', parts[0] + '.ics'))
       );
     }
   }
 
-  return lines.join('\n');
+  return JSON.stringify(json, null, 2);
 }
 
 async function get_tzdb_version() {

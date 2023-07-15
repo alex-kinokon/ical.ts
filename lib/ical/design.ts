@@ -3,7 +3,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import { isStrictlyNaN } from './helpers';
 import { UtcOffset } from './utc_offset';
 import { VCardTime } from './vcard_time';
 import type { RecurData } from './recur';
@@ -155,7 +154,7 @@ const commonValues = {
 
     fromICAL(aValue) {
       const parsed = parseFloat(aValue);
-      if (isStrictlyNaN(parsed)) {
+      if (Number.isNaN(parsed)) {
         // TODO: parser warning
         return 0.0;
       }
@@ -170,7 +169,7 @@ const commonValues = {
   integer: {
     fromICAL(aValue) {
       const parsed = parseInt(aValue);
-      if (isStrictlyNaN(parsed)) {
+      if (Number.isNaN(parsed)) {
         return 0;
       }
       return parsed;

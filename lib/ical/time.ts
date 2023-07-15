@@ -10,7 +10,7 @@ import { TimezoneService } from './timezone_service';
 import { pad2, strictParseInt, trunc } from './helpers';
 import type { Property } from './property';
 
-interface TimeData {
+export interface TimeData {
   /** The year for this date */
   year?: number;
   /** The month for this date */
@@ -26,7 +26,7 @@ interface TimeData {
   /** If true, the instance represents a date (as opposed to a date-time) */
   isDate?: boolean;
   /** Timezone this position occurs in */
-  aZone?: Timezone;
+  timezone?: string;
 }
 
 /**
@@ -224,7 +224,7 @@ export class Time {
         ) {
           // Per RFC 5545 3.8.2.4 and 3.8.2.2, start/end date-times within
           // these components MUST be specified in local time.
-          zone = undefined;
+          zone = Timezone.localTimezone;
         } else if (zoneId) {
           // If the desired time zone is defined within the component tree,
           // fetch its definition and prefer that.
@@ -975,7 +975,7 @@ export class Time {
    * @param aOther The instance to compare with
    * @return       -1, 0 or 1 for less/equal/greater
    */
-  compare(other: Duration): number {
+  compare(other: Time): number {
     const a = this.toUnixTime();
     const b = other.toUnixTime();
 
@@ -1015,7 +1015,7 @@ export class Time {
     const zone_equals = this.zone!.tzid === zone.tzid;
 
     if (!this.isDate && !zone_equals) {
-      Timezone.convert_time(copy, this.zone!, zone);
+      Timezone.convertTime(copy, this.zone!, zone);
     }
 
     copy.zone = zone;

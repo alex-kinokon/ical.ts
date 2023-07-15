@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
-import { isStrictlyNaN, trunc } from './helpers';
+import { trunc } from './helpers';
 
 const DURATION_LETTERS = /([PDWHMTS]{1,1})/;
 const DATA_PROPS_TO_COPY = [
@@ -337,7 +337,7 @@ function parseDurationChunk(
       );
     }
     const num = parseInt(number as any, 10);
-    if (isStrictlyNaN(num)) {
+    if (Number.isNaN(num)) {
       throw new Error(
         `invalid duration value: Invalid number "${number}" before "${letter}"`
       );

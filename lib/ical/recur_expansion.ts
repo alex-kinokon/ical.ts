@@ -3,16 +3,26 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
+import type { TimeData } from './time';
 import { Time } from './time';
+import type { RecurIteratorData } from './recur_iterator';
 import { RecurIterator } from './recur_iterator';
 import { binsearchInsert, formatClassType } from './helpers';
 import type { Component } from './component';
+import type { Recur } from './recur';
 
 interface RecurExpansionOptions {
   /** Start time of the event */
   dtstart: Time;
   /** Component for expansion, required if not resuming. */
   component?: Component;
+  ruleIterators: RecurIteratorData[];
+  ruleDateInc: number;
+  exDateInc: number;
+  last: Time | TimeData;
+  ruleDates?: (Time | TimeData)[];
+  exDates?: (Time | TimeData)[];
+  complete?: boolean;
 }
 
 /**
@@ -57,9 +67,6 @@ interface RecurExpansionOptions {
  * @alias ICAL.RecurExpansion
  */
 export class RecurExpansion {
-  private ruleDates: Time[];
-  private exDates: Time[];
-
   /**
    * Creates a new ICAL.RecurExpansion instance.
    *
@@ -85,17 +92,17 @@ export class RecurExpansion {
   /**
    * Array of rrule iterators.
    */
-  private ruleIterators: RecurIterator[];
+  private ruleIterators!: RecurIterator[];
 
   /**
    * Array of rdate instances.
    */
-  private ruleDates: Time[];
+  private ruleDates?: Time[];
 
   /**
    * Array of exdate instances.
    */
-  private exDates: Time[];
+  private exDates?: Time[];
 
   /**
    * Current position in ruleDates array.
@@ -110,22 +117,22 @@ export class RecurExpansion {
   /**
    * Current negative date.
    */
-  private exDate: Time;
+  private exDate?: Time;
 
   /**
    * Current additional date.
    */
-  private ruleDate: Time;
+  private ruleDate?: Time;
 
   /**
    * Start date of recurring rules.
    */
-  dtstart: Time;
+  dtstart!: Time;
 
   /**
    * Last expanded time
    */
-  last: Time;
+  last!: Time;
 
   /**
    * Initialize the recurrence expansion from the data object. The options
@@ -144,9 +151,9 @@ export class RecurExpansion {
 
     if (!start) {
       throw new Error('.dtstart (ICAL.Time) must be given');
-    } else {
-      this.dtstart = start;
     }
+
+    this.dtstart = start;
 
     if (options.component) {
       this._init(options.component);
@@ -185,10 +192,10 @@ export class RecurExpansion {
   /**
    * Retrieve the next occurrence in the series.
    */
-  next(): Time {
-    let iter;
-    let next;
-    let compare;
+  next(): Time | undefined {
+    let iter: RecurIterator | undefined;
+    let next: Time | undefined;
+    let compare: number;
 
     const maxTries = 500;
     let currentTry = 0;
@@ -202,7 +209,7 @@ export class RecurExpansion {
       }
 
       next = this.ruleDate;
-      iter = this._nextRecurrenceIter(this.last);
+      iter = this._nextRecurrenceIter();
 
       // no more matches
       // because we increment the rule day or rule
@@ -218,9 +225,9 @@ export class RecurExpansion {
       // no next rule day or recurrence rule is first.
       if (!next || (iter && next.compare(iter.last) > 0)) {
         // must be cloned, recur will reuse the time element.
-        next = iter.last.clone();
+        next = iter!.last.clone();
         // move to next so we can continue
-        iter.next();
+        iter!.next();
       }
 
       // if the ruleDate is still next increment it.
@@ -259,7 +266,7 @@ export class RecurExpansion {
    * back into the expansion to resume iteration.
    */
   toJSON(): Record<string, any> {
-    function toJSON(item) {
+    function toJSON(item: any) {
       return item.toJSON();
     }
 
@@ -356,12 +363,9 @@ export class RecurExpansion {
       let i = 0;
       const len = rules.length;
 
-      let rule;
-      let iter;
-
       for (; i < len; i++) {
-        rule = rules[i].getFirstValue();
-        iter = rule.iterator(this.dtstart);
+        const rule = rules[i].getFirstValue<Recur>()!;
+        const iter = rule.iterator(this.dtstart);
         this.ruleIterators.push(iter);
 
         // increment to the next occurrence so future
@@ -386,14 +390,14 @@ export class RecurExpansion {
    * Advance to the next exdate
    */
   private _nextExDay() {
-    this.exDate = this.exDates[++this.exDateInc];
+    this.exDate = this.exDates![++this.exDateInc];
   }
 
   /**
    * Advance to the next rule date
    */
   private _nextRuleDay() {
-    this.ruleDate = this.ruleDates[++this.ruleDateInc];
+    this.ruleDate = this.ruleDates![++this.ruleDateInc];
   }
 
   /**
@@ -402,11 +406,11 @@ export class RecurExpansion {
    *
    * @return Found iterator.
    */
-  private _nextRecurrenceIter(): RecurIterator | null {
+  private _nextRecurrenceIter(): RecurIterator | undefined {
     const iters = this.ruleIterators;
 
     if (iters.length === 0) {
-      return null;
+      return;
     }
 
     let len = iters.length;

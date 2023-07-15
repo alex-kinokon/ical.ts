@@ -69,15 +69,15 @@ suite('vcard time', () => {
     test('invalid icaltype', () => {
       const subject = ICAL.VCardTime.fromDateAndOrTimeString(
         '2015-01-01',
-        'ballparkfigure'
+        'ballparkfigure' as any
       );
-      assert.isNull(subject.toString());
+      assert.isUndefined(subject.toString());
     });
     test('invalid timezone', () => {
       const subject = ICAL.VCardTime.fromDateAndOrTimeString(
         '2015-01-01T01:01:01'
       );
-      subject.zone = null;
+      subject.zone = null!;
       assert.equal(subject.toString(), '2015-01-01T01:01:01');
     });
     test('Olson timezone', () => {

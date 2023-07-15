@@ -5,6 +5,7 @@
 
 import { Property } from './property';
 import { Timezone } from './timezone';
+import type { ParseComponent } from './parse';
 import { parse } from './parse';
 import { stringify } from './stringify';
 import type { DesignSet } from './design';
@@ -19,7 +20,7 @@ const COMPONENT_INDEX = 2;
  * properties.
  */
 export class Component {
-  private jCal: any[];
+  jCal: any[];
   parent: Component | null;
   private _components?: Component[];
   private _properties?: Property[];
@@ -39,7 +40,13 @@ export class Component {
    * @param jCal Raw jCal component data OR name of new
    * @param parent Parent component to associate
    */
-  constructor(jCal: any[] | string, parent?: Component) {
+  constructor(
+    jCal:
+      | string
+      | ParseComponent
+      | [string, Record<string, string>, ...string[]],
+    parent?: Component
+  ) {
     if (typeof jCal === 'string') {
       // jCal spec (name, properties, components)
       jCal = [jCal, [], []];
@@ -272,8 +279,11 @@ export class Component {
     }
   }
 
-  private _removeObjectByIndex(jCalIndex: number, cache, index) {
-    cache = cache || [];
+  private _removeObjectByIndex(
+    jCalIndex: number,
+    cache: (Component | Property)[] = [],
+    index: number
+  ) {
     // remove cached version
     if (cache[index]) {
       const obj = cache[index];
@@ -288,7 +298,11 @@ export class Component {
     this.jCal[jCalIndex].splice(index, 1);
   }
 
-  private _removeObject(jCalIndex: number, cache, nameOrObject) {
+  private _removeObject(
+    jCalIndex: number,
+    cache: '_components' | '_properties',
+    nameOrObject: string | Component | Property
+  ) {
     let i = 0;
     const objects = this.jCal[jCalIndex];
     const len = objects.length;
@@ -313,7 +327,11 @@ export class Component {
     return false;
   }
 
-  _removeAllObjects(jCalIndex: number, cache: string, name?: string) {
+  _removeAllObjects(
+    jCalIndex: number,
+    cache: '_components' | '_properties',
+    name?: string
+  ) {
     const cached = this[cache];
 
     // Unfortunately we have to run through all children to reset their
@@ -422,10 +440,7 @@ export class Component {
    * @param value Property value
    * @return The created property
    */
-  addPropertyWithValue(
-    name: string,
-    value: string | number | object
-  ): Property {
+  addPropertyWithValue(name: string, value: object | null): Property {
     const prop = new Property(name);
     prop.setValue(value);
 
@@ -443,10 +458,7 @@ export class Component {
    * @param value Property value
    * @return The created property
    */
-  updatePropertyWithValue(
-    name: string,
-    value: string | number | object
-  ): Property {
+  updatePropertyWithValue(name: string, value: object | null): Property {
     let prop = this.getFirstProperty(name);
 
     if (prop) {
@@ -484,10 +496,9 @@ export class Component {
    * @param name Lowercase property name
    * @return True, when deleted
    */
-  removeAllProperties(name?: string): boolean {
-    const removed = this._removeAllObjects(PROPERTY_INDEX, '_properties', name);
+  removeAllProperties(name?: string): void {
+    this._removeAllObjects(PROPERTY_INDEX, '_properties', name);
     this._hydratedPropertyCount = 0;
-    return removed;
   }
 
   /**

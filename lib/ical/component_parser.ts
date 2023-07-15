@@ -4,6 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch */
 
+import type { ParseComponent } from './parse';
 import { parse } from './parse';
 import { Component } from './component';
 import { Event } from './event';
@@ -97,7 +98,7 @@ export class ComponentParser {
    * @param ical The component to process, either in its final form, as a jCal
    *    Object, or string representation
    */
-  process(ical: Component | string | Record<string, any>) {
+  process(ical: Component | string | ParseComponent) {
     // TODO: this is sync now in the future we will have a incremental parser.
     if (typeof ical === 'string') {
       ical = parse(ical);

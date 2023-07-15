@@ -63,7 +63,7 @@ export class Event {
   ) {
     if (!(component instanceof Component)) {
       options = component;
-      component = null;
+      component = undefined;
     }
 
     if (component) {
@@ -96,7 +96,7 @@ export class Event {
   /**
    * List of related event exceptions.
    */
-  exceptions: Event[];
+  exceptions: Record<string, Event>;
 
   /**
    * When true, will verify exceptions are related by their UUID.
@@ -533,13 +533,13 @@ export class Event {
       // remove the tzid
       prop.removeParameter('tzid');
     } else {
-      prop.setParameter('tzid', time.zone.tzid);
+      prop.setParameter('tzid', time.zone!.tzid);
     }
 
     prop.setValue(time);
   }
 
-  _setProp(name: string, value) {
+  _setProp(name: string, value: string | number | object) {
     this.component.updatePropertyWithValue(name, value);
   }
 

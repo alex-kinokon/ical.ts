@@ -4,18 +4,17 @@ import { ICAL, loadSample } from './support/helper';
 
 suite('ICAL.helpers', () => {
   suite('#clone', () => {
-    const subject = ICAL.helpers.clone;
+    const { shallowClone } = ICAL.helpers;
+
     test('some primatives', () => {
-      assert.equal(subject(null, false), null);
-      assert.equal(subject(123, false), 123);
-      assert.equal(subject(null, true), null);
-      assert.equal(subject(123, true), 123);
+      assert.equal(shallowClone(null), null);
+      assert.equal(shallowClone(123), 123);
     });
 
     test('a date', () => {
       const date = new Date(2015, 1, 1);
       const time = date.getTime();
-      const copy = subject(date, false);
+      const copy = shallowClone(date);
 
       copy.setYear(2016);
       assert.notEqual(time, copy.getTime());
@@ -27,47 +26,27 @@ suite('ICAL.helpers', () => {
           return 'test';
         }
       };
-      assert.equal(subject(obj, false), 'test');
+      assert.equal(shallowClone(obj), 'test');
     });
 
     test('shallow array', () => {
       const obj = { v: 2 };
       const arr = [obj, 2, 3];
 
-      const result = subject(arr, false);
+      const result = shallowClone(arr);
       assert.deepEqual(result, [{ v: 2 }, 2, 3]);
       obj.v = 3;
       assert.deepEqual(result, [{ v: 3 }, 2, 3]);
-    });
-
-    test('deep array', () => {
-      const obj = { v: 2 };
-      const arr = [obj, 2, 3];
-
-      const result = subject(arr, true);
-      assert.deepEqual(result, [{ v: 2 }, 2, 3]);
-      obj.v = 3;
-      assert.deepEqual(result, [{ v: 2 }, 2, 3]);
     });
 
     test('shallow object', () => {
       const deepobj = { v: 2 };
       const obj = { a: deepobj, b: 2 };
 
-      const result = subject(obj, false);
+      const result = shallowClone(obj);
       assert.deepEqual(result, { a: { v: 2 }, b: 2 });
       deepobj.v = 3;
       assert.deepEqual(result, { a: { v: 3 }, b: 2 });
-    });
-
-    test('deep object', () => {
-      const deepobj = { v: 2 };
-      const obj = { a: deepobj, b: 2 };
-
-      const result = subject(obj, true);
-      assert.deepEqual(result, { a: { v: 2 }, b: 2 });
-      deepobj.v = 3;
-      assert.deepEqual(result, { a: { v: 2 }, b: 2 });
     });
   });
 

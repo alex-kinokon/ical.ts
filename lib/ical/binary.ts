@@ -127,14 +127,14 @@ export class Binary {
     // }
     const b64 =
       'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
-    let o1;
-    let o2;
-    let o3;
-    let h1;
-    let h2;
-    let h3;
-    let h4;
-    let bits;
+    let o1: number;
+    let o2: number;
+    let o3: number;
+    let h1: number;
+    let h2: number;
+    let h3: number;
+    let h4: number;
+    let bits: number;
     let i = 0;
     let ac = 0;
     let dec = '';

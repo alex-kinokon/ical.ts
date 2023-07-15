@@ -3,20 +3,28 @@
   "cSpell.words": [
     "ALTREP",
     "bday",
+    "BYHOUR",
+    "BYMINUTE",
+    "BYMONTHDAY",
+    "BYSECOND",
+    "BYWEEKNO",
+    "BYYEARDAY",
     "caladruri",
     "caluri",
     "clientpidmap",
+    "dtstart",
     "fbtype",
     "fburl",
     "FMTTYPE",
-    "icalperiod",
     "icalclass",
     "icalendar",
+    "icalperiod",
     "icaltimezone",
     "icaltype",
     "impp",
     "Kewisch",
     "mmhhss",
+    "monthday",
     "onevent",
     "ontimezone",
     "partstat",
@@ -42,6 +50,7 @@
     "vjournal",
     "vtimezone",
     "vtodo",
-    "wkdy"
+    "wkdy",
+    "wkst"
   ]
 }

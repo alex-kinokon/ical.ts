@@ -47,7 +47,10 @@ export class VCardTime extends Time {
    * @param aIcalType  The type for this instance, e.g. date-and-or-time
    * @return The date/time instance
    */
-  static fromDateAndOrTimeString(aValue: string, aIcalType: string): VCardTime {
+  static fromDateAndOrTimeString(
+    aValue: string,
+    aIcalType?: VCardTime['icaltype']
+  ): VCardTime {
     function part(v: string, s: number, e: number) {
       return v ? strictParseInt(v.slice(s, s + e)) : null;
     }
@@ -62,7 +65,7 @@ export class VCardTime extends Time {
     const hasDashDate = dt && dt[0] === '-' && dt[1] === '-';
     const hasDashTime = tm && tm[0] === '-';
 
-    const o = {
+    const o: VCardTimeData = {
       year: hasDashDate ? null : part(dt, 0, 4),
       month:
         hasDashDate && (dtLen === 4 || dtLen === 7)
@@ -121,11 +124,11 @@ export class VCardTime extends Time {
   constructor(
     data: VCardTimeData,
     zone: Timezone | UtcOffset,
-    icalType: VCardTime['icaltype']
+    icalType: VCardTime['icaltype'] = 'date-and-or-time'
   ) {
     super(data, zone);
     Object.defineProperty(this, 'icaltype', {
-      value: icalType || 'date-and-or-time',
+      value: icalType,
       writable: true
     });
   }
@@ -138,7 +141,7 @@ export class VCardTime extends Time {
   /**
    * The type name, to be used in the jCal object.
    */
-  readonly icaltype: 'date-and-or-time' | 'date' | 'date-time';
+  readonly icaltype: 'date-and-or-time' | 'date' | 'date-time' | 'time';
 
   /**
    * Returns a clone of the vcard date/time object.
@@ -160,7 +163,7 @@ export class VCardTime extends Time {
     if (this.zone instanceof UtcOffset) {
       return this.zone.toSeconds();
     } else {
-      return super.utcOffset(...arguments);
+      return super.utcOffset();
     }
   }
 
@@ -177,7 +180,7 @@ export class VCardTime extends Time {
    * The string representation of this date/time, in jCard form
    * (including : and - separators).
    */
-  toString(): string | null {
+  toString(): string {
     const y = this.year;
     const m = this.month;
     const d = this.day;
@@ -222,7 +225,7 @@ export class VCardTime extends Time {
       zone = '';
     }
 
-    switch (this.icaltype as string) {
+    switch (this.icaltype) {
       case 'time':
         return timePart + zone;
       case 'date-and-or-time':
@@ -231,7 +234,5 @@ export class VCardTime extends Time {
       case 'date':
         return datePart;
     }
-
-    return null;
   }
 }

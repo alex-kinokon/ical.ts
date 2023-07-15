@@ -1,11 +1,13 @@
-import { setup, suite, suiteSetup, test } from 'mocha';
+import { setup, suite, test } from 'mocha';
 import { assert } from 'chai';
 import { ICAL } from './support/helper';
 import type { Component } from '../lib/ical';
 
 suite('Component', () => {
   let subject: Component;
-  let fixtures;
+  let fixtures: {
+    components: [string, any[], any[]];
+  };
 
   setup(() => {
     fixtures = {
@@ -58,13 +60,14 @@ suite('Component', () => {
 
   suite('parenting', () => {
     // Today we hear a tale about Tom, Marge, Bernhard and Claire.
-    let tom;
-    let bernhard;
-    let claire;
-    let marge;
-    let relationship;
-    let house;
-    let otherhouse;
+    let tom: ICAL.Component;
+    let bernhard: ICAL.Component;
+    let claire: ICAL.Component;
+    let marge: ICAL.Component;
+    let relationship: ICAL.Component;
+    let house: ICAL.Property;
+    let otherhouse: ICAL.Property;
+
     setup(() => {
       tom = new ICAL.Component('tom');
       bernhard = new ICAL.Component('bernhard');
@@ -176,14 +179,15 @@ suite('Component', () => {
   });
 
   suite('#getFirstSubcomponent', () => {
-    let jCal;
+    let jCal: typeof fixtures.components;
+
     setup(() => {
       jCal = fixtures.components;
       subject = new ICAL.Component(jCal);
     });
 
     test('without name', () => {
-      const component = subject.getFirstSubcomponent();
+      const component = subject.getFirstSubcomponent()!;
       assert.equal(component.parent, subject);
       assert.equal(component.name, 'valarm');
 
@@ -194,7 +198,7 @@ suite('Component', () => {
     });
 
     test('with name (when not first)', () => {
-      const component = subject.getFirstSubcomponent('vtodo');
+      const component = subject.getFirstSubcomponent('vtodo')!;
 
       assert.equal(component.parent, subject);
 
@@ -203,7 +207,7 @@ suite('Component', () => {
     });
 
     test('with name (when there are two)', () => {
-      const component = subject.getFirstSubcomponent('valarm');
+      const component = subject.getFirstSubcomponent('valarm')!;
       assert.equal(component.name, 'valarm');
       assert.equal(component.jCal, jCal[2][0]);
     });
@@ -295,13 +299,13 @@ suite('Component', () => {
     });
 
     test('by component', () => {
-      const first = subject.getFirstSubcomponent();
+      const first = subject.getFirstSubcomponent()!;
 
       subject.removeSubcomponent(first);
 
       assert.notEqual(subject.getFirstSubcomponent(), first);
 
-      assert.equal(subject.getFirstSubcomponent().name, 'vtodo');
+      assert.equal(subject.getFirstSubcomponent()!.name, 'vtodo');
     });
 
     test('remove non hydrated subcomponent should not shift hydrated property', () => {
@@ -316,7 +320,7 @@ suite('Component', () => {
       ]);
       component.getFirstSubcomponent('b');
       component.removeSubcomponent('a');
-      const cValue = component.getFirstSubcomponent('c').name;
+      const cValue = component.getFirstSubcomponent('c')!.name;
       assert.equal(cValue, 'c');
     });
   });
@@ -353,14 +357,14 @@ suite('Component', () => {
     });
 
     test('name has multiple', () => {
-      const first = subject.getFirstProperty('description');
+      const first = subject.getFirstProperty('description')!;
       assert.equal(first, subject.getFirstProperty());
 
       assert.equal(first.getFirstValue(), 'xfoo');
     });
 
     test('without name', () => {
-      const first = subject.getFirstProperty();
+      const first = subject.getFirstProperty()!;
       assert.equal(first.jCal, fixtures.components[1][0]);
     });
 
@@ -474,7 +478,7 @@ suite('Component', () => {
     });
 
     test('remove by property', () => {
-      const first = subject.getFirstProperty('description');
+      const first = subject.getFirstProperty('description')!;
 
       const result = subject.removeProperty(first);
       assert.isTrue(result, 'removes property');
@@ -537,7 +541,7 @@ suite('Component', () => {
       subject.removeAllProperties('description');
       assert.lengthOf(subject.jCal[1], 1);
 
-      const first = subject.getFirstProperty();
+      const first = subject.getFirstProperty()!;
 
       assert.equal(first.name, 'xfoo');
       assert.equal(subject.jCal[1][0][0], 'xfoo');

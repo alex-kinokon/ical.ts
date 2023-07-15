@@ -1,12 +1,13 @@
 {
   "compilerOptions": {
-    "declaration": true,
     "target": "esnext",
     "moduleResolution": "bundler",
     "esModuleInterop": true,
     "strict": true,
+    "jsx": "react-jsx",
     "noImplicitAny": true,
     "stripInternal": true,
-    "useDefineForClassFields": true
+    "useDefineForClassFields": true,
+    "forceConsistentCasingInFileNames": true
   }
 }

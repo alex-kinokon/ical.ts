@@ -4,8 +4,9 @@
  * Portions Copyright (C) Philipp Kewisch */
 
 import { TimezoneService } from './timezone_service';
-import { config } from './index';
+import type { Property } from './property';
 import type { Component } from './component';
+import { config } from './index';
 
 /**
  * Helper functions used in various places within ical.js
@@ -18,11 +19,11 @@ import type { Component } from './component';
  * are referenced by a component, but a VTIMEZONE does not exist,
  * an attempt will be made to generate a VTIMEZONE using ICAL.TimezoneService.
  *
- * @param {ICAL.Component} vcal     The top-level VCALENDAR component.
- * @return {ICAL.Component}         The ICAL.Component that was passed in.
+ * @param vcal     The top-level VCALENDAR component.
+ * @return The ICAL.Component that was passed in.
  */
-export function updateTimezones(vcal: Component) {
-  let i;
+export function updateTimezones(vcal: Component): Component {
+  let i: number;
 
   if (!vcal || vcal.name !== 'vcalendar') {
     // not a top-level vcalendar component
@@ -31,22 +32,22 @@ export function updateTimezones(vcal: Component) {
 
   // Store vtimezone subcomponents in an object reference by tzid.
   // Store properties from everything else in another array
-  const allsubs = vcal.getAllSubcomponents();
-  let properties = [];
-  const vtimezones = {};
-  for (i = 0; i < allsubs.length; i++) {
-    if (allsubs[i].name === 'vtimezone') {
-      const tzid = allsubs[i].getFirstProperty('tzid')!.getFirstValue();
-      vtimezones[tzid] = allsubs[i];
+  const allSubs = vcal.getAllSubcomponents();
+  let properties: Property[] = [];
+  const vtimezones: Record<string, Component> = Object.create(null);
+  for (i = 0; i < allSubs.length; i++) {
+    if (allSubs[i].name === 'vtimezone') {
+      const tzid = allSubs[i].getFirstProperty('tzid')!.getFirstValue<string>();
+      vtimezones[tzid] = allSubs[i];
     } else {
-      properties = properties.concat(allsubs[i].getAllProperties());
+      properties = properties.concat(allSubs[i].getAllProperties());
     }
   }
 
   // create an object with one entry for each required tz
-  const reqTzid = {};
+  const reqTzid: Record<string, boolean> = Object.create(null);
   for (i = 0; i < properties.length; i++) {
-    const tzid = properties[i].getParameter('tzid');
+    const tzid = properties[i].getParameter<string>('tzid');
     if (tzid) {
       reqTzid[tzid] = true;
     }
@@ -62,7 +63,7 @@ export function updateTimezones(vcal: Component) {
   // create any missing, but registered timezones
   for (const tzid of Object.keys(reqTzid)) {
     if (!vtimezones[tzid] && TimezoneService.has(tzid)) {
-      vcal.addSubcomponent(TimezoneService.get(tzid).component);
+      vcal.addSubcomponent(TimezoneService.get(tzid)!.component!);
     }
   }
 
@@ -70,26 +71,16 @@ export function updateTimezones(vcal: Component) {
 }
 
 /**
- * Checks if the given type is of the number type and also NaN.
- *
- * @param {Number} number     The number to check
- * @return {Boolean}          True, if the number is strictly NaN
- */
-export function isStrictlyNaN(number: number): boolean {
-  return typeof number === 'number' && isNaN(number);
-}
-
-/**
  * Parses a string value that is expected to be an integer, when the valid is
  * not an integer throws a decoration error.
  *
- * @param {String} string     Raw string input
- * @return {Number}           Parsed integer
+ * @param string Raw string input
+ * @return Parsed integer
  */
 export function strictParseInt(string: string): number {
   const result = parseInt(string, 10);
 
-  if (isStrictlyNaN(result)) {
+  if (Number.isNaN(result)) {
     throw new Error('Could not extract integer from "' + string + '"');
   }
 
@@ -116,7 +107,25 @@ export function strictParseInt(string: string): number {
  * @param type       object type (like ICAL.Time)
  * @return An instance of the found type.
  */
-export function formatClassType(data: any, type: any) {
+export { formatClassType };
+
+function formatClassType<
+  Data,
+  Class extends { new (arg: Data): InstanceType<Class> }
+>(data: Data | InstanceType<Class>, type: Class): InstanceType<Class>;
+
+function formatClassType<
+  Data,
+  Class extends { new (arg: Data): InstanceType<Class> }
+>(
+  data: Data | InstanceType<Class> | undefined,
+  type: Class
+): InstanceType<Class> | undefined;
+
+function formatClassType<
+  Data,
+  Class extends { new (arg: Data): InstanceType<Class> }
+>(data: Data | InstanceType<Class>, type: Class) {
   if (typeof data === 'undefined') {
     return undefined;
   }
@@ -124,7 +133,7 @@ export function formatClassType(data: any, type: any) {
   if (data instanceof type) {
     return data;
   }
-  return new type(data);
+  return new type(data as Data);
 }
 
 /**
@@ -185,37 +194,17 @@ export function binsearchInsert<T, T1 = T>(
   else return mid!;
 }
 
-/**
- * Clone the passed object or primitive. By default a shallow clone will be
- * executed.
- *
- * @param {*} aSrc            The thing to clone
- * @param {Boolean=} aDeep    If true, a deep clone will be performed
- * @return {*}                The copy of the thing
- */
-export function clone<T>(aSrc: T, aDeep: boolean): T {
-  if (!aSrc || typeof aSrc != 'object') {
-    return aSrc;
-  } else if (aSrc instanceof Date) {
-    return new Date(aSrc.getTime());
-  } else if ('clone' in aSrc) {
-    return aSrc.clone();
-  } else if (Array.isArray(aSrc)) {
-    const arr = [];
-    for (let i = 0; i < aSrc.length; i++) {
-      arr.push(aDeep ? clone(aSrc[i], true) : aSrc[i]);
-    }
-    return arr;
-  } else {
-    const obj = {};
-    for (const [name, value] of Object.entries(aSrc)) {
-      if (aDeep) {
-        obj[name] = clone(value, true);
-      } else {
-        obj[name] = value;
-      }
-    }
+export function shallowClone<T>(obj: T): T {
+  if (!obj || typeof obj != 'object') {
     return obj;
+  } else if (obj instanceof Date) {
+    return new Date(obj.getTime()) as T;
+  } else if ('clone' in obj && typeof obj.clone == 'function') {
+    return obj.clone();
+  } else if (Array.isArray(obj)) {
+    return obj.slice() as T;
+  } else {
+    return { ...obj };
   }
 }
 
@@ -258,14 +247,14 @@ export function foldline(aLine: string): string {
  * Pads the given string or number with zeros so it will have at least two
  * characters.
  *
- * @param {String|Number} data    The string or number to pad
- * @return {String}               The number padded as a string
+ * @param data    The string or number to pad
+ * @return The number padded as a string
  */
 export function pad2(data: string | number): string {
   if (typeof data !== 'string') {
     // handle fractions.
     if (typeof data === 'number') {
-      data = parseInt(data);
+      data = parseInt(String(data));
     }
     data = String(data);
   }
@@ -285,8 +274,8 @@ export function pad2(data: string | number): string {
 /**
  * Truncates the given number, correctly handling negative numbers.
  *
- * @param {Number} number     The number to truncate
- * @return {Number}           The truncated number
+ * @param number The number to truncate
+ * @return The truncated number
  */
 export function trunc(number: number): number {
   return number < 0 ? Math.ceil(number) : Math.floor(number);

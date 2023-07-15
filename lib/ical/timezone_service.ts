@@ -27,7 +27,6 @@ Object.defineProperties(zones, {
 });
 
 /**
- * @classdesc
  * Singleton class to contain timezones.  Right now it is all manual registry in
  * the future we may use this class to download timezone information or handle
  * loading pre-expanded timezones.
@@ -76,10 +75,7 @@ export const TimezoneService = {
    *        passed.
    * @param timezone The initialized zone or vtimezone.
    */
-  register(
-    name: string | Component | undefined,
-    timezone: Component | Timezone
-  ) {
+  register(name: string | Component, timezone?: Component | Timezone) {
     if (name instanceof Component) {
       if (name.name === 'vtimezone') {
         timezone = new Timezone(name);
@@ -97,10 +93,24 @@ export const TimezoneService = {
   /**
    * Removes a timezone by its tzid from the list.
    *
-   * @param {String} tzid     Timezone identifier (e.g. America/Los_Angeles)
-   * @return {?ICAL.Timezone} The removed timezone, or null if not registered
+   * @param tzid     Timezone identifier (e.g. America/Los_Angeles)
    */
-  remove(tzid: string): Timezone | null {
-    return delete zones[tzid];
+  remove(tzid: string): void {
+    delete zones[tzid];
+  },
+
+  /**
+   * Register timezone definitions.
+   * @example
+   * import { TimezoneService } from 'ical';
+   * import tzdata from 'ical/timezones.json';
+   * TimezoneService.registerTimezones(tzdata);
+   */
+  registerTimezones({ tzdata }: { tzdata: string[] }) {
+    for (const tz of tzdata) {
+      TimezoneService.register(
+        Component.fromString('BEGIN:VTIMEZONE\r\n' + tz + '\r\nEND:VTIMEZONE')
+      );
+    }
   }
 };
