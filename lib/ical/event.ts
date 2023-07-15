@@ -398,7 +398,7 @@ export class Event {
    * will remove any `dtend` properties.
    * @type {Duration}
    */
-  get duration() {
+  get duration(): Duration {
     const duration = this._firstProp('duration');
     if (!duration) {
       return this.endDate.subtractDateTz(this.startDate);
