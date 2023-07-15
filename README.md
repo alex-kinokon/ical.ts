@@ -17,14 +17,14 @@ This is a library to parse the formats defined in the following rfcs and their e
 ## npm
 
 ```
-yarn add ical.ts
+yarn add tcal
 ```
 
 ### Register timezones
 
 ```ts
-import { TimezoneService } from 'ical.ts';
-import tzdata from 'ical.ts/timezones.json';
+import { TimezoneService } from 'tcal';
+import tzdata from 'tcal/timezones.json';
 TimezoneService.registerTimezones(tzdata);
 ```
 

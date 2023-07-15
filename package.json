@@ -1,5 +1,5 @@
 {
-  "name": "ical.ts",
+  "name": "tcal",
   "version": "0.1.0-beta.1",
   "author": "alex-kinokon",
   "contributors": [
@@ -68,7 +68,7 @@
     "test-acceptance": "mocha test/acceptance/*_test.ts",
     "test-performance": "mocha --reporter test/support/perfReporter.ts test/performance/*_test.ts",
     "test-all": "npm run test-unit && npm run test-acceptance && npm run test-performance",
-    "build": "./esbuild.ts",
+    "build": "./esbuild.ts && tsc -p ./tsconfig.emit.json",
     "build:types": "tsc -p ./tsconfig.emit.json",
     "build:timezones": "node -r esbuild-register tools/scriptutils.js generate-zones tools/tzdb > dist/timezones.json",
     "lint": "eslint lib/ical test tools/scriptutils.js",
